@@ -1,49 +1,69 @@
+import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Building2, ArrowRight } from 'lucide-react';
-
-interface Company {
-  id: string;
-  name: string;
-  slug: string;
-}
+import { API_URL } from '../config';
+import type { Company } from '../types';
+import { ArrowRight, FileText } from 'lucide-react';
 
 export function SelectorPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock fetch GET /catalog
-    setCompanies([
-      { id: '1', name: 'Agencia Digital Pro', slug: 'agencia-digital-pro' },
-      { id: '2', name: 'Consultora Tech', slug: 'consultora-tech' }
-    ]);
+    fetch(`${API_URL}/catalog`)
+      .then(res => res.json())
+      .then(data => { setCompanies(data); setLoading(false); })
+      .catch(() => { setError('No se pudieron cargar las empresas'); setLoading(false); });
   }, []);
 
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="text-center py-16 text-red-500">{error}</div>
+  );
+
   return (
-    <div className="max-w-4xl mx-auto py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-black text-slate-800 mb-4">Selecciona tu Empresa</h1>
-        <p className="text-slate-500">Elige con qué perfil quieres generar tu cotización hoy.</p>
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-800">Selecciona la empresa</h1>
+        <p className="text-slate-500 mt-1">¿Para qué empresa deseas crear una nueva cotización?</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-6">
+      <div className="grid sm:grid-cols-2 gap-4">
         {companies.map(company => (
-          <div 
+          <Link
             key={company.id}
-            onClick={() => navigate('/cotizaciones/nueva', { state: { company } })}
-            className="group cursor-pointer bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-500 transition-all"
+            to={`/nueva/${company.slug}`}
+            className="group bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-2xl p-6 flex items-center gap-4 transition-all hover:shadow-md"
           >
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Building2 className="w-6 h-6" />
+            {company.logoUrl ? (
+              <img src={`${API_URL}/public${company.logoUrl}`} alt={company.name} className="h-14 w-24 object-contain shrink-0" />
+            ) : (
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-xl shrink-0" style={{ backgroundColor: company.colorPrimary }}>
+                {company.name.charAt(0)}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-slate-800 truncate">{company.name}</p>
+              <p className="text-sm text-slate-400 mt-0.5">Nueva cotización</p>
             </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">{company.name}</h2>
-            <p className="text-sm text-slate-500 mb-4">Slug: {company.slug}</p>
-            <div className="flex items-center text-indigo-600 font-semibold text-sm group-hover:gap-2 transition-all">
-              Generar cotización <ArrowRight className="w-4 h-4 ml-1" />
-            </div>
-          </div>
+            <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-400 transition-colors shrink-0" />
+          </Link>
         ))}
+      </div>
+
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <Link
+          to="/lista"
+          className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium transition-colors"
+        >
+          <FileText className="w-4 h-4" />
+          Ver cotizaciones guardadas
+        </Link>
       </div>
     </div>
   );

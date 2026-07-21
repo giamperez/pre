@@ -73,17 +73,18 @@ model Lead {
 }
 
 model Quote {
-  id             String  @id @default(uuid())
-  companyId      String
-  number         String
-  clientData     Json
-  projectData    Json
-  items          Json
-  subtotal       Float
-  igv            Float
-  total          Float
-  considerations String?
-  images         Json?
+  id              String  @id @default(uuid())
+  companyId       String
+  number          String
+  clientData      Json
+  projectData     Json
+  items           Json
+  additionalItems Json?
+  subtotal        Float
+  igv             Float
+  total           Float
+  considerations  String?
+  images          Json?
 
   company Company @relation(fields: [companyId], references: [id])
 
