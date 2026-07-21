@@ -101,4 +101,40 @@ export class CreateQuoteDto {
   @IsOptional()
   @IsArray()
   images?: string[];
+
+  @IsOptional()
+  @IsString()
+  ubicacionProyecto?: string;
+
+  @IsOptional()
+  @IsString()
+  sectorProyecto?: string;
+
+  @IsOptional()
+  @IsString()
+  tipoProyecto?: string;
+
+  @IsOptional()
+  @IsString()
+  tipoServicio?: string;
+
+  @IsOptional()
+  @IsString()
+  tipoCliente?: string;
+
+  @IsOptional()
+  @IsString()
+  clienteNuevoRecurrente?: string;
+
+  @IsOptional()
+  @IsString()
+  fuenteCliente?: string;
+
+  @IsOptional()
+  @IsString()
+  estado?: string;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, any>;
 }

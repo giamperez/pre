@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Res } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Res, Query, Patch, NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { QuotesService } from './quotes.service';
 import { PdfService } from './pdf.service';
@@ -17,8 +17,15 @@ export class QuotesController {
   }
 
   @Get()
-  findAll() {
-    return this.quotesService.findAll();
+  findAll(
+    @Query('companyId') companyId?: string,
+    @Query('search') search?: string,
+    @Query('estado') estado?: string,
+    @Query('tipoServicio') tipoServicio?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.quotesService.findAll({ companyId, search, estado, tipoServicio, from, to });
   }
 
   @Get(':id/pdf')
@@ -40,5 +47,10 @@ export class QuotesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.quotesService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() body: any) {
+    return this.quotesService.update(id, body);
   }
 }
