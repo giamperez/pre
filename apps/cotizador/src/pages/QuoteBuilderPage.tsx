@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
-import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
@@ -12,6 +12,59 @@ const emptyItem = (): QuoteItem & { _key: string } => ({
   precioUnitario: 0,
   total: 0,
 });
+
+const defaultSections = [
+  {
+    title: "Alcance del Servicio",
+    content: "El presente servicio comprende el desarrollo e implementación de las funcionalidades descritas en esta cotización, conforme a los requerimientos previamente definidos y aprobados por el cliente.\n\nCualquier modificación al alcance o incorporación de nuevas funcionalidades será evaluada y cotizada por separado.\n\nLa presente cotización comprende únicamente los entregables descritos en este documento. Cualquier componente o activo técnico no contemplado expresamente en la sección «Entrega de Productos Finales» se entenderá excluido del alcance de la presente propuesta, salvo acuerdo escrito entre las partes.",
+    enabled: false
+  },
+  {
+    title: "Condiciones para la realización del Servicio",
+    content: "El cliente deberá proporcionar oportunamente toda la información necesaria para el desarrollo del proyecto, incluyendo textos, imágenes, logotipos, manual de identidad visual, catálogos de productos y demás recursos requeridos.\n\nEn caso de requerirse acceso a servicios de terceros (hosting, dominio, pasarelas de pago, correos corporativos, APIs, entre otros), el cliente deberá proporcionar las credenciales correspondientes.\n\nLos retrasos ocasionados por la entrega tardía de información, aprobaciones o accesos podrán modificar el cronograma de ejecución sin generar responsabilidad para Vertex Developers.",
+    enabled: false
+  },
+  {
+    title: "Responsabilidades del Cliente",
+    content: "• Proporcionar oportunamente la información y recursos necesarios.\n- Aprobar los requerimientos funcionales antes del inicio del desarrollo.",
+    enabled: false
+  },
+  {
+    title: "Plazos de Ejecución",
+    content: "El tiempo estimado para el desarrollo del proyecto es de 45 días calendario, distribuidos de la siguiente manera:\n\n- Análisis y levantamiento de requerimientos: 5 días calendario.\n- Diseño de interfaces (UI/UX): 5 días calendario.\n- Desarrollo de la aplicación: 30 días calendario.\n- Pruebas, ajustes e implementación: 5 días calendario.\n\n*El plazo es referencial a aceptación de servicios de terceros: Pasarelas de pago, APIs externas.",
+    enabled: false
+  },
+  {
+    title: "Pruebas y Aceptación",
+    content: "Antes de la entrega final se realizarán pruebas funcionales para verificar el correcto funcionamiento de las funcionalidades incluidas en el alcance.\n\nEl cliente dispondrá de un período de revisión de hasta 5 días calendario para reportar observaciones relacionadas con el alcance contratado.\n\nLas observaciones que impliquen nuevas funcionalidades serán consideradas como requerimientos adicionales y serán cotizadas por separado.",
+    enabled: false
+  },
+  {
+    title: "Forma de Pago",
+    content: "• 40% del monto total al aceptar la cotización, como adelanto para el inicio del proyecto.\n- 30% al aprobar la maqueta funcional (frontend), una vez validado el diseño, la estructura y la experiencia de usuario.\n- 30% restante al concluir el desarrollo, luego de la demostración de las funcionalidades del sistema mediante una reunión virtual y la conformidad del cliente.\n\nLos entregables del proyecto serán entregados una vez confirmado el pago del 100% del monto contratado.\n\nEn caso de retraso en cualquiera de los pagos establecidos, Vertex Developers podrá suspender temporalmente las actividades del proyecto hasta la regularización de los importes pendientes.",
+    enabled: false
+  },
+  {
+    title: "Validez de la Cotización",
+    content: "La presente cotización tiene una vigencia de 15 días calendario contados desde su fecha de emisión.\n\nLa presente cotización incluye IGV.",
+    enabled: false
+  },
+  {
+    title: "Garantía del Servicio",
+    content: "Vertex Developers brinda una garantía de 60 días calendario contados a partir de la entrega del proyecto.\n\nLa garantía cubre exclusivamente la corrección de errores de programación relacionados con las funcionalidades incluidas en el alcance aprobado.\n\nLa garantía no incluye:\n- Nuevas funcionalidades.\n- Cambios en los procesos del negocio.\n- Modificaciones solicitadas después de la aprobación del proyecto.\n- Problemas ocasionados por terceros.\n- Fallas derivadas de modificaciones realizadas por personas ajenas a Vertex Developers.\n- Problemas ocasionados por el servidor, hosting, proveedores de Internet o servicios externos.",
+    enabled: false
+  },
+  {
+    title: "Licencia de Uso del software",
+    content: "Con la entrega del proyecto y una vez efectuado el pago total del servicio, el cliente adquiere una licencia de uso sobre la solución desarrollada, que le permite utilizarla para las actividades propias de su organización conforme al alcance contratado.\n\nLos componentes tecnológicos, librerías, frameworks, plantillas, arquitecturas, metodologías, herramientas internas y demás elementos desarrollados previamente o reutilizables por Vertex Developers continúan siendo de su titularidad, pudiendo ser utilizados en otros proyectos sin afectar los derechos de uso otorgados al cliente.\n\nLa entrega del código fuente únicamente se realizará cuando haya sido expresamente incluida en la presente cotización o acordada posteriormente por escrito entre ambas partes.",
+    enabled: false
+  },
+  {
+    title: "Entrega de Productos Finales",
+    content: "Al finalizar el proyecto se entregará:\n\n- Aplicación web completamente funcional e implementada.\n- Respaldo de la base de datos (cuando corresponda).\n- Manual de usuario.\n- Documentación funcional incluida en la presente cotización (si aplica).\n- Credenciales de acceso a los servicios contratados por el cliente (cuando corresponda).\n- Capacitación para el personal designado.\n- Acta de conformidad del servicio.\n\nTodos los entregables serán proporcionados en formato digital mediante archivos electrónicos o mediante acceso a la infraestructura del cliente, según corresponda.",
+    enabled: false
+  }
+];
 
 function currency(n: number) {
   return n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -127,11 +180,6 @@ function ItemsTable({
   );
 }
 
-// ========================
-// MAIN PAGE
-// ========================
-import { useLocation } from 'react-router-dom';
-
 export function QuoteBuilderPage() {
   const { companySlug } = useParams();
   const navigate = useNavigate();
@@ -143,7 +191,6 @@ export function QuoteBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
 
-  // Form state
   const [clientData, setClientData] = useState({
     empresa: leadState?.empresa || '',
     ruc: '',
@@ -167,9 +214,11 @@ export function QuoteBuilderPage() {
     leadState?.additionalItems?.length > 0 ? leadState.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : []
   );
   const [considerations, setConsiderations] = useState('');
+  const [sections, setSections] = useState(defaultSections);
   const [images, setImages] = useState<string[]>([]);
   const [validity, setValidity] = useState('15 días calendario');
   const [paymentTerms, setPaymentTerms] = useState('40% adelanto, 30% al aprobar maqueta, 30% al finalizar');
+  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -181,7 +230,6 @@ export function QuoteBuilderPage() {
       .catch(() => setLoadingCompany(false));
   }, [companySlug]);
 
-  // Totals
   const itemsSubtotal = items.reduce((s, i) => s + i.total, 0);
   const addonsSubtotal = additionalItems.reduce((s, i) => s + i.total, 0);
   const subtotal = itemsSubtotal + addonsSubtotal;
@@ -212,6 +260,7 @@ export function QuoteBuilderPage() {
         items: items.filter(i => i.detalle.trim()).map(({ _key, ...rest }) => rest),
         additionalItems: additionalItems.filter(i => i.detalle.trim()).map(({ _key, ...rest }) => rest),
         considerations: considerations || undefined,
+        sections: sections,
         images: images.length > 0 ? images : undefined,
       };
 
@@ -243,7 +292,6 @@ export function QuoteBuilderPage() {
 
   return (
     <div className="max-w-4xl mx-auto pb-16">
-      {/* ---- TOP TOOLBAR ---- */}
       <div className="flex items-center justify-between mb-6 sticky top-0 bg-slate-50 py-3 z-10 -mx-6 px-6 border-b border-slate-200">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -284,7 +332,6 @@ export function QuoteBuilderPage() {
       </div>
 
       <div className="space-y-6">
-        {/* ---- DATOS DEL CLIENTE ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">1</span>
@@ -318,7 +365,6 @@ export function QuoteBuilderPage() {
           </div>
         </section>
 
-        {/* ---- DATOS DEL PROYECTO ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">2</span>
@@ -340,7 +386,6 @@ export function QuoteBuilderPage() {
           </div>
         </section>
 
-        {/* ---- DETALLE DE PROPUESTA ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">3</span>
@@ -349,7 +394,6 @@ export function QuoteBuilderPage() {
 
           <ItemsTable title="Paquete base" items={items} setItems={setItems} addLabel="Agregar ítem" />
 
-          {/* Adicionales collapsable */}
           <div className="mt-6 border-t border-slate-100 pt-5">
             <button
               type="button"
@@ -369,7 +413,6 @@ export function QuoteBuilderPage() {
           </div>
         </section>
 
-        {/* ---- TOTALES ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">4</span>
@@ -391,7 +434,6 @@ export function QuoteBuilderPage() {
           </div>
         </section>
 
-        {/* ---- CONSIDERACIONES E IMÁGENES ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">5</span>
@@ -436,7 +478,6 @@ export function QuoteBuilderPage() {
           </div>
         </section>
 
-        {/* ---- VALIDEZ Y FORMA DE PAGO ---- */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6">
           <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">6</span>
@@ -453,6 +494,74 @@ export function QuoteBuilderPage() {
             </div>
           </div>
         </section>
+
+        <section className="bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">7</span>
+              Secciones Legales / Condiciones
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSections(prev => prev.map(s => ({ ...s, enabled: true })))}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+              >
+                Activar todas
+              </button>
+              <span className="text-slate-300">|</span>
+              <button
+                type="button"
+                onClick={() => setSections(prev => prev.map(s => ({ ...s, enabled: false })))}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+              >
+                Desactivar todas
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {sections.map((section, idx) => {
+              const isExpanded = expandedSections[idx];
+              return (
+                <div key={idx} className={`border rounded-xl overflow-hidden transition-colors ${section.enabled ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-75'}`}>
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setSections(prev => prev.map((s, i) => i === idx ? { ...s, enabled: !s.enabled } : s))}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${section.enabled ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                      >
+                        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${section.enabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
+                      <span className={`text-sm font-semibold ${section.enabled ? 'text-slate-800' : 'text-slate-500'}`}>
+                        {idx + 1}. {section.title}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSections(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+                      <textarea
+                        rows={6}
+                        className={inputCls + " resize-none text-xs"}
+                        value={section.content}
+                        onChange={e => setSections(prev => prev.map((s, i) => i === idx ? { ...s, content: e.target.value } : s))}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
       </div>
     </div>
   );

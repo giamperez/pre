@@ -35,7 +35,7 @@ export class QuotesService {
   }
 
   async create(createQuoteDto: CreateQuoteDto) {
-    const { companyId, clientData, projectData, items, additionalItems, considerations, images } = createQuoteDto;
+    const { companyId, clientData, projectData, items, additionalItems, considerations, sections, images } = createQuoteDto;
 
     // Calculate totals
     const itemsTotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -58,6 +58,7 @@ export class QuotesService {
         igv,
         total,
         considerations,
+        sections: sections ? sections.map(s => ({ ...s })) as object[] : undefined,
         images: images || [],
       },
       include: {

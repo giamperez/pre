@@ -1,14 +1,27 @@
 import { Injectable } from '@nestjs/common';
+import * as fs from 'fs';
 import * as path from 'path';
 import puppeteer from 'puppeteer';
 
 @Injectable()
 export class PdfService {
-  private formatCurrency(value: number): string {
-    return `S/ ${Number(value || 0).toLocaleString('es-PE', {
+  private imageToBase64(relativePath: string): string {
+    const absolutePath = path.join(process.cwd(), 'public', 'companies', relativePath);
+    if (!fs.existsSync(absolutePath)) {
+      console.warn('Image not found:', absolutePath);
+      return '';
+    }
+    const buffer = fs.readFileSync(absolutePath);
+    const ext = path.extname(absolutePath).toLowerCase();
+    const mime = ext === '.png' ? 'image/png' : 'image/jpeg';
+    return `data:${mime};base64,${buffer.toString('base64')}`;
+  }
+
+  private fmt(n: number): string {
+    return Number(n || 0).toLocaleString('es-PE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })}`;
+    });
   }
 
   private formatDate(date: Date): string {
@@ -18,234 +31,180 @@ export class PdfService {
     return `${d}/${m}/${y}`;
   }
 
-  private getImageUrl(slug: string, filename: string): string {
-    const fullPath = path.join(process.cwd(), 'public', 'companies', slug, filename);
-    return `file:///${fullPath.replace(/\\/g, '/')}`;
-  }
-
   private buildHtml(quote: any): string {
     const company = quote.company;
-    const slug = company.slug;
-    const primary = company.colorPrimary || '#0C2448';
+    const slug = company.slug as string;
+    const primary: string = company.colorPrimary || '#0C2448';
+    const secondary: string = company.colorSecondary || '#0397A3';
 
-    const portadaUrl = this.getImageUrl(slug, 'portada.jpeg');
-    const membreteUrl = this.getImageUrl(slug, 'membrete.jpeg');
-    const contraportadaUrl = this.getImageUrl(slug, 'contraportada.jpeg');
+    const portadaB64 = this.imageToBase64(`${slug}/portada.jpeg`);
+    const membreteB64 = this.imageToBase64(`${slug}/membrete.jpeg`);
+    const contraportadaB64 = this.imageToBase64(`${slug}/contraportada.jpeg`);
 
-    const clientData = quote.clientData as Record<string, string>;
-    const projectData = quote.projectData as Record<string, string>;
-    const items = (quote.items as any[]) || [];
-    const additionalItems = (quote.additionalItems as any[]) || [];
-    const paymentInfo = company.paymentInfo as Record<string, string> || {};
+    const clientData: Record<string, string> = (quote.clientData as any) || {};
+    const projectData: Record<string, string> = (quote.projectData as any) || {};
+    const items: any[] = (quote.items as any[]) || [];
+    const additionalItems: any[] = (quote.additionalItems as any[]) || [];
+    const sections: any[] = (quote.sections as any[]) || [];
+    const paymentInfo: Record<string, string> = (company.paymentInfo as any) || {};
 
-    const itemsRows = items
-      .map(
-        (item, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${item.detalle || ''}</td>
-          <td style="text-align:center">${item.cantidad || 1}</td>
-          <td style="text-align:right">${this.formatCurrency(item.precioUnitario)}</td>
-          <td style="text-align:right">${this.formatCurrency(item.total)}</td>
-        </tr>`,
-      )
-      .join('');
-
-    const addonsRows = additionalItems
-      .map(
-        (item, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${item.detalle || ''}</td>
-          <td style="text-align:center">${item.cantidad || 1}</td>
-          <td style="text-align:right">${this.formatCurrency(item.precioUnitario)}</td>
-          <td style="text-align:right">${this.formatCurrency(item.total)}</td>
-        </tr>`,
-      )
-      .join('');
-
-    const additionalItemsSection =
-      additionalItems.length > 0
-        ? `
-      <h3>Características Adicionales</h3>
-      <table class="items-table">
+    const buildItemsTable = (rows: any[], title: string): string => `
+      <h3 style="color:${primary}; font-size:14px; margin-top:22px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${title}</h3>
+      <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
         <thead>
-          <tr>
-            <th style="width:40px">N°</th>
-            <th>Detalle</th>
-            <th style="width:60px;text-align:center">Cant.</th>
-            <th style="width:120px;text-align:right">P. Unitario</th>
-            <th style="width:120px;text-align:right">Total</th>
+          <tr style="background-color:${primary}; color:white;">
+            <th style="padding:8px; text-align:center; width:40px; border:1px solid ${primary};">N°</th>
+            <th style="padding:8px; text-align:left; border:1px solid ${primary};">Detalle</th>
+            <th style="padding:8px; text-align:center; width:50px; border:1px solid ${primary};">Cant.</th>
+            <th style="padding:8px; text-align:right; width:110px; border:1px solid ${primary};">P. Unitario</th>
+            <th style="padding:8px; text-align:right; width:110px; border:1px solid ${primary};">Total</th>
           </tr>
         </thead>
-        <tbody>${addonsRows}</tbody>
-      </table>`
+        <tbody>
+          ${rows
+            .map(
+              (item, i) => `
+          <tr style="background-color:${i % 2 === 0 ? '#fff' : '#f9f9f9'};">
+            <td style="padding:6px; border:1px solid #ddd; text-align:center;">${i + 1}</td>
+            <td style="padding:6px; border:1px solid #ddd;">${item.detalle || ''}</td>
+            <td style="padding:6px; border:1px solid #ddd; text-align:center;">${item.cantidad || 1}</td>
+            <td style="padding:6px; border:1px solid #ddd; text-align:right;">S/ ${this.fmt(item.precioUnitario)}</td>
+            <td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:600;">S/ ${this.fmt(item.total)}</td>
+          </tr>`,
+            )
+            .join('')}
+        </tbody>
+      </table>`;
+
+    const additionalSection =
+      additionalItems.length > 0
+        ? buildItemsTable(additionalItems, 'Características Adicionales')
         : '';
 
     const considerationsSection = quote.considerations
-      ? `<h3>Consideraciones</h3><p class="considerations">${quote.considerations}</p>`
+      ? `<h3 style="color:${primary}; font-size:14px; margin-top:25px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Consideraciones</h3>
+         <p style="font-size:11px; white-space:pre-wrap; color:#444; line-height:1.6;">${quote.considerations}</p>`
       : '';
 
-    const paymentRows = Object.entries(paymentInfo)
-      .filter(([key]) => ['banco', 'cuenta', 'cci'].includes(key))
-      .map(
-        ([key, val]) => `
-        <tr>
-          <td style="color:#666;width:100px;text-transform:capitalize">${key}</td>
-          <td style="font-weight:600">${val}</td>
-        </tr>`,
-      )
-      .join('');
+    const enabledSections = sections.filter(s => s.enabled);
+    const sectionsHtml = enabledSections.map((s, i) => `
+      <h3 style="color:${primary}; font-size:14px; margin-top:25px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${i + 1}. ${s.title}</h3>
+      <p style="font-size:11px; white-space:pre-wrap; color:#444; line-height:1.6;">${s.content}</p>
+    `).join('');
 
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <style>
+  @page { margin: 0; size: A4; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; }
-
-  /* ---------- PORTADA ---------- */
-  .page-portada {
-    width: 210mm;
-    height: 297mm;
-    background-image: url('${portadaUrl}');
+  body { font-family: Arial, Helvetica, sans-serif; }
+  .page { width: 210mm; min-height: 297mm; position: relative; page-break-after: always; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  .portada img, .contraportada img { display: block; width: 210mm; height: 297mm; object-fit: cover; }
+  .contenido {
+    background-image: url('${membreteB64}');
     background-size: cover;
+    background-position: center top;
     background-repeat: no-repeat;
-    background-position: center;
-    page-break-after: always;
-  }
-
-  /* ---------- CONTENIDO ---------- */
-  .page-content {
-    width: 210mm;
+    padding: 145px 65px 110px 65px;
     min-height: 297mm;
-    background-image: url('${membreteUrl}');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    padding: 130px 40px 80px 40px;
-    page-break-after: always;
   }
-
-  h2 {
-    font-size: 16px;
-    font-weight: 700;
-    color: ${primary};
-    margin-bottom: 4px;
-  }
-  .meta { color: #555; margin-bottom: 20px; font-size: 10.5px; }
-  h3 {
-    font-size: 12px;
-    font-weight: 700;
-    color: ${primary};
-    margin-top: 20px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1.5px solid ${primary};
-    padding-bottom: 3px;
-  }
-
-  /* Client data table */
-  .client-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-  .client-table td { padding: 4px 6px; font-size: 10.5px; }
-  .client-table td:first-child { color: #666; width: 120px; font-weight: 600; }
-
-  /* Items table */
-  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-  .items-table thead tr { background-color: ${primary}; color: #fff; }
-  .items-table th { padding: 6px 8px; text-align: left; font-size: 10px; font-weight: 600; }
-  .items-table td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 10.5px; }
-  .items-table tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.03); }
-
-  /* Totals */
-  .totals { text-align: right; margin-top: 12px; }
-  .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 2px 0; font-size: 11px; color: #444; }
-  .totals .row.total { font-size: 13px; font-weight: 700; color: ${primary}; border-top: 2px solid ${primary}; margin-top: 4px; padding-top: 6px; }
-
-  /* Payment */
-  .payment-table { border-collapse: collapse; }
-  .payment-table td { padding: 3px 8px; font-size: 10.5px; }
-
-  /* Considerations */
-  .considerations { font-size: 10.5px; color: #444; line-height: 1.6; white-space: pre-wrap; }
-
-  /* ---------- CONTRAPORTADA ---------- */
-  .page-contraportada {
-    width: 210mm;
-    height: 297mm;
-    background-image: url('${contraportadaUrl}');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    page-break-before: always;
-  }
+  hr { border: none; border-top: 2px solid ${secondary}; margin: 14px 0; }
+  h3 { color: ${primary}; font-size: 13px; margin-top: 22px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 </style>
 </head>
 <body>
 
-<!-- PORTADA -->
-<div class="page-portada"></div>
+<!-- ===== PORTADA ===== -->
+<div class="page portada">
+  <img src="${portadaB64}" alt="portada" />
+  ${slug === 'pyramid-structures' ? `
+    <div style="position:absolute; top: 400px; left: 0; right: 0; text-align: center; color: white; font-size: 26px; font-weight: bold; padding: 0 40px; text-transform: uppercase;">
+      ${projectData.nombre || ''}
+    </div>
+    <div style="position:absolute; bottom: 85px; left: 85px; color: white; font-size: 16px; font-weight: bold; text-align: left;">
+      ${quote.number}
+    </div>
+  ` : ''}
+</div>
 
-<!-- CONTENIDO -->
-<div class="page-content">
+<!-- ===== CONTENIDO ===== -->
+<div class="page contenido">
 
-  <h2>COTIZACIÓN N° ${quote.number}</h2>
-  <div class="meta">
-    Fecha: ${this.formatDate(new Date(quote.createdAt))} &nbsp;|&nbsp; Válida por: 15 días calendario
-  </div>
+  <h2 style="color:${primary}; font-size:20px; font-weight:700; margin-bottom:4px;">COTIZACIÓN N° ${quote.number}</h2>
+  <p style="color:#666; font-size:11px; margin-bottom:4px;">Fecha: ${this.formatDate(new Date(quote.createdAt))} &nbsp;|&nbsp; Válida por: 15 días calendario</p>
+  <hr />
 
   <h3>Datos del Cliente</h3>
-  <table class="client-table">
-    <tr><td>Empresa</td><td>${clientData.empresa || '-'}</td></tr>
-    <tr><td>RUC</td><td>${clientData.ruc || '-'}</td></tr>
-    <tr><td>Solicitante</td><td>${clientData.solicitante || '-'}</td></tr>
-    <tr><td>Teléfono</td><td>${clientData.telefono || '-'}</td></tr>
-    <tr><td>Dirección</td><td>${clientData.direccion || '-'}</td></tr>
-    <tr><td>Correo</td><td>${clientData.correo || '-'}</td></tr>
+  <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
+    <tr>
+      <td style="padding:6px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Empresa:</strong> ${clientData.empresa || '-'}</td>
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">RUC:</strong> ${clientData.ruc || '-'}</td>
+    </tr>
+    <tr style="background:#f9f9f9;">
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Solicitante:</strong> ${clientData.solicitante || '-'}</td>
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Teléfono:</strong> ${clientData.telefono || '-'}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Dirección:</strong> ${clientData.direccion || '-'}</td>
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Correo:</strong> ${clientData.correo || '-'}</td>
+    </tr>
   </table>
 
   <h3>Proyecto</h3>
-  <table class="client-table">
-    <tr><td>Nombre</td><td>${projectData.nombre || '-'}</td></tr>
-    <tr><td>Modalidad</td><td>${projectData.modalidad || '-'}</td></tr>
-    <tr><td>Plazo</td><td>${projectData.plazo || '-'}</td></tr>
+  <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:15px;">
+    <tr>
+      <td style="padding:6px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Nombre:</strong> ${projectData.nombre || '-'}</td>
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Modalidad:</strong> ${projectData.modalidad || '-'}</td>
+    </tr>
+    <tr style="background:#f9f9f9;">
+      <td style="padding:6px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Plazo:</strong> ${projectData.plazo || '-'}</td>
+      <td style="padding:6px 8px; border:1px solid #ddd;"></td>
+    </tr>
   </table>
 
-  <h3>Paquete Base</h3>
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th style="width:40px">N°</th>
-        <th>Detalle</th>
-        <th style="width:60px;text-align:center">Cant.</th>
-        <th style="width:120px;text-align:right">P. Unitario</th>
-        <th style="width:120px;text-align:right">Total</th>
-      </tr>
-    </thead>
-    <tbody>${itemsRows}</tbody>
-  </table>
+  ${buildItemsTable(items, 'Paquete Base')}
 
-  ${additionalItemsSection}
+  ${additionalSection}
 
-  <div class="totals">
-    <div class="row"><span>SUB TOTAL:</span><span>${this.formatCurrency(quote.subtotal)}</span></div>
-    <div class="row"><span>IGV (18%):</span><span>${this.formatCurrency(quote.igv)}</span></div>
-    <div class="row total"><span>TOTAL:</span><span>${this.formatCurrency(quote.total)}</span></div>
+  <!-- TOTALES -->
+  <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+    <div style="min-width:280px; border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
+      <div style="display:flex; justify-content:space-between; padding:8px 16px; font-size:12px; background:#f9f9f9; border-bottom:1px solid #e5e7eb;">
+        <span style="color:#555;">SUB TOTAL</span>
+        <strong>S/ ${this.fmt(quote.subtotal)}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:8px 16px; font-size:12px; border-bottom:1px solid #e5e7eb;">
+        <span style="color:#555;">IGV (18%)</span>
+        <strong>S/ ${this.fmt(quote.igv)}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:10px 16px; font-size:15px; background:${primary}; color:white;">
+        <strong>TOTAL</strong>
+        <strong>S/ ${this.fmt(quote.total)}</strong>
+      </div>
+    </div>
   </div>
 
-  <h3>Forma de Pago</h3>
-  <table class="payment-table">
-    ${paymentRows}
+  <!-- FORMA DE PAGO -->
+  <h3 style="margin-top:28px;">Forma de Pago</h3>
+  <table style="font-size:11px; border-collapse:collapse;">
+    ${paymentInfo.banco ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600; min-width:120px;">Banco</td><td>${paymentInfo.banco}</td></tr>` : ''}
+    ${paymentInfo.cuenta ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">Cuenta corriente</td><td>${paymentInfo.cuenta}</td></tr>` : ''}
+    ${paymentInfo.cci ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">CCI</td><td>${paymentInfo.cci}</td></tr>` : ''}
+    ${paymentInfo.ruc ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">RUC</td><td>${paymentInfo.ruc}</td></tr>` : ''}
   </table>
 
   ${considerationsSection}
+  ${sectionsHtml}
 
 </div>
 
-<!-- CONTRAPORTADA -->
-<div class="page-contraportada"></div>
+<!-- ===== CONTRAPORTADA ===== -->
+<div class="page contraportada">
+  <img src="${contraportadaB64}" alt="contraportada" />
+</div>
 
 </body>
 </html>`;
@@ -256,7 +215,7 @@ export class PdfService {
 
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--allow-file-access-from-files'],
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();

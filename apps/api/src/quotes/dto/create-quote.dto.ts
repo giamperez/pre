@@ -52,6 +52,17 @@ class QuoteItemDto {
   total: number;
 }
 
+class QuoteSectionDto {
+  @IsString()
+  title: string;
+
+  @IsString()
+  content: string;
+
+  @IsOptional()
+  enabled?: boolean;
+}
+
 export class CreateQuoteDto {
   @IsString()
   companyId: string;
@@ -80,6 +91,12 @@ export class CreateQuoteDto {
   @IsOptional()
   @IsString()
   considerations?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuoteSectionDto)
+  sections?: QuoteSectionDto[];
 
   @IsOptional()
   @IsArray()

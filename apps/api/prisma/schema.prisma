@@ -85,6 +85,7 @@ model Quote {
   igv             Float
   total           Float
   considerations  String?
+  sections        Json?
   images          Json?
 
   company Company @relation(fields: [companyId], references: [id])
