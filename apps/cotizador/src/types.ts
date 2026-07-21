@@ -48,3 +48,21 @@ export interface Quote {
   createdAt: string;
   updatedAt: string;
 }
+
+export type LeadClassification = 'calificado' | 'no_calificado' | 'pendiente';
+
+export interface Lead {
+  id: string;
+  companyId: string;
+  name: string;
+  businessName?: string;
+  phone?: string;
+  email?: string;
+  source?: string;
+  answers?: any;
+  classification: LeadClassification;
+  notes?: string;
+  company?: Company;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -65,6 +65,7 @@ model Lead {
   source         String?
   answers        Json?
   classification LeadClassification @default(pendiente)
+  notes          String?
 
   company Company @relation(fields: [companyId], references: [id])
 

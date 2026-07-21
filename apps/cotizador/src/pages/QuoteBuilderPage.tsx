@@ -130,20 +130,42 @@ function ItemsTable({
 // ========================
 // MAIN PAGE
 // ========================
+import { useLocation } from 'react-router-dom';
+
 export function QuoteBuilderPage() {
   const { companySlug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const leadState = location.state?.leadData;
 
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showAddons, setShowAddons] = useState(false);
+  const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
 
   // Form state
-  const [clientData, setClientData] = useState({ empresa: '', ruc: '', solicitante: '', direccion: '', telefono: '', correo: '' });
-  const [projectData, setProjectData] = useState({ nombre: '', modalidad: 'Proyecto por alcance', plazo: '45 días calendario' });
-  const [items, setItems] = useState<(QuoteItem & { _key: string })[]>([emptyItem()]);
-  const [additionalItems, setAdditionalItems] = useState<(QuoteItem & { _key: string })[]>([]);
+  const [clientData, setClientData] = useState({
+    empresa: leadState?.empresa || '',
+    ruc: '',
+    solicitante: leadState?.solicitante || '',
+    direccion: '',
+    telefono: leadState?.telefono || '',
+    correo: leadState?.correo || '',
+  });
+  
+  const [projectData, setProjectData] = useState({
+    nombre: leadState?.proyecto || '',
+    modalidad: 'Proyecto por alcance',
+    plazo: '45 días calendario',
+  });
+  
+  const [items, setItems] = useState<(QuoteItem & { _key: string })[]>(
+    leadState?.items?.length > 0 ? leadState.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : [emptyItem()]
+  );
+  
+  const [additionalItems, setAdditionalItems] = useState<(QuoteItem & { _key: string })[]>(
+    leadState?.additionalItems?.length > 0 ? leadState.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : []
+  );
   const [considerations, setConsiderations] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [validity, setValidity] = useState('15 días calendario');

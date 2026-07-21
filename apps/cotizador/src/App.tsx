@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } f
 import { SelectorPage } from './pages/SelectorPage';
 import { QuoteBuilderPage } from './pages/QuoteBuilderPage';
 import { QuoteListPage } from './pages/QuoteListPage';
-import { FileText, Home } from 'lucide-react';
+import { LeadsPage } from './pages/LeadsPage';
+import { FileText, Home, Users } from 'lucide-react';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -34,6 +35,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <FileText className="w-4 h-4" />
             Cotizaciones
           </Link>
+          <Link
+            to="/leads"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/leads' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Leads
+          </Link>
         </nav>
       </header>
 
@@ -51,6 +61,7 @@ function App() {
         <Route path="/" element={<AppLayout><SelectorPage /></AppLayout>} />
         <Route path="/nueva/:companySlug" element={<AppLayout><QuoteBuilderPage /></AppLayout>} />
         <Route path="/lista" element={<AppLayout><QuoteListPage /></AppLayout>} />
+        <Route path="/leads" element={<AppLayout><LeadsPage /></AppLayout>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
