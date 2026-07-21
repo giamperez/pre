@@ -106,11 +106,11 @@ export function QuoteListPage() {
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDate(q.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => alert(`ID de cotización: ${q.id}\nNúmero: ${q.number}`)}
+                        onClick={() => window.open(`${API_URL}/quotes/${q.id}/pdf`, '_blank')}
                         className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2.5 py-1.5 rounded-lg transition-all"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Ver
+                        Ver PDF
                       </button>
                     </td>
                   </tr>

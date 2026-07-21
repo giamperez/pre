@@ -223,7 +223,7 @@ export function QuoteBuilderPage() {
 
       if (!res.ok) throw new Error('Error al guardar');
       const quote = await res.json();
-      alert(`✅ Cotización ${quote.number} guardada exitosamente`);
+      window.open(`${API_URL}/quotes/${quote.id}/pdf`, '_blank');
       navigate('/lista');
     } catch {
       alert('Hubo un error al guardar la cotización. Intenta nuevamente.');
