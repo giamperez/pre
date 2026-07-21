@@ -1,0 +1,107 @@
+# ============================================================
+#  VERTEX COMERCIAL — .gitignore
+#  Monorepo: NestJS API + Vite/React (cotizador + precotizador)
+# ============================================================
+
+# ----------------------------------------------------------
+# Dependencias (NUNCA subir)
+# ----------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+
+# ----------------------------------------------------------
+# Variables de entorno (secretos)
+# ----------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+# Sí subir el ejemplo (sin valores reales)
+!.env.example
+
+# ----------------------------------------------------------
+# Build / compilación
+# ----------------------------------------------------------
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+
+# NestJS compiled output
+apps/api/dist/
+
+# Vite build
+apps/cotizador/dist/
+apps/precotizador/dist/
+
+# ----------------------------------------------------------
+# Prisma
+# ----------------------------------------------------------
+# Mantener schema.prisma, pero ignorar migraciones locales si las hay
+# apps/api/prisma/migrations/   ← descomenta si no quieres subir migraciones
+
+# ----------------------------------------------------------
+# Logs
+# ----------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ----------------------------------------------------------
+# Cache y herramientas
+# ----------------------------------------------------------
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.turbo/
+.nx/cache
+
+# ----------------------------------------------------------
+# Testing / cobertura
+# ----------------------------------------------------------
+coverage/
+*.lcov
+.nyc_output/
+
+# ----------------------------------------------------------
+# Sistema operativo
+# ----------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ----------------------------------------------------------
+# Editores / IDEs
+# ----------------------------------------------------------
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ----------------------------------------------------------
+# Temporales
+# ----------------------------------------------------------
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
