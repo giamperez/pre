@@ -341,14 +341,33 @@ export function QuoteBuilderPage() {
     if (tpl.items?.length > 0) {
       setItems(tpl.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
     }
-    if (tpl.sections) {
-      setSections(defaultSections.map(def => {
-        const found = tpl.sections.find((s: any) => s.title === def.title);
-        if (found) {
-          return { ...def, content: found.content, enabled: found.enabled ?? true };
+    if (tpl.sections && Array.isArray(tpl.sections)) {
+      // Build a Map keyed by normalized title for O(1) lookup
+      const templateSectionsMap = new Map<string, any>(
+        tpl.sections.map((s: any) => [s.title.toLowerCase().trim(), s])
+      );
+
+      // Map each default section, matching by normalized title
+      const mergedSections = defaultSections.map(defaultSection => {
+        const key = defaultSection.title.toLowerCase().trim();
+        const match = templateSectionsMap.get(key);
+        if (match) {
+          templateSectionsMap.delete(key); // consumed
+          return { title: defaultSection.title, content: match.content, enabled: Boolean(match.enabled) };
         }
-        return { ...def, enabled: false };
-      }));
+        return { ...defaultSection, enabled: false };
+      });
+
+      // Append extra sections that exist in the template but not in defaultSections
+      templateSectionsMap.forEach((extraSection) => {
+        mergedSections.push({
+          title: extraSection.title,
+          content: extraSection.content,
+          enabled: Boolean(extraSection.enabled),
+        });
+      });
+
+      setSections(mergedSections);
     }
     setShowStartModal(false);
   };
