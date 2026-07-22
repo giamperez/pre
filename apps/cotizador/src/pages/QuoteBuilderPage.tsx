@@ -335,12 +335,20 @@ export function QuoteBuilderPage() {
   };
 
   const applyTemplate = (tpl: any) => {
-    setProjectData(prev => ({ ...prev, ...tpl.projectData }));
+    if (tpl.projectData) {
+      setProjectData(prev => ({ ...prev, ...tpl.projectData }));
+    }
     if (tpl.items?.length > 0) {
       setItems(tpl.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
     }
-    if (tpl.sections?.length > 0) {
-      setSections(tpl.sections);
+    if (tpl.sections) {
+      setSections(defaultSections.map(def => {
+        const found = tpl.sections.find((s: any) => s.title === def.title);
+        if (found) {
+          return { ...def, content: found.content, enabled: found.enabled ?? true };
+        }
+        return { ...def, enabled: false };
+      }));
     }
     setShowStartModal(false);
   };

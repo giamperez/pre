@@ -210,48 +210,74 @@ async function main() {
   ];
 
   const templatesPyramid = [
+    // ─── COT-TIP-ED ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-ED",
       name: "Expediente técnico — Estructuras (edificio)",
       category: "diseño-estructural",
       projectData: { nombre: "Desarrollo de especialidades — Estructuras", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
-      items: [{
-        detalle: "Especialidad: ESTRUCTURAS\n\nDISEÑO DE LA SUPERESTRUCTURA — S/500.00\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de los Elementos Estructurales\n\nDISEÑO DE COMPONENTES ESPECIALES — S/200.00\nDiseño de conexiones\nElementos de la fachada\n\nDISEÑO DE CIMENTACIONES — S/300.00\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Deslizamiento y Volteo\nDiseño de Concreto Armado\n\nDIBUJO DE PLANOS — S/400.00\nPlanos en Planta\nPlanos de Elevaciones\nPlanos de Detalles Estructurales\n\nMEMORIA DE CÁLCULO — S/200.00\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones\n\nMEMORIA DESCRIPTIVA — S/400.00\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad\n\nESPECIFICACIONES TÉCNICAS — S/400.00\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos\n\nMETRADOS — S/200.00\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones\n\nCOSTOS Y PRESUPUESTOS — S/200.00\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S (avance físico y financiero)\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos",
-        cantidad: 1, precioUnitario: 2800, total: 2800
-      }],
+      items: [
+        { detalle: "DISEÑO DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de los Elementos Estructurales", cantidad: 1, precioUnitario: 500, total: 500 },
+        { detalle: "DISEÑO DE COMPONENTES ESPECIALES\nDiseño de conexiones\nElementos de la fachada", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "DISEÑO DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Deslizamiento y Volteo\nDiseño de Concreto Armado", cantidad: 1, precioUnitario: 300, total: 300 },
+        { detalle: "DIBUJO DE PLANOS\nPlanos en Planta\nPlanos de Elevaciones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "MEMORIA DE CÁLCULO\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S (avance físico y financiero)\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+      ],
       sections: seccionesEstandarIngenieria
     },
+    // ─── COT-TIP-RV ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-RV",
       name: "Revisión de diseño estructural",
       category: "diseño-estructural",
       projectData: { nombre: "Actualización de planos de estructuras", modalidad: "Proyecto por alcance", plazo: "45 días calendario" },
-      items: [{
-        detalle: "REVISIÓN DE DISEÑO ESTRUCTURAL\n\nREVISIÓN DE LA SUPERESTRUCTURA — S/1,000.00\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas, Columnas, Muros, Losas\n\nREVISIÓN DE COMPONENTES ESPECIALES — S/200.00\nDiseño estructural de escalera\nElementos asociados a ascensores (cuando aplique)\n\nREVISIÓN DE CIMENTACIONES — S/400.00\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte, Flexión, Punzonamiento\nDiseño del Refuerzo en las cimentaciones\nDiseño de Elementos de Conexión (Vigas)\n\nREVISIÓN Y MODIFICACIÓN DE PLANOS — S/800.00\nPlanos Generales en planta\nPlanos de Cimentaciones\nPlanos de Columnas y Muros\nPlanos de Losas y Vigas\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales\n\nMEMORIA DESCRIPTIVA — S/350.00\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas\nDescripción de la función y materiales\nSoluciones adoptadas\n\nMEMORIA DE CÁLCULO — S/350.00\nDiseño de Cimentaciones, Superestructura, Componentes Especiales\n\nESPECIFICACIONES TÉCNICAS — S/400.00\nCaracterísticas de materiales, procesos constructivos, requisitos de calidad\n\nMETRADOS — S/350.00\nMetrados de Superestructura, Componentes Especiales, Cimentaciones\n\nCOSTOS Y PRESUPUESTOS — S/200.00\nAPU, costos directos e indirectos, presupuesto, fórmulas polinómicas, cronograma valorizado, curva S",
-        cantidad: 1, precioUnitario: 4050, total: 4050
-      }],
+      items: [
+        { detalle: "REVISIÓN DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Muros\nDiseño de Losas", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "REVISIÓN DE COMPONENTES ESPECIALES\nDiseño estructural de escalera\nElementos asociados a ascensores (cuando aplique)", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "REVISIÓN DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "REVISIÓN Y MODIFICACIÓN DE PLANOS\nPlanos Generales en planta\nPlanos de Cimentaciones\nPlanos de Columnas y Muros\nPlanos de Losas y Vigas\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 800, total: 800 },
+        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 350, total: 350 },
+        { detalle: "MEMORIA DE CÁLCULO\nDiseño de las Cimentaciones\nDiseño de la Superestructura\nDiseño de los Componentes Especiales", cantidad: 1, precioUnitario: 350, total: 350 },
+        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 350, total: 350 },
+        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+      ],
       sections: seccionesEstandarIngenieria
     },
+    // ─── COT-TIP-IN ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-IN",
       name: "Estructuras metálicas / Nave industrial",
       category: "diseño-estructural",
       projectData: { nombre: "Diseño de estructura metálica", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
-      items: [{
-        detalle: "Especialidad: ESTRUCTURAS\n\nDISEÑO DE LA SUPERESTRUCTURA — S/2,000.00\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo de la Cobertura\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nAnálisis normativo por cambios de Temperatura\nRevisión de Desplazamientos y Distorsiones\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas, Columnas, Pedestales, Arriostres o Tensores\n\nDISEÑO DE COMPONENTES ESPECIALES — S/1,000.00\nConexiones de Placa base\nConexiones de Viga - columna\nConexiones de Arriostres\nConexiones a Otros Elementos\nDiseño de Pernos\nDiseño de Soportes para Canaletas\nDiseño de Soldadura\n\nDISEÑO DE CIMENTACIONES — S/1,000.00\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte, Flexión, Punzonamiento\nDiseño del Refuerzo en cimentaciones\nDiseño de Elementos de Conexión\n\nDIBUJO DE PLANOS — S/1,500.00\nPlanos de Cimentaciones\nPlanos Generales en planta\nPlanos de Ejes\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales\nPlanos de Componentes Especiales\nPlanos de Fabricación\nPlanos de Montaje\n\nMEMORIA DE CÁLCULO — S/200.00\nDiseño de Superestructura, Componentes Especiales, Cimentaciones\n\nMEMORIA DESCRIPTIVA — S/400.00\nCriterios de diseño, consideraciones técnicas, materiales, soluciones adoptadas\n\nESPECIFICACIONES TÉCNICAS — S/400.00\nMateriales, procesos constructivos, requisitos de calidad, tolerancias\n\nMETRADOS — S/200.00\nMetrados de Superestructura, Componentes Especiales, Cimentaciones\n\nCOSTOS Y PRESUPUESTOS — S/200.00\nAPU, costos, presupuesto, fórmulas polinómicas, cronograma, curva S",
-        cantidad: 1, precioUnitario: 6900, total: 6900
-      }],
+      items: [
+        { detalle: "DISEÑO DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo de la Cobertura\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nAnálisis normativo por cambios de Temperatura\nRevisión de Desplazamientos y Distorsiones\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Pedestales\nDiseño de Arriostres o Tensores", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "DISEÑO DE COMPONENTES ESPECIALES\nConexiones de Placa base\nConexiones de Viga - columna\nConexiones de Arriostres\nConexiones a Otros Elementos\nDiseño de Pernos\nDiseño de Soportes para Canaletas\nDiseño de Soldadura", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "DISEÑO DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "DIBUJO DE PLANOS\nPlanos de Cimentaciones\nPlanos Generales en planta\nPlanos de Ejes\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales\nPlanos de Componentes Especiales\nPlanos de Fabricación\nPlanos de Montaje", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "MEMORIA DE CÁLCULO\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+      ],
       sections: seccionesEstandarIngenieria
     },
+    // ─── COT-TIP-PR ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-PR",
       name: "Costos y presupuestos de obra",
       category: "costos-presupuestos",
       projectData: { nombre: "Elaboración de presupuesto de obra", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
-      items: [{
-        detalle: "Especialidad: COSTOS Y PRESUPUESTOS\n\nELABORACIÓN DE METRADOS — S/1,000.00\nMetrados de Obras provisionales\nMetrados de la especialidad de Arquitectura\nMetrados de la especialidad de Estructuras\nMetrados de la especialidad de Instalaciones Sanitarias\nMetrados de la especialidad de Instalaciones Eléctricas\nMetrados de la especialidad de Agua contra Incendios\nMetrados de la especialidad de Telecomunicaciones\nMetrados de la especialidad de Instalaciones Mecánicas\n\nELABORACIÓN DE PRESUPUESTO DE OBRA — S/1,000.00\nPresupuesto de Obras provisionales\nPresupuesto de cada especialidad\nAnálisis de precios unitarios\nFórmula polinómica\nRelación de insumos\nAnálisis de costos de materiales\nAnálisis de costos de mano de obra\nAnálisis de costos de equipos y herramientas\nDesagregado de gastos generales\nResumen del presupuesto general\n\nCRONOGRAMAS PARA LA EJECUCIÓN — S/750.00\nCronograma de ejecución de obra\nCronograma de adquisición de materiales\nCronograma de avance valorizado",
-        cantidad: 1, precioUnitario: 2750, total: 2750
-      }],
+      items: [
+        { detalle: "ELABORACIÓN DE METRADOS\nMetrados de Obras provisionales\nMetrados de la especialidad de Arquitectura\nMetrados de la especialidad de Estructuras\nMetrados de la especialidad de Instalaciones Sanitarias\nMetrados de la especialidad de Instalaciones Eléctricas\nMetrados de la especialidad de Agua contra Incendios\nMetrados de la especialidad de Telecomunicaciones\nMetrados de la especialidad de Instalaciones Mecánicas", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "ELABORACIÓN DE PRESUPUESTO DE OBRA\nPresupuesto de Obras provisionales\nPresupuesto de cada especialidad\nAnálisis de precios unitarios\nFórmula polinómica\nRelación de insumos\nAnálisis de costos de materiales\nAnálisis de costos de mano de obra\nAnálisis de costos de equipos y herramientas\nDesagregado de gastos generales\nResumen del presupuesto general", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "CRONOGRAMAS PARA LA EJECUCIÓN\nCronograma de ejecución de obra\nCronograma de adquisición de materiales\nCronograma de avance valorizado", cantidad: 1, precioUnitario: 750, total: 750 }
+      ],
       sections: [
         { title: "Alcance del Servicio", content: "Los entregables son metrados y presupuestos de todas las especialidades mencionadas.\nCualquier requerimiento adicional deberá ser evaluado y presupuestado por separado.", enabled: true },
         { title: "Normativa Aplicable", content: "El desarrollo del presupuesto se realizará conforme a la normativa vigente nacional e internacional aplicable.\n- Reglamento Nacional de Edificaciones (RNE)\n- Reglamento de Contrataciones del Estado (cuando aplique)\n- Normativa vigente de costos y presupuestos utilizada en el sector construcción\n- Especificaciones Técnicas y Expediente Técnico proporcionados por el cliente", enabled: true },
@@ -265,15 +291,25 @@ async function main() {
         { title: "Exclusiones del Servicio", content: "Salvo indicación expresa, no se incluyen:\n- Levantamiento de información en campo\n- Elaboración o modificación de planos\n- Diseño de especialidades\n- Supervisión de obra\n- Actualización de Expediente Técnico\n- Valorizaciones de obra\n- Liquidaciones de obra\n- Costos derivados de cambios posteriores", enabled: true }
       ]
     },
+    // ─── COT-TIP-RE ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-RE",
       name: "Inspección + Evaluación + Propuesta de reforzamiento",
       category: "inspeccion-evaluacion",
       projectData: { nombre: "Inspección y evaluación estructural", modalidad: "Proyecto por alcance", plazo: "42 días calendario" },
-      items: [{
-        detalle: "Especialidad: ESTRUCTURAS\n\nI. INSPECCIÓN ESTRUCTURAL — S/7,000.00\n\n1. LEVANTAMIENTO ESTRUCTURAL GENERAL — S/3,000.00\nRevisión de Información preliminar\nRegistro y documentación del estado actual en general\nVerificación de la infraestructura existente con planos del estado actual (As-build)\n\n2. ENSAYOS EN LA SUPERESTRUCTURA — S/3,500.00\n2.1. Inspección Visual y Diagnóstico Inicial\nObservación de fisuras, desprendimientos, humedad o corrosión en refuerzos\nEvaluación de deformaciones, pandeo o colapso parcial de elementos estructurales\nIdentificación de asentamientos diferenciales y fallas por problemas del suelo\n\n2.2. Ensayos No Destructivos para Concreto\nPrueba de esclerometría (Martillo de Schmidt) → Para estimar la resistencia superficial del concreto\nPacometría (detector de armaduras) → Para determinar ubicación y cantidad de acero de refuerzo\n\n3. INFORME DE INSPECCIÓN ESTRUCTURAL — S/500.00\nInterpretación de ensayos y comparaciones con normativa vigente (RNE, ACI, ASCE)\nInforme técnico con conclusiones y recomendaciones\n\nII. EVALUACIÓN ESTRUCTURAL — S/14,500.00\n\n4. LEVANTAMIENTO ESTRUCTURAL A DETALLE — S/4,000.00\nLevantamiento mediante estación total o distanciómetro\nLevantamiento del acero de refuerzo existente mediante pacometría\nRealización de planos estructurales a detalle del estado actual (As-build)\n\n5. ENSAYOS DESTRUCTIVOS — S/3,000.00\nExtracción de testigos de concreto → Ensayo de resistencia a compresión en laboratorio (Norma ASTM C42)\n\n6. ENSAYOS EN EL SUELO — S/4,500.00\nEstudio de Mecánica de Suelos (3 calicatas)\nPerfil del suelo, capacidad portante mediante triaxial y otros parámetros\n\n6b. EVALUACIÓN ESTRUCTURAL — S/2,500.00\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nRevisión de Fuerzas y Esfuerzos\nChequeo de Resistencia de Cimentaciones\nChequeo de Resistencia de Columnas, Muros, Vigas, Losas\n\n7. INFORME DE EVALUACIÓN ESTRUCTURAL — S/500.00\nInforme técnico con conclusiones y recomendaciones\nAnálisis de posibles soluciones de intervención estructural (refuerzo, rehabilitación o reconstrucción)\n\nIII. PROPUESTA DE INTERVENCIÓN — S/7,000.00\n\n8. PROPUESTA TÉCNICA DE INTERVENCIÓN\n8.1. Diseño de la propuesta de reforzamiento — S/1,000.00\nEstructuración y Predimensionamiento\nRevisión de Asentamientos, Fuerzas y Esfuerzos\nCombinaciones de Carga para el Diseño\nDiseño del Reforzamiento de las Cimentaciones\n\n8.2. Dibujo de planos de la propuesta — S/3,000.00\nPlanos Generales, en Planta, Elevaciones, Detalles, Reforzamiento/Rehabilitación\n\n9. MEMORIA DE CÁLCULO — S/2,500.00\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño/Revisión de las Cimentaciones\n\n10. INFORME FINAL — S/500.00",
-        cantidad: 1, precioUnitario: 28500, total: 28500
-      }],
+      items: [
+        { detalle: "I. INSPECCIÓN ESTRUCTURAL\n\n1. LEVANTAMIENTO ESTRUCTURAL GENERAL\nRevisión de Información preliminar\nRegistro y documentación del estado actual en general\nVerificación de la infraestructura existente con planos del estado actual (As-build)", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { detalle: "2. ENSAYOS EN LA SUPERESTRUCTURA\n2.1. Inspección Visual y Diagnóstico Inicial\nObservación de fisuras, desprendimientos, humedad o corrosión en refuerzos\nEvaluación de deformaciones, pandeo o colapso parcial de elementos estructurales\nIdentificación de asentamientos diferenciales y fallas por problemas del suelo\n\n2.2. Ensayos No Destructivos para Concreto\nPrueba de esclerometría (Martillo de Schmidt)\nPacometría (detector de armaduras)", cantidad: 1, precioUnitario: 3500, total: 3500 },
+        { detalle: "3. INFORME DE INSPECCIÓN ESTRUCTURAL\nInterpretación de ensayos y comparaciones con normativa vigente (RNE, ACI, ASCE)\nInforme técnico con conclusiones y recomendaciones", cantidad: 1, precioUnitario: 500, total: 500 },
+        { detalle: "II. EVALUACIÓN ESTRUCTURAL\n\n4. LEVANTAMIENTO ESTRUCTURAL A DETALLE\nLevantamiento mediante estación total o distanciómetro\nLevantamiento del acero de refuerzo existente mediante pacometría\nRealización de planos estructurales a detalle del estado actual (As-build)", cantidad: 1, precioUnitario: 4000, total: 4000 },
+        { detalle: "5. ENSAYOS DESTRUCTIVOS\nExtracción de testigos de concreto → Ensayo de resistencia a compresión en laboratorio (Norma ASTM C42)", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { detalle: "6. ENSAYOS EN EL SUELO (EMS)\nEstudio de Mecánica de Suelos (3 calicatas)\nPerfil del suelo, capacidad portante mediante triaxial y otros parámetros", cantidad: 1, precioUnitario: 4500, total: 4500 },
+        { detalle: "6b. EVALUACIÓN ESTRUCTURAL\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nRevisión de Fuerzas y Esfuerzos\nChequeo de Resistencia de Cimentaciones, Columnas, Muros, Vigas, Losas", cantidad: 1, precioUnitario: 2500, total: 2500 },
+        { detalle: "7. INFORME DE EVALUACIÓN ESTRUCTURAL\nInforme técnico con conclusiones y recomendaciones\nAnálisis de posibles soluciones de intervención estructural (refuerzo, rehabilitación o reconstrucción)", cantidad: 1, precioUnitario: 500, total: 500 },
+        { detalle: "III. PROPUESTA DE INTERVENCIÓN\n\n8. PROPUESTA TÉCNICA\n8.1. Diseño de la propuesta de reforzamiento\n8.2. Dibujo de planos de la propuesta", cantidad: 1, precioUnitario: 4000, total: 4000 },
+        { detalle: "9. MEMORIA DE CÁLCULO DE LA PROPUESTA\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño/Revisión de las Cimentaciones", cantidad: 1, precioUnitario: 2500, total: 2500 },
+        { detalle: "10. INFORME FINAL", cantidad: 1, precioUnitario: 500, total: 500 }
+      ],
       sections: [
         { title: "Alcance del Servicio", content: "La presente cotización cubre únicamente los servicios detallados en los ítems descritos.\nCualquier requerimiento adicional deberá ser evaluado y presupuestado por separado.\nLos ensayos destructivos y no destructivos están incluidos en esta cotización.\nLos ensayos destructivos serán realizados en un laboratorio.", enabled: true },
         { title: "Condiciones para la realización del Servicio", content: "Se requiere acceso total a las instalaciones para la inspección estructural.\nRestricciones de acceso o demora en autorizaciones por parte del cliente.\nEl cliente podrá realizar pruebas adicionales a las propuestas para la evaluación estructural.\nLa inspección de las cimentaciones se realizará solo en los puntos seleccionados para las calicatas y donde sea posible observarlas directamente.\nLos resultados de la evaluación y diseño estructural estarán sujetos a la disponibilidad y tiempos de respuesta del laboratorio acreditado contratado.", enabled: true },
@@ -286,18 +322,23 @@ async function main() {
         { title: "Entrega de Productos Finales", content: "Los entregables incluirán informes técnicos, memorias de cálculo y planos estructurales, según lo indicado en la cotización.\nLos documentos se entregarán en formato digital (PDF, DOC, XLS, DWG, según corresponda).", enabled: true }
       ]
     },
+    // ─── COT-TIP-CE ───────────────────────────────────────────────────────────
     {
       code: "COT-TIP-CE",
       name: "Construcción / Ejecución de obra",
       category: "construccion",
       projectData: { nombre: "Construcción", modalidad: "Proyecto por alcance", plazo: "40 días calendario" },
-      items: [{
-        detalle: "CONSTRUCCIÓN\n\nMANO DE OBRA — S/44,800.00\nEliminación de desmonte: S/1,500.00\nParedes y columnas: S/10,200.00\nTecho: S/12,500.00\nTarrajeo: S/10,000.00\nInstalaciones eléctricas: S/2,000.00\nInstalaciones sanitarias: S/1,750.00\nContrapiso: S/1,850.00\nPintura y empastado: S/6,500.00\n\nMATERIALES — S/43,050.00\nParedes y columnas: S/10,500.00\nTecho: S/19,500.00\nTarrajeo: S/2,750.00\nInstalaciones eléctricas: S/2,750.00\nInstalaciones sanitarias: S/3,950.00\nContrapiso: S/1,850.00\nPintura y empastado: S/1,750.00\n\nSEGURIDAD — S/2,000.00\nGastos de seguridad: S/2,000.00\n\nSUPERVISIÓN — S/4,500.00\nSupervisión y control de la calidad: S/4,500.00\n\nUTILIDAD — S/8,000.00\nCorrección de planos: S/3,000.00\nUtilidad de la empresa: S/5,000.00",
-        cantidad: 1, precioUnitario: 102350, total: 102350
-      }],
+      items: [
+        { detalle: "MANO DE OBRA\nEliminación de desmonte: S/1,500.00\nParedes y columnas: S/10,200.00\nTecho: S/12,500.00\nTarrajeo: S/10,000.00\nInstalaciones eléctricas: S/2,000.00\nInstalaciones sanitarias: S/1,750.00\nContrapiso: S/1,850.00\nPintura y empastado: S/6,500.00", cantidad: 1, precioUnitario: 44800, total: 44800 },
+        { detalle: "MATERIALES\nParedes y columnas: S/10,500.00\nTecho: S/19,500.00\nTarrajeo: S/2,750.00\nInstalaciones eléctricas: S/2,750.00\nInstalaciones sanitarias: S/3,950.00\nContrapiso: S/1,850.00\nPintura y empastado: S/1,750.00", cantidad: 1, precioUnitario: 43050, total: 43050 },
+        { detalle: "SEGURIDAD\nGastos de seguridad", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "SUPERVISIÓN\nSupervisión y control de la calidad", cantidad: 1, precioUnitario: 4500, total: 4500 },
+        { detalle: "UTILIDAD\nCorrección de planos: S/3,000.00\nUtilidad de la empresa: S/5,000.00", cantidad: 1, precioUnitario: 8000, total: 8000 }
+      ],
       sections: []
     }
   ];
+
 
   let templatesCount = 0;
   for (const tpl of templatesPyramid) {
