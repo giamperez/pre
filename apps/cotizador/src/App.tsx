@@ -6,9 +6,10 @@ import { LeadsPage } from './pages/LeadsPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
+import { AgendaPage } from './pages/AgendaPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getUser, logout } from './auth';
-import { FileText, Home, Users, LogOut, BarChart2, UserCog } from 'lucide-react';
+import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar } from 'lucide-react';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -48,6 +49,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <Link to="/leads" className={navLinkCls('/leads')}>
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Leads</span>
+          </Link>
+          <Link to="/agenda" className={navLinkCls('/agenda')}>
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Agenda</span>
           </Link>
           {isAdmin && (
             <Link to="/usuarios" className={navLinkCls('/usuarios')}>
@@ -101,6 +106,7 @@ function App() {
         <Route path="/nueva/:companySlug" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
         <Route path="/lista" element={<ProtectedRoute><AppLayout><QuoteListPage /></AppLayout></ProtectedRoute>} />
         <Route path="/leads" element={<ProtectedRoute><AppLayout><LeadsPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/agenda" element={<ProtectedRoute><AppLayout><AgendaPage /></AppLayout></ProtectedRoute>} />
         <Route path="/usuarios" element={<ProtectedRoute><AppLayout><UsersPage /></AppLayout></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

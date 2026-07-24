@@ -38,6 +38,8 @@ model Company {
   leads        Lead[]
   quotes       Quote[]
   templates    QuoteTemplate[]
+  availability Availability[]
+  bookings     Booking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,3 +135,30 @@ model QuoteTemplate {
 
   @@unique([companyId, code])
 }
+
+model Availability {
+  id          String   @id @default(uuid())
+  companyId   String
+  dayOfWeek   Int      // 0=domingo, 1=lunes ... 6=sábado
+  startTime   String   // "09:00"
+  endTime     String   // "18:00"
+  slotMinutes Int      @default(30)
+  isActive    Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  companyId   String
+  leadId      String?
+  clientName  String
+  clientEmail String
+  clientPhone String?
+  date        String   // "2026-07-25"
+  time        String   // "10:00"
+  status      String   @default("pendiente") // pendiente, confirmada, cancelada
+  notes       String?
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+

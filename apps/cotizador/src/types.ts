@@ -10,6 +10,8 @@ export interface Company {
 }
 
 export interface QuoteItem {
+  titulo?: string;
+  contenido?: string;
   detalle: string;
   cantidad: number;
   precioUnitario: number;

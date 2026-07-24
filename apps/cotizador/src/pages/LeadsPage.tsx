@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '../config';
 import type { Lead, Company } from '../types';
-import { Search, X, ChevronRight, FileText, Save } from 'lucide-react';
+import { Search, X, ChevronRight, FileText, Save, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../auth';
 
@@ -317,6 +317,17 @@ export function LeadsPage() {
                       <span>{formatCurrency(selectedLead.answers.total)}</span>
                     </div>
                   </div>
+
+                  {selectedLead.answers.booking && (
+                    <div className="mt-4 bg-green-50 p-4 rounded-xl border border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-1 flex items-center gap-2">
+                        <Calendar className="w-4 h-4" /> Reunión Solicitada
+                      </h4>
+                      <p className="text-sm text-green-700">
+                        Fecha: <strong>{selectedLead.answers.booking.date}</strong> a las <strong>{selectedLead.answers.booking.time}</strong>
+                      </p>
+                    </div>
+                  )}
                 </section>
               )}
 

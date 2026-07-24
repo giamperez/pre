@@ -8,6 +8,8 @@ import { fetchWithAuth, getToken } from '../auth';
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
   _key: Math.random().toString(36).slice(2),
+  titulo: '',
+  contenido: '',
   detalle: '',
   cantidad: 1,
   precioUnitario: 0,
@@ -90,15 +92,23 @@ function ItemRow({
   };
 
   return (
-    <tr className="border-b border-slate-100 last:border-0 group">
+    <tr className="border-b border-slate-100 last:border-0 group align-top">
       <td className="py-2 pr-3">
-        <textarea
-          rows={2}
-          className="w-full text-sm border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
-          placeholder="Descripción del ítem"
-          value={item.detalle}
-          onChange={e => handleField('detalle', e.target.value)}
-        />
+        <div className="space-y-2">
+          <input
+            className="w-full text-sm font-semibold border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
+            placeholder="Título del ítem"
+            value={item.titulo || item.detalle}
+            onChange={e => { handleField('titulo', e.target.value); handleField('detalle', e.target.value); }}
+          />
+          <textarea
+            rows={2}
+            className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all text-slate-600"
+            placeholder="Contenido descriptivo (opcional)"
+            value={item.contenido || ''}
+            onChange={e => handleField('contenido', e.target.value)}
+          />
+        </div>
       </td>
       <td className="py-2 px-2 w-20">
         <input
@@ -257,7 +267,7 @@ export function QuoteBuilderPage() {
   const igv = subtotal * 0.18;
   const total = subtotal + igv;
 
-  const hasItems = items.some(i => i.detalle.trim() && i.total > 0);
+  const hasItems = items.some(i => (i.titulo?.trim() || i.detalle?.trim()) && i.total > 0);
   const canSave = hasItems && clientData.empresa.trim() && clientData.solicitante.trim() && projectData.nombre.trim();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,8 +295,8 @@ export function QuoteBuilderPage() {
         tipoCliente: clientData.tipoCliente || undefined,
         clienteNuevoRecurrente: clientData.clienteNuevoRecurrente || undefined,
         fuenteCliente: clientData.fuenteCliente || undefined,
-        items: items.filter(i => i.detalle.trim()).map(({ _key, ...rest }) => rest),
-        additionalItems: additionalItems.filter(i => i.detalle.trim()).map(({ _key, ...rest }) => rest),
+        items: items.filter(i => i.titulo?.trim() || i.detalle?.trim()).map(({ _key, ...rest }) => rest),
+        additionalItems: additionalItems.filter(i => i.titulo?.trim() || i.detalle?.trim()).map(({ _key, ...rest }) => rest),
         considerations: considerations || undefined,
         sections: sections,
         images: images.length > 0 ? images : undefined,
@@ -329,7 +339,7 @@ export function QuoteBuilderPage() {
         name: templateName,
         category: 'personalizada',
         projectData: { nombre: projectData.nombre, modalidad: projectData.modalidad, plazo: projectData.plazo },
-        items: items.filter(i => i.detalle.trim()).map(({ _key, ...rest }) => rest),
+        items: items.filter(i => i.titulo?.trim() || i.detalle?.trim()).map(({ _key, ...rest }) => rest),
         sections: sections,
         isCustom: true
       };

@@ -58,7 +58,10 @@ export class PdfService {
       rows.map((item, i) => `
         <tr style="background-color:${(i + startIdx) % 2 === 0 ? '#fff' : '#f9f9f9'};">
           <td style="padding:6px; border:1px solid #ddd; text-align:center;">${startIdx + i + 1}</td>
-          <td style="padding:6px; border:1px solid #ddd; white-space:pre-wrap;">${item.detalle || ''}</td>
+          <td style="padding:6px; border:1px solid #ddd; white-space:pre-wrap;">
+            <strong>${item.titulo || item.detalle || ''}</strong>
+            ${item.contenido ? `<br/><span style="font-size:11px; color:#444;">${item.contenido}</span>` : ''}
+          </td>
           <td style="padding:6px; border:1px solid #ddd; text-align:center;">${item.cantidad || 1}</td>
           <td style="padding:6px; border:1px solid #ddd; text-align:right;">S/ ${this.fmt(item.precioUnitario)}</td>
           <td style="padding:6px; border:1px solid #ddd; text-align:right; font-weight:600;">S/ ${this.fmt(item.total)}</td>

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare } from 'lucide-react';
 import { useCatalog } from '../hooks/useCatalog';
 import { API_URL } from '../config';
+import { CalendarPicker } from '../components/CalendarPicker';
 
 export function PrecotizadorPage() {
   const { companySlug } = useParams();
@@ -14,6 +15,7 @@ export function PrecotizadorPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', businessName: '', phone: '', email: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [booking, setBooking] = useState<{date: string, time: string} | null>(null);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-slate-500">Cargando catálogo...</p></div>;
   if (error || !company) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-red-500">{error || 'Empresa no encontrada'}</p></div>;
@@ -51,7 +53,8 @@ export function PrecotizadorPage() {
           addons: selectedAddonObjs.map(a => a.name),
           subtotal,
           igv,
-          total
+          total,
+          ...(booking ? { booking } : {})
         }
       };
 
@@ -61,7 +64,24 @@ export function PrecotizadorPage() {
         body: JSON.stringify(payload)
       });
       
-      if (!res.ok) throw new Error('Error al enviar la solicitud');
+      if (!res.ok) throw new Error('Error al enviar la solicitud de cotización');
+
+      if (booking) {
+        const bookingRes = await fetch(`${API_URL}/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companySlug: company.slug,
+            clientName: formData.name,
+            clientEmail: formData.email,
+            clientPhone: formData.phone,
+            date: booking.date,
+            time: booking.time,
+            notes: 'Desde precotizador web'
+          })
+        });
+        if (!bookingRes.ok) console.error('Error al guardar booking');
+      }
       
       setSubmitted(true);
     } catch (err) {
@@ -185,6 +205,16 @@ export function PrecotizadorPage() {
           </section>
         )}
 
+        {/* Calendar Picker Section */}
+        <section>
+          <CalendarPicker
+            companySlug={company.slug}
+            colorPrimary={company.colorPrimary || '#0ea5e9'}
+            onSelectBooking={(date, time) => setBooking({ date, time })}
+            onClearBooking={() => setBooking(null)}
+          />
+        </section>
+
         {/* Contact Form */}
         <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: company.colorPrimary }} />
@@ -202,6 +232,18 @@ export function PrecotizadorPage() {
               <h3 className="text-xl font-bold text-slate-800 mb-2">¡Solicitud Recibida!</h3>
               <p className="text-slate-600 mb-6">Nos pondremos en contacto contigo pronto.</p>
               
+              {booking && (
+                <div className="bg-white p-4 rounded-xl border border-green-200 text-left max-w-sm mx-auto shadow-sm mb-6 flex gap-3 items-center">
+                  <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                    <CheckSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">Reunión confirmada</p>
+                    <p className="text-slate-600 text-xs">Para el {booking.date} a las {booking.time}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white p-6 rounded-xl border border-slate-200 text-left max-w-sm mx-auto shadow-sm">
                 <p className="font-semibold text-slate-800 mb-4 text-center">Resumen de Cotización</p>
                 <div className="flex justify-between text-sm mb-2">

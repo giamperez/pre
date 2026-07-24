@@ -243,15 +243,15 @@ async function main() {
       category: "diseño-estructural",
       projectData: { nombre: "Desarrollo de especialidades — Estructuras", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
       items: [
-        { detalle: "DISEÑO DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de los Elementos Estructurales", cantidad: 1, precioUnitario: 500, total: 500 },
-        { detalle: "DISEÑO DE COMPONENTES ESPECIALES\nDiseño de conexiones\nElementos de la fachada", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "DISEÑO DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Deslizamiento y Volteo\nDiseño de Concreto Armado", cantidad: 1, precioUnitario: 300, total: 300 },
-        { detalle: "DIBUJO DE PLANOS\nPlanos en Planta\nPlanos de Elevaciones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "MEMORIA DE CÁLCULO\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S (avance físico y financiero)\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+        { titulo: "DISEÑO DE LA SUPERESTRUCTURA", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de los Elementos Estructurales", cantidad: 1, precioUnitario: 500, total: 500 },
+        { titulo: "DISEÑO DE COMPONENTES ESPECIALES", contenido: "Diseño de conexiones\nElementos de la fachada", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "DISEÑO DE CIMENTACIONES", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Deslizamiento y Volteo\nDiseño de Concreto Armado", cantidad: 1, precioUnitario: 300, total: 300 },
+        { titulo: "DIBUJO DE PLANOS", contenido: "Planos en Planta\nPlanos de Elevaciones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "MEMORIA DE CÁLCULO", contenido: "Diseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "MEMORIA DESCRIPTIVA", contenido: "Criterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "ESPECIFICACIONES TÉCNICAS", contenido: "Características de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "METRADOS", contenido: "Metrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "COSTOS Y PRESUPUESTOS", contenido: "Análisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S (avance físico y financiero)\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
       ],
       sections: seccionesEstandarIngenieria
     },
@@ -262,15 +262,15 @@ async function main() {
       category: "diseño-estructural",
       projectData: { nombre: "Actualización de planos de estructuras", modalidad: "Proyecto por alcance", plazo: "45 días calendario" },
       items: [
-        { detalle: "REVISIÓN DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Muros\nDiseño de Losas", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "REVISIÓN DE COMPONENTES ESPECIALES\nDiseño estructural de escalera\nElementos asociados a ascensores (cuando aplique)", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "REVISIÓN DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "REVISIÓN Y MODIFICACIÓN DE PLANOS\nPlanos Generales en planta\nPlanos de Cimentaciones\nPlanos de Columnas y Muros\nPlanos de Losas y Vigas\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 800, total: 800 },
-        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 350, total: 350 },
-        { detalle: "MEMORIA DE CÁLCULO\nDiseño de las Cimentaciones\nDiseño de la Superestructura\nDiseño de los Componentes Especiales", cantidad: 1, precioUnitario: 350, total: 350 },
-        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 350, total: 350 },
-        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+        { titulo: "REVISIÓN DE LA SUPERESTRUCTURA", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural Completo del Edificio\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Muros\nDiseño de Losas", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "REVISIÓN DE COMPONENTES ESPECIALES", contenido: "Diseño estructural de escalera\nElementos asociados a ascensores (cuando aplique)", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "REVISIÓN DE CIMENTACIONES", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "REVISIÓN Y MODIFICACIÓN DE PLANOS", contenido: "Planos Generales en planta\nPlanos de Cimentaciones\nPlanos de Columnas y Muros\nPlanos de Losas y Vigas\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales", cantidad: 1, precioUnitario: 800, total: 800 },
+        { titulo: "MEMORIA DESCRIPTIVA", contenido: "Criterios de diseño y normativas aplicadas\nConsideraciones técnicas de la superestructura, componentes especiales y cimentaciones\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 350, total: 350 },
+        { titulo: "MEMORIA DE CÁLCULO", contenido: "Diseño de las Cimentaciones\nDiseño de la Superestructura\nDiseño de los Componentes Especiales", cantidad: 1, precioUnitario: 350, total: 350 },
+        { titulo: "ESPECIFICACIONES TÉCNICAS", contenido: "Características de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "METRADOS", contenido: "Metrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 350, total: 350 },
+        { titulo: "COSTOS Y PRESUPUESTOS", contenido: "Análisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
       ],
       sections: seccionesEstandarIngenieria
     },
@@ -281,15 +281,15 @@ async function main() {
       category: "diseño-estructural",
       projectData: { nombre: "Diseño de estructura metálica", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
       items: [
-        { detalle: "DISEÑO DE LA SUPERESTRUCTURA\nEstructuración y Predimensionamiento\nModelamiento Estructural Completo de la Cobertura\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nAnálisis normativo por cambios de Temperatura\nRevisión de Desplazamientos y Distorsiones\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Pedestales\nDiseño de Arriostres o Tensores", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "DISEÑO DE COMPONENTES ESPECIALES\nConexiones de Placa base\nConexiones de Viga - columna\nConexiones de Arriostres\nConexiones a Otros Elementos\nDiseño de Pernos\nDiseño de Soportes para Canaletas\nDiseño de Soldadura", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "DISEÑO DE CIMENTACIONES\nEstructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "DIBUJO DE PLANOS\nPlanos de Cimentaciones\nPlanos Generales en planta\nPlanos de Ejes\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales\nPlanos de Componentes Especiales\nPlanos de Fabricación\nPlanos de Montaje", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "MEMORIA DE CÁLCULO\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "MEMORIA DESCRIPTIVA\nCriterios de diseño y normativas aplicadas\nConsideraciones técnicas\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "ESPECIFICACIONES TÉCNICAS\nCaracterísticas de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "METRADOS\nMetrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "COSTOS Y PRESUPUESTOS\nAnálisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
+        { titulo: "DISEÑO DE LA SUPERESTRUCTURA", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural Completo de la Cobertura\nAnálisis por Cargas Verticales\nAnálisis Sísmico Estático normativo, FLE\nAnálisis Sísmico Dinámico Modal Espectral, AMRE\nAnálisis normativo por Viento\nAnálisis normativo por cambios de Temperatura\nRevisión de Desplazamientos y Distorsiones\nRevisión de Deflexiones\nCombinaciones de Carga para el Diseño\nDiseño de Vigas\nDiseño de Columnas\nDiseño de Pedestales\nDiseño de Arriostres o Tensores", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "DISEÑO DE COMPONENTES ESPECIALES", contenido: "Conexiones de Placa base\nConexiones de Viga - columna\nConexiones de Arriostres\nConexiones a Otros Elementos\nDiseño de Pernos\nDiseño de Soportes para Canaletas\nDiseño de Soldadura", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "DISEÑO DE CIMENTACIONES", contenido: "Estructuración y Predimensionamiento\nModelamiento Estructural de la Cimentación\nRevisión de Presiones en el Terreno\nRevisión por Corte\nRevisión por Flexión\nRevisión por Punzonamiento\nDiseño del Refuerzo en las cimentaciones de Columnas\nDiseño de Elementos de Conexión (Vigas)", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "DIBUJO DE PLANOS", contenido: "Planos de Cimentaciones\nPlanos Generales en planta\nPlanos de Ejes\nPlanos de Cortes Estructurales\nPlanos de Conexiones\nPlanos de Detalles Estructurales\nPlanos de Componentes Especiales\nPlanos de Fabricación\nPlanos de Montaje", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "MEMORIA DE CÁLCULO", contenido: "Diseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "MEMORIA DESCRIPTIVA", contenido: "Criterios de diseño y normativas aplicadas\nConsideraciones técnicas\nDescripción de la función y materiales de los elementos estructurales\nSoluciones adoptadas para garantizar seguridad y funcionalidad", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "ESPECIFICACIONES TÉCNICAS", contenido: "Características de los materiales utilizados\nProcesos constructivos y criterios de ejecución\nRequisitos de calidad y normativas aplicables\nTolerancias permitidas y ensayos requeridos", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "METRADOS", contenido: "Metrados de la Superestructura\nMetrados de los Componentes Especiales\nMetrados de las Cimentaciones", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "COSTOS Y PRESUPUESTOS", contenido: "Análisis de precios unitarios (APU)\nDeterminación de costos directos e indirectos\nElaboración del presupuesto del proyecto\nDesarrollo de fórmulas polinómicas\nElaboración de cronograma valorizado de obra\nElaboración de curva S\nAnálisis de costos por fases constructivas\nCompatibilización entre metrados y planos", cantidad: 1, precioUnitario: 200, total: 200 }
       ],
       sections: seccionesEstandarIngenieria
     },
@@ -300,9 +300,9 @@ async function main() {
       category: "costos-presupuestos",
       projectData: { nombre: "Elaboración de presupuesto de obra", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
       items: [
-        { detalle: "ELABORACIÓN DE METRADOS\nMetrados de Obras provisionales\nMetrados de la especialidad de Arquitectura\nMetrados de la especialidad de Estructuras\nMetrados de la especialidad de Instalaciones Sanitarias\nMetrados de la especialidad de Instalaciones Eléctricas\nMetrados de la especialidad de Agua contra Incendios\nMetrados de la especialidad de Telecomunicaciones\nMetrados de la especialidad de Instalaciones Mecánicas", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "ELABORACIÓN DE PRESUPUESTO DE OBRA\nPresupuesto de Obras provisionales\nPresupuesto de cada especialidad\nAnálisis de precios unitarios\nFórmula polinómica\nRelación de insumos\nAnálisis de costos de materiales\nAnálisis de costos de mano de obra\nAnálisis de costos de equipos y herramientas\nDesagregado de gastos generales\nResumen del presupuesto general", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "CRONOGRAMAS PARA LA EJECUCIÓN\nCronograma de ejecución de obra\nCronograma de adquisición de materiales\nCronograma de avance valorizado", cantidad: 1, precioUnitario: 750, total: 750 }
+        { titulo: "ELABORACIÓN DE METRADOS", contenido: "Metrados de Obras provisionales\nMetrados de la especialidad de Arquitectura\nMetrados de la especialidad de Estructuras\nMetrados de la especialidad de Instalaciones Sanitarias\nMetrados de la especialidad de Instalaciones Eléctricas\nMetrados de la especialidad de Agua contra Incendios\nMetrados de la especialidad de Telecomunicaciones\nMetrados de la especialidad de Instalaciones Mecánicas", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "ELABORACIÓN DE PRESUPUESTO DE OBRA", contenido: "Presupuesto de Obras provisionales\nPresupuesto de cada especialidad\nAnálisis de precios unitarios\nFórmula polinómica\nRelación de insumos\nAnálisis de costos de materiales\nAnálisis de costos de mano de obra\nAnálisis de costos de equipos y herramientas\nDesagregado de gastos generales\nResumen del presupuesto general", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "CRONOGRAMAS PARA LA EJECUCIÓN", contenido: "Cronograma de ejecución de obra\nCronograma de adquisición de materiales\nCronograma de avance valorizado", cantidad: 1, precioUnitario: 750, total: 750 }
       ],
       sections: [
         { title: "Alcance del Servicio", content: "Los entregables son metrados y presupuestos de todas las especialidades mencionadas.\nCualquier requerimiento adicional deberá ser evaluado y presupuestado por separado.", enabled: true },
@@ -324,17 +324,17 @@ async function main() {
       category: "inspeccion-evaluacion",
       projectData: { nombre: "Inspección y evaluación estructural", modalidad: "Proyecto por alcance", plazo: "42 días calendario" },
       items: [
-        { detalle: "I. INSPECCIÓN ESTRUCTURAL\n\n1. LEVANTAMIENTO ESTRUCTURAL GENERAL\nRevisión de Información preliminar\nRegistro y documentación del estado actual en general\nVerificación de la infraestructura existente con planos del estado actual (As-build)", cantidad: 1, precioUnitario: 3000, total: 3000 },
-        { detalle: "2. ENSAYOS EN LA SUPERESTRUCTURA\n2.1. Inspección Visual y Diagnóstico Inicial\nObservación de fisuras, desprendimientos, humedad o corrosión en refuerzos\nEvaluación de deformaciones, pandeo o colapso parcial de elementos estructurales\nIdentificación de asentamientos diferenciales y fallas por problemas del suelo\n\n2.2. Ensayos No Destructivos para Concreto\nPrueba de esclerometría (Martillo de Schmidt)\nPacometría (detector de armaduras)", cantidad: 1, precioUnitario: 3500, total: 3500 },
-        { detalle: "3. INFORME DE INSPECCIÓN ESTRUCTURAL\nInterpretación de ensayos y comparaciones con normativa vigente (RNE, ACI, ASCE)\nInforme técnico con conclusiones y recomendaciones", cantidad: 1, precioUnitario: 500, total: 500 },
-        { detalle: "II. EVALUACIÓN ESTRUCTURAL\n\n4. LEVANTAMIENTO ESTRUCTURAL A DETALLE\nLevantamiento mediante estación total o distanciómetro\nLevantamiento del acero de refuerzo existente mediante pacometría\nRealización de planos estructurales a detalle del estado actual (As-build)", cantidad: 1, precioUnitario: 4000, total: 4000 },
-        { detalle: "5. ENSAYOS DESTRUCTIVOS\nExtracción de testigos de concreto → Ensayo de resistencia a compresión en laboratorio (Norma ASTM C42)", cantidad: 1, precioUnitario: 3000, total: 3000 },
-        { detalle: "6. ENSAYOS EN EL SUELO (EMS)\nEstudio de Mecánica de Suelos (3 calicatas)\nPerfil del suelo, capacidad portante mediante triaxial y otros parámetros", cantidad: 1, precioUnitario: 4500, total: 4500 },
-        { detalle: "6b. EVALUACIÓN ESTRUCTURAL\nRevisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nRevisión de Fuerzas y Esfuerzos\nChequeo de Resistencia de Cimentaciones, Columnas, Muros, Vigas, Losas", cantidad: 1, precioUnitario: 2500, total: 2500 },
-        { detalle: "7. INFORME DE EVALUACIÓN ESTRUCTURAL\nInforme técnico con conclusiones y recomendaciones\nAnálisis de posibles soluciones de intervención estructural (refuerzo, rehabilitación o reconstrucción)", cantidad: 1, precioUnitario: 500, total: 500 },
-        { detalle: "III. PROPUESTA DE INTERVENCIÓN\n\n8. PROPUESTA TÉCNICA\n8.1. Diseño de la propuesta de reforzamiento\n8.2. Dibujo de planos de la propuesta", cantidad: 1, precioUnitario: 4000, total: 4000 },
-        { detalle: "9. MEMORIA DE CÁLCULO DE LA PROPUESTA\nDiseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño/Revisión de las Cimentaciones", cantidad: 1, precioUnitario: 2500, total: 2500 },
-        { detalle: "10. INFORME FINAL", cantidad: 1, precioUnitario: 500, total: 500 }
+        { titulo: "I. INSPECCIÓN ESTRUCTURAL", contenido: "\n1. LEVANTAMIENTO ESTRUCTURAL GENERAL\nRevisión de Información preliminar\nRegistro y documentación del estado actual en general\nVerificación de la infraestructura existente con planos del estado actual (As-build)", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { titulo: "2. ENSAYOS EN LA SUPERESTRUCTURA", contenido: "2.1. Inspección Visual y Diagnóstico Inicial\nObservación de fisuras, desprendimientos, humedad o corrosión en refuerzos\nEvaluación de deformaciones, pandeo o colapso parcial de elementos estructurales\nIdentificación de asentamientos diferenciales y fallas por problemas del suelo\n\n2.2. Ensayos No Destructivos para Concreto\nPrueba de esclerometría (Martillo de Schmidt)\nPacometría (detector de armaduras)", cantidad: 1, precioUnitario: 3500, total: 3500 },
+        { titulo: "3. INFORME DE INSPECCIÓN ESTRUCTURAL", contenido: "Interpretación de ensayos y comparaciones con normativa vigente (RNE, ACI, ASCE)\nInforme técnico con conclusiones y recomendaciones", cantidad: 1, precioUnitario: 500, total: 500 },
+        { titulo: "II. EVALUACIÓN ESTRUCTURAL", contenido: "\n4. LEVANTAMIENTO ESTRUCTURAL A DETALLE\nLevantamiento mediante estación total o distanciómetro\nLevantamiento del acero de refuerzo existente mediante pacometría\nRealización de planos estructurales a detalle del estado actual (As-build)", cantidad: 1, precioUnitario: 4000, total: 4000 },
+        { titulo: "5. ENSAYOS DESTRUCTIVOS", contenido: "Extracción de testigos de concreto → Ensayo de resistencia a compresión en laboratorio (Norma ASTM C42)", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { titulo: "6. ENSAYOS EN EL SUELO (EMS)", contenido: "Estudio de Mecánica de Suelos (3 calicatas)\nPerfil del suelo, capacidad portante mediante triaxial y otros parámetros", cantidad: 1, precioUnitario: 4500, total: 4500 },
+        { titulo: "6b. EVALUACIÓN ESTRUCTURAL", contenido: "Revisión de Desplazamientos y Distorsiones (Derivas)\nRevisión de Deflexiones\nRevisión de Fuerzas y Esfuerzos\nChequeo de Resistencia de Cimentaciones, Columnas, Muros, Vigas, Losas", cantidad: 1, precioUnitario: 2500, total: 2500 },
+        { titulo: "7. INFORME DE EVALUACIÓN ESTRUCTURAL", contenido: "Informe técnico con conclusiones y recomendaciones\nAnálisis de posibles soluciones de intervención estructural (refuerzo, rehabilitación o reconstrucción)", cantidad: 1, precioUnitario: 500, total: 500 },
+        { titulo: "III. PROPUESTA DE INTERVENCIÓN", contenido: "\n8. PROPUESTA TÉCNICA\n8.1. Diseño de la propuesta de reforzamiento\n8.2. Dibujo de planos de la propuesta", cantidad: 1, precioUnitario: 4000, total: 4000 },
+        { titulo: "9. MEMORIA DE CÁLCULO DE LA PROPUESTA", contenido: "Diseño de la Superestructura\nDiseño de los Componentes Especiales\nDiseño/Revisión de las Cimentaciones", cantidad: 1, precioUnitario: 2500, total: 2500 },
+        { titulo: "10. INFORME FINAL", contenido: "", cantidad: 1, precioUnitario: 500, total: 500 }
       ],
       sections: [
         { title: "Alcance del Servicio", content: "La presente cotización cubre únicamente los servicios detallados en los ítems descritos.\nCualquier requerimiento adicional deberá ser evaluado y presupuestado por separado.\nLos ensayos destructivos y no destructivos están incluidos en esta cotización.\nLos ensayos destructivos serán realizados en un laboratorio.", enabled: true },
@@ -355,11 +355,11 @@ async function main() {
       category: "construccion",
       projectData: { nombre: "Construcción", modalidad: "Proyecto por alcance", plazo: "40 días calendario" },
       items: [
-        { detalle: "MANO DE OBRA\nEliminación de desmonte: S/1,500.00\nParedes y columnas: S/10,200.00\nTecho: S/12,500.00\nTarrajeo: S/10,000.00\nInstalaciones eléctricas: S/2,000.00\nInstalaciones sanitarias: S/1,750.00\nContrapiso: S/1,850.00\nPintura y empastado: S/6,500.00", cantidad: 1, precioUnitario: 44800, total: 44800 },
-        { detalle: "MATERIALES\nParedes y columnas: S/10,500.00\nTecho: S/19,500.00\nTarrajeo: S/2,750.00\nInstalaciones eléctricas: S/2,750.00\nInstalaciones sanitarias: S/3,950.00\nContrapiso: S/1,850.00\nPintura y empastado: S/1,750.00", cantidad: 1, precioUnitario: 43050, total: 43050 },
-        { detalle: "SEGURIDAD\nGastos de seguridad", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "SUPERVISIÓN\nSupervisión y control de la calidad", cantidad: 1, precioUnitario: 4500, total: 4500 },
-        { detalle: "UTILIDAD\nCorrección de planos: S/3,000.00\nUtilidad de la empresa: S/5,000.00", cantidad: 1, precioUnitario: 8000, total: 8000 }
+        { titulo: "MANO DE OBRA", contenido: "Eliminación de desmonte: S/1,500.00\nParedes y columnas: S/10,200.00\nTecho: S/12,500.00\nTarrajeo: S/10,000.00\nInstalaciones eléctricas: S/2,000.00\nInstalaciones sanitarias: S/1,750.00\nContrapiso: S/1,850.00\nPintura y empastado: S/6,500.00", cantidad: 1, precioUnitario: 44800, total: 44800 },
+        { titulo: "MATERIALES", contenido: "Paredes y columnas: S/10,500.00\nTecho: S/19,500.00\nTarrajeo: S/2,750.00\nInstalaciones eléctricas: S/2,750.00\nInstalaciones sanitarias: S/3,950.00\nContrapiso: S/1,850.00\nPintura y empastado: S/1,750.00", cantidad: 1, precioUnitario: 43050, total: 43050 },
+        { titulo: "SEGURIDAD", contenido: "Gastos de seguridad", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "SUPERVISIÓN", contenido: "Supervisión y control de la calidad", cantidad: 1, precioUnitario: 4500, total: 4500 },
+        { titulo: "UTILIDAD", contenido: "Corrección de planos: S/3,000.00\nUtilidad de la empresa: S/5,000.00", cantidad: 1, precioUnitario: 8000, total: 8000 }
       ],
       sections: []
     }
@@ -418,10 +418,10 @@ async function main() {
       companySlug: "vertex-developers",
       projectData: { nombre: "Desarrollo de sitio web corporativo", modalidad: "Proyecto por alcance", plazo: "30 días calendario" },
       items: [
-        { detalle: "DISEÑO UI/UX\nDiseño de wireframes y mockups\nDiseño responsive (desktop y mobile)\nPaleta de colores y tipografía según identidad de marca\nHasta 5 secciones: Hero, Nosotros, Servicios, Portafolio, Contacto", cantidad: 1, precioUnitario: 400, total: 400 },
-        { detalle: "DESARROLLO FRONTEND\nMaquetado HTML/CSS/JS o React\nAnimaciones y transiciones\nFormulario de contacto con envío a correo\nIntegración de mapa (Google Maps)\nOptimización de velocidad de carga", cantidad: 1, precioUnitario: 600, total: 600 },
-        { detalle: "SEO BÁSICO ON-PAGE\nMeta tags, títulos y descripciones\nEstructura de encabezados\nSitemap XML\nConfiguración Google Search Console", cantidad: 1, precioUnitario: 200, total: 200 },
-        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nConfiguración de hosting y dominio\nInstalación de certificado SSL\nDespliegue en producción\nPruebas de funcionamiento", cantidad: 1, precioUnitario: 300, total: 300 }
+        { titulo: "DISEÑO UI/UX", contenido: "Diseño de wireframes y mockups\nDiseño responsive (desktop y mobile)\nPaleta de colores y tipografía según identidad de marca\nHasta 5 secciones: Hero, Nosotros, Servicios, Portafolio, Contacto", cantidad: 1, precioUnitario: 400, total: 400 },
+        { titulo: "DESARROLLO FRONTEND", contenido: "Maquetado HTML/CSS/JS o React\nAnimaciones y transiciones\nFormulario de contacto con envío a correo\nIntegración de mapa (Google Maps)\nOptimización de velocidad de carga", cantidad: 1, precioUnitario: 600, total: 600 },
+        { titulo: "SEO BÁSICO ON-PAGE", contenido: "Meta tags, títulos y descripciones\nEstructura de encabezados\nSitemap XML\nConfiguración Google Search Console", cantidad: 1, precioUnitario: 200, total: 200 },
+        { titulo: "DESPLIEGUE Y CONFIGURACIÓN", contenido: "Configuración de hosting y dominio\nInstalación de certificado SSL\nDespliegue en producción\nPruebas de funcionamiento", cantidad: 1, precioUnitario: 300, total: 300 }
       ],
       sections: seccionesVertex
     },
@@ -432,12 +432,12 @@ async function main() {
       companySlug: "vertex-developers",
       projectData: { nombre: "Desarrollo de tienda online", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
       items: [
-        { detalle: "DISEÑO UI/UX\nDiseño de interfaces para tienda, carrito y checkout\nDiseño responsive\nDashboard administrativo", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "CATÁLOGO DE PRODUCTOS\nGestión de productos con categorías, variantes y stock\nGalería de imágenes por producto\nBúsqueda y filtros avanzados\nProductos relacionados y destacados", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "CARRITO Y CHECKOUT\nCarrito de compras persistente\nFlujo de checkout en pasos\nCálculo automático de envío\nResumen de pedido", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "INTEGRACIÓN DE PAGOS\nYape, Plin, transferencia bancaria\nPasarela de tarjetas (Culqi o Mercado Pago)\nConfirmación de pago automática\nNotificación por correo al cliente y administrador", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "PANEL ADMINISTRATIVO\nGestión de pedidos (pendiente, en proceso, enviado, entregado)\nGestión de clientes\nReportes de ventas\nControl de inventario", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nConfiguración de servidor y dominio\nSSL, backups automáticos\nPruebas de carga y seguridad", cantidad: 1, precioUnitario: 1500, total: 1500 }
+        { titulo: "DISEÑO UI/UX", contenido: "Diseño de interfaces para tienda, carrito y checkout\nDiseño responsive\nDashboard administrativo", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "CATÁLOGO DE PRODUCTOS", contenido: "Gestión de productos con categorías, variantes y stock\nGalería de imágenes por producto\nBúsqueda y filtros avanzados\nProductos relacionados y destacados", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "CARRITO Y CHECKOUT", contenido: "Carrito de compras persistente\nFlujo de checkout en pasos\nCálculo automático de envío\nResumen de pedido", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "INTEGRACIÓN DE PAGOS", contenido: "Yape, Plin, transferencia bancaria\nPasarela de tarjetas (Culqi o Mercado Pago)\nConfirmación de pago automática\nNotificación por correo al cliente y administrador", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "PANEL ADMINISTRATIVO", contenido: "Gestión de pedidos (pendiente, en proceso, enviado, entregado)\nGestión de clientes\nReportes de ventas\nControl de inventario", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "DESPLIEGUE Y CONFIGURACIÓN", contenido: "Configuración de servidor y dominio\nSSL, backups automáticos\nPruebas de carga y seguridad", cantidad: 1, precioUnitario: 1500, total: 1500 }
       ],
       sections: seccionesVertex
     },
@@ -448,11 +448,11 @@ async function main() {
       companySlug: "vertex-developers",
       projectData: { nombre: "Desarrollo de software a medida", modalidad: "Proyecto por alcance", plazo: "90 días calendario" },
       items: [
-        { detalle: "LEVANTAMIENTO DE REQUERIMIENTOS\nEntrevistas con stakeholders\nDocumentación de requerimientos funcionales y no funcionales\nDiagramas de flujo y casos de uso\nDefinición de arquitectura técnica", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "DISEÑO UI/UX\nPrototipo interactivo (Figma)\nSistema de diseño y componentes\nFlujos de usuario\nDiseño responsive", cantidad: 1, precioUnitario: 1500, total: 1500 },
-        { detalle: "DESARROLLO BACKEND\nAPI REST con NestJS\nBase de datos PostgreSQL\nAutenticación y autorización (JWT, roles)\nLógica de negocio según requerimientos\nDocumentación de API", cantidad: 1, precioUnitario: 3000, total: 3000 },
-        { detalle: "DESARROLLO FRONTEND\nInterface React/Vite\nConsumo de API\nGráficas y reportes\nExportación de datos (PDF, Excel)", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "PRUEBAS Y QA\nPruebas unitarias e integración\nPruebas de usuario (UAT)\nCorrección de bugs\nDocumentación técnica", cantidad: 1, precioUnitario: 500, total: 500 }
+        { titulo: "LEVANTAMIENTO DE REQUERIMIENTOS", contenido: "Entrevistas con stakeholders\nDocumentación de requerimientos funcionales y no funcionales\nDiagramas de flujo y casos de uso\nDefinición de arquitectura técnica", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "DISEÑO UI/UX", contenido: "Prototipo interactivo (Figma)\nSistema de diseño y componentes\nFlujos de usuario\nDiseño responsive", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { titulo: "DESARROLLO BACKEND", contenido: "API REST con NestJS\nBase de datos PostgreSQL\nAutenticación y autorización (JWT, roles)\nLógica de negocio según requerimientos\nDocumentación de API", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { titulo: "DESARROLLO FRONTEND", contenido: "Interface React/Vite\nConsumo de API\nGráficas y reportes\nExportación de datos (PDF, Excel)", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "PRUEBAS Y QA", contenido: "Pruebas unitarias e integración\nPruebas de usuario (UAT)\nCorrección de bugs\nDocumentación técnica", cantidad: 1, precioUnitario: 500, total: 500 }
       ],
       sections: seccionesVertex
     },
@@ -463,10 +463,10 @@ async function main() {
       companySlug: "vertex-developers",
       projectData: { nombre: "Desarrollo de aplicación móvil", modalidad: "Proyecto por alcance", plazo: "90 días calendario" },
       items: [
-        { detalle: "DISEÑO UI/UX MOBILE\nPrototipo interactivo para móvil\nDiseño de pantallas y flujos\nSistema de diseño adaptado a iOS y Android\nAnimaciones y microinteracciones", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "DESARROLLO APP (React Native / Flutter)\nNavegación y estructura de la app\nIntegración con API backend\nNotificaciones push\nAlmacenamiento local\nSoporte Android e iOS", cantidad: 1, precioUnitario: 5000, total: 5000 },
-        { detalle: "BACKEND Y API\nAPI REST para la app\nAutenticación con JWT\nGestión de usuarios y perfiles\nBase de datos y almacenamiento", cantidad: 1, precioUnitario: 2000, total: 2000 },
-        { detalle: "PUBLICACIÓN EN TIENDAS\nConfiguración de cuenta Google Play y App Store\nPreparación de assets (íconos, capturas)\nPublicación y revisión\nSoporte post-publicación (30 días)", cantidad: 1, precioUnitario: 3000, total: 3000 }
+        { titulo: "DISEÑO UI/UX MOBILE", contenido: "Prototipo interactivo para móvil\nDiseño de pantallas y flujos\nSistema de diseño adaptado a iOS y Android\nAnimaciones y microinteracciones", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "DESARROLLO APP (React Native / Flutter)", contenido: "Navegación y estructura de la app\nIntegración con API backend\nNotificaciones push\nAlmacenamiento local\nSoporte Android e iOS", cantidad: 1, precioUnitario: 5000, total: 5000 },
+        { titulo: "BACKEND Y API", contenido: "API REST para la app\nAutenticación con JWT\nGestión de usuarios y perfiles\nBase de datos y almacenamiento", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { titulo: "PUBLICACIÓN EN TIENDAS", contenido: "Configuración de cuenta Google Play y App Store\nPreparación de assets (íconos, capturas)\nPublicación y revisión\nSoporte post-publicación (30 días)", cantidad: 1, precioUnitario: 3000, total: 3000 }
       ],
       sections: seccionesVertex
     },
@@ -477,10 +477,10 @@ async function main() {
       companySlug: "vertex-developers",
       projectData: { nombre: "Desarrollo de web con catálogo", modalidad: "Proyecto por alcance", plazo: "45 días calendario" },
       items: [
-        { detalle: "DISEÑO UI/UX\nDiseño de landing + catálogo\nDiseño responsive\nFichas de producto", cantidad: 1, precioUnitario: 600, total: 600 },
-        { detalle: "CATÁLOGO DE PRODUCTOS/SERVICIOS\nListado con categorías y filtros\nFicha de producto con galería de imágenes\nBúsqueda por nombre o categoría\nBotón de consulta vía WhatsApp por producto", cantidad: 1, precioUnitario: 1000, total: 1000 },
-        { detalle: "PANEL ADMINISTRATIVO\nGestión de productos y categorías (CRUD)\nCarga de imágenes\nActivar/desactivar productos", cantidad: 1, precioUnitario: 800, total: 800 },
-        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nHosting, dominio, SSL\nDespliegue en producción", cantidad: 1, precioUnitario: 600, total: 600 }
+        { titulo: "DISEÑO UI/UX", contenido: "Diseño de landing + catálogo\nDiseño responsive\nFichas de producto", cantidad: 1, precioUnitario: 600, total: 600 },
+        { titulo: "CATÁLOGO DE PRODUCTOS/SERVICIOS", contenido: "Listado con categorías y filtros\nFicha de producto con galería de imágenes\nBúsqueda por nombre o categoría\nBotón de consulta vía WhatsApp por producto", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { titulo: "PANEL ADMINISTRATIVO", contenido: "Gestión de productos y categorías (CRUD)\nCarga de imágenes\nActivar/desactivar productos", cantidad: 1, precioUnitario: 800, total: 800 },
+        { titulo: "DESPLIEGUE Y CONFIGURACIÓN", contenido: "Hosting, dominio, SSL\nDespliegue en producción", cantidad: 1, precioUnitario: 600, total: 600 }
       ],
       sections: seccionesVertex
     }
@@ -512,6 +512,52 @@ async function main() {
     });
     templatesCount++;
   }
+
+  // ---------------------------------------------------------
+  // DISPONIBILIDAD (Lunes a Viernes, 09:00–18:00, slots de 30 min)
+  // ---------------------------------------------------------
+  const workDays = [1, 2, 3, 4, 5]; // 0=Domingo, 1=Lunes...5=Viernes, 6=Sábado
+
+  for (const day of workDays) {
+    await prisma.availability.upsert({
+      where: { id: `avail-vtx-${day}` },
+      update: {
+        startTime: '09:00',
+        endTime: '18:00',
+        slotMinutes: 30,
+        isActive: true,
+      },
+      create: {
+        id: `avail-vtx-${day}`,
+        companyId: vertex.id,
+        dayOfWeek: day,
+        startTime: '09:00',
+        endTime: '18:00',
+        slotMinutes: 30,
+        isActive: true,
+      },
+    });
+
+    await prisma.availability.upsert({
+      where: { id: `avail-pyr-${day}` },
+      update: {
+        startTime: '09:00',
+        endTime: '18:00',
+        slotMinutes: 30,
+        isActive: true,
+      },
+      create: {
+        id: `avail-pyr-${day}`,
+        companyId: pyramid.id,
+        dayOfWeek: day,
+        startTime: '09:00',
+        endTime: '18:00',
+        slotMinutes: 30,
+        isActive: true,
+      },
+    });
+  }
+  console.log('✅ Disponibilidad semanal creada/actualizada para Vertex y Pyramid');
 
   console.log(`✅ Seed completado. Empresas actualizadas/creadas: ${companiesCount}. Items de catálogo actualizados/creados: ${catalogItemsCount}. ${templatesCount} plantillas creadas/actualizadas.`);
 }

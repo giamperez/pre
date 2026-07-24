@@ -12,6 +12,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
+import { BookingsModule } from './bookings/bookings.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     TemplatesModule,
     AnalyticsModule,
     UsersModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote } from '../types';
-import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2 } from 'lucide-react';
 import { fetchWithAuth, getUser, getToken } from '../auth';
 
 function formatDate(dateStr: string) {
