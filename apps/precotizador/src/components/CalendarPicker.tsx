@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, HelpCircle } from 'lucide-react';
 import { API_URL } from '../config';
 
 type MonthStatus = { date: string; status: 'disponible' | 'consultar' | 'ocupado' | 'no-laboral' };
-type Slot = { time: string; status: 'disponible' | 'ocupado' };
+type Slot = { time: string; status: 'disponible' | 'consultar' | 'ocupado' };
 
 interface CalendarPickerProps {
   companySlug: string;
@@ -207,19 +207,26 @@ export function CalendarPicker({ companySlug, colorPrimary, onSelectBooking, onC
                 <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                   {slots.map((slot, i) => {
                     const isAvailable = slot.status === 'disponible';
+                    const isConsultar = slot.status === 'consultar';
+                    const isOccupied = slot.status === 'ocupado';
+                    
+                    let bgCls = '';
+                    if (isAvailable) bgCls = 'bg-green-100 text-green-800 hover:bg-green-200 border-green-200';
+                    else if (isConsultar) bgCls = 'bg-slate-200 text-slate-700 hover:bg-slate-300 border-slate-300';
+                    else bgCls = 'bg-red-100 text-red-500 cursor-not-allowed border-red-200 opacity-60 line-through';
+
                     return (
-                      <button
-                        key={i}
-                        onClick={() => handleSlotClick(slot.time, slot.status)}
-                        disabled={!isAvailable}
-                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                          isAvailable 
-                          ? 'bg-green-50 text-green-700 hover:bg-green-100 hover:shadow-sm border border-green-200' 
-                          : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 opacity-60 line-through'
-                        }`}
-                      >
-                        {slot.time}
-                      </button>
+                      <div key={i} className="flex flex-col gap-1">
+                        <button
+                          onClick={() => handleSlotClick(slot.time, slot.status)}
+                          disabled={isOccupied}
+                          className={`py-2 px-3 rounded-lg text-sm font-medium transition-all border flex items-center justify-center gap-1.5 ${bgCls}`}
+                        >
+                          {isConsultar && <HelpCircle className="w-3.5 h-3.5" />}
+                          {slot.time}
+                        </button>
+                        {isConsultar && <span className="text-[9px] text-center text-slate-500 leading-tight">Requiere confirmar</span>}
+                      </div>
                     );
                   })}
                 </div>

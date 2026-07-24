@@ -19,14 +19,11 @@ export class BookingsService {
     const date = new Date(`${dateString}T00:00:00`);
     const dayOfWeek = date.getDay();
 
-    const config = company.availability.find(a => a.dayOfWeek === dayOfWeek && a.isActive);
+    const configs = company.availability.filter(a => a.dayOfWeek === dayOfWeek && a.isActive);
 
-    if (!config) {
+    if (configs.length === 0) {
       return [];
     }
-
-    const start = parse(config.startTime, 'HH:mm', date);
-    const end = parse(config.endTime, 'HH:mm', date);
 
     const bookings = await this.prisma.booking.findMany({
       where: {
@@ -36,30 +33,35 @@ export class BookingsService {
       },
     });
 
-    const slots: { time: string; status: 'disponible' | 'ocupado' }[] = [];
-    let current = start;
-
+    const slots: { time: string; status: 'disponible' | 'consultar' | 'ocupado' }[] = [];
     const now = new Date();
 
-    while (isBefore(addMinutes(current, config.slotMinutes - 1), end)) {
-      const timeStr = format(current, 'HH:mm');
-      
-      let status: 'disponible' | 'ocupado' = 'disponible';
-      
-      if (isSameDay(date, now) && isBefore(current, now)) {
-        status = 'ocupado';
-      } else if (bookings.some(b => b.time === timeStr)) {
-        status = 'ocupado';
+    for (const config of configs) {
+      const start = parse(config.startTime, 'HH:mm', date);
+      const end = parse(config.endTime, 'HH:mm', date);
+      let current = start;
+
+      while (isBefore(addMinutes(current, config.slotMinutes - 1), end)) {
+        const timeStr = format(current, 'HH:mm');
+        
+        let status: 'disponible' | 'consultar' | 'ocupado' = config.type as 'disponible' | 'consultar';
+        
+        if (isSameDay(date, now) && isBefore(current, now)) {
+          status = 'ocupado';
+        } else if (bookings.some(b => b.time === timeStr)) {
+          status = 'ocupado';
+        }
+
+        slots.push({
+          time: timeStr,
+          status,
+        });
+
+        current = addMinutes(current, config.slotMinutes);
       }
-
-      slots.push({
-        time: timeStr,
-        status,
-      });
-
-      current = addMinutes(current, config.slotMinutes);
     }
 
+    slots.sort((a, b) => a.time.localeCompare(b.time));
     return slots;
   }
 
@@ -92,32 +94,43 @@ export class BookingsService {
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dateObj = new Date(`${dateStr}T00:00:00`);
       
-      const config = company.availability.find(a => a.dayOfWeek === dateObj.getDay() && a.isActive);
+      const configs = company.availability.filter(a => a.dayOfWeek === dateObj.getDay() && a.isActive);
       
-      if (!config) {
+      if (configs.length === 0) {
         summary.push({ date: dateStr, status: 'no-laboral' });
         continue;
       }
 
-      // calculate total slots for this day
-      const start = parse(config.startTime, 'HH:mm', dateObj);
-      const end = parse(config.endTime, 'HH:mm', dateObj);
+      let hasDisponible = false;
+      let hasConsultar = false;
+      let allOccupied = true;
       
-      let totalSlots = 0;
-      let curr = start;
-      while (isBefore(addMinutes(curr, config.slotMinutes - 1), end)) {
-        totalSlots++;
-        curr = addMinutes(curr, config.slotMinutes);
+      for (const config of configs) {
+        const start = parse(config.startTime, 'HH:mm', dateObj);
+        const end = parse(config.endTime, 'HH:mm', dateObj);
+        
+        let curr = start;
+        while (isBefore(addMinutes(curr, config.slotMinutes - 1), end)) {
+          const timeStr = format(curr, 'HH:mm');
+          const isOccupied = bookings.some(b => b.date === dateStr && b.time === timeStr);
+          
+          if (!isOccupied) {
+            allOccupied = false;
+            if (config.type === 'disponible') hasDisponible = true;
+            if (config.type === 'consultar') hasConsultar = true;
+          }
+          
+          curr = addMinutes(curr, config.slotMinutes);
+        }
       }
 
-      const bookedSlots = bookings.filter(b => b.date === dateStr).length;
-      const freeSlots = totalSlots - bookedSlots;
-
-      let status: 'disponible' | 'consultar' | 'ocupado' = 'disponible';
-      if (freeSlots === 0) {
-        status = 'ocupado';
-      } else if (freeSlots <= 2) {
-        status = 'consultar';
+      let status: 'disponible' | 'consultar' | 'ocupado' = 'ocupado';
+      if (!allOccupied) {
+        if (hasDisponible) {
+          status = 'disponible';
+        } else if (hasConsultar) {
+          status = 'consultar';
+        }
       }
 
       summary.push({ date: dateStr, status });

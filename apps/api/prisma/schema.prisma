@@ -144,6 +144,7 @@ model Availability {
   endTime     String   // "18:00"
   slotMinutes Int      @default(30)
   isActive    Boolean  @default(true)
+  type        String   @default("disponible") // "disponible" o "consultar"
   company     Company  @relation(fields: [companyId], references: [id])
 }
 

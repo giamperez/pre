@@ -514,50 +514,67 @@ async function main() {
   }
 
   // ---------------------------------------------------------
-  // DISPONIBILIDAD (Lunes a Viernes, 09:00–18:00, slots de 30 min)
+  // DISPONIBILIDAD (Lunes a Viernes, Mañana: 08:00–13:30, Tarde: 15:00–19:00)
   // ---------------------------------------------------------
   const workDays = [1, 2, 3, 4, 5]; // 0=Domingo, 1=Lunes...5=Viernes, 6=Sábado
 
+  // Limpiar disponibilidades previas
+  await prisma.availability.deleteMany({});
+
   for (const day of workDays) {
-    await prisma.availability.upsert({
-      where: { id: `avail-vtx-${day}` },
-      update: {
-        startTime: '09:00',
-        endTime: '18:00',
-        slotMinutes: 30,
-        isActive: true,
-      },
-      create: {
-        id: `avail-vtx-${day}`,
+    // Vertex - Mañana (consultar)
+    await prisma.availability.create({
+      data: {
         companyId: vertex.id,
         dayOfWeek: day,
-        startTime: '09:00',
-        endTime: '18:00',
+        startTime: '08:00',
+        endTime: '13:30',
         slotMinutes: 30,
         isActive: true,
+        type: 'consultar',
       },
     });
 
-    await prisma.availability.upsert({
-      where: { id: `avail-pyr-${day}` },
-      update: {
-        startTime: '09:00',
-        endTime: '18:00',
+    // Vertex - Tarde (disponible)
+    await prisma.availability.create({
+      data: {
+        companyId: vertex.id,
+        dayOfWeek: day,
+        startTime: '15:00',
+        endTime: '19:00',
         slotMinutes: 30,
         isActive: true,
+        type: 'disponible',
       },
-      create: {
-        id: `avail-pyr-${day}`,
+    });
+
+    // Pyramid - Mañana (consultar)
+    await prisma.availability.create({
+      data: {
         companyId: pyramid.id,
         dayOfWeek: day,
-        startTime: '09:00',
-        endTime: '18:00',
+        startTime: '08:00',
+        endTime: '13:30',
         slotMinutes: 30,
         isActive: true,
+        type: 'consultar',
+      },
+    });
+
+    // Pyramid - Tarde (disponible)
+    await prisma.availability.create({
+      data: {
+        companyId: pyramid.id,
+        dayOfWeek: day,
+        startTime: '15:00',
+        endTime: '19:00',
+        slotMinutes: 30,
+        isActive: true,
+        type: 'disponible',
       },
     });
   }
-  console.log('✅ Disponibilidad semanal creada/actualizada para Vertex y Pyramid');
+  console.log('✅ Disponibilidad semanal (mañana y tarde) creada para Vertex y Pyramid');
 
   console.log(`✅ Seed completado. Empresas actualizadas/creadas: ${companiesCount}. Items de catálogo actualizados/creados: ${catalogItemsCount}. ${templatesCount} plantillas creadas/actualizadas.`);
 }
