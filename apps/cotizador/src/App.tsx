@@ -4,61 +4,68 @@ import { QuoteBuilderPage } from './pages/QuoteBuilderPage';
 import { QuoteListPage } from './pages/QuoteListPage';
 import { LeadsPage } from './pages/LeadsPage';
 import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { UsersPage } from './pages/UsersPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getUser, logout } from './auth';
-import { FileText, Home, Users, LogOut } from 'lucide-react';
+import { FileText, Home, Users, LogOut, BarChart2, UserCog } from 'lucide-react';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const user = getUser();
+  const isAdmin = user?.role === 'admin';
+
+  const navLinkCls = (path: string) =>
+    `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      location.pathname === path
+        ? 'bg-indigo-50 text-indigo-700'
+        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+    }`;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20">
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20 gap-2">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-sm">V</div>
-          <span className="font-bold text-slate-800">Vertex Cotizador</span>
+          <span className="font-bold text-slate-800 hidden sm:block">Vertex Cotizador</span>
         </Link>
 
-        <nav className="flex items-center gap-1">
-          <Link
-            to="/"
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-            }`}
-          >
+        {/* Nav */}
+        <nav className="flex items-center gap-0.5 overflow-x-auto">
+          <Link to="/" className={navLinkCls('/')}>
             <Home className="w-4 h-4" />
-            Inicio
+            <span className="hidden sm:inline">Inicio</span>
           </Link>
-          <Link
-            to="/lista"
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/lista' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-            }`}
-          >
+          <Link to="/dashboard" className={navLinkCls('/dashboard')}>
+            <BarChart2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          <Link to="/lista" className={navLinkCls('/lista')}>
             <FileText className="w-4 h-4" />
-            Cotizaciones
+            <span className="hidden sm:inline">Cotizaciones</span>
           </Link>
-          <Link
-            to="/leads"
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/leads' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-            }`}
-          >
+          <Link to="/leads" className={navLinkCls('/leads')}>
             <Users className="w-4 h-4" />
-            Leads
+            <span className="hidden sm:inline">Leads</span>
           </Link>
+          {isAdmin && (
+            <Link to="/usuarios" className={navLinkCls('/usuarios')}>
+              <UserCog className="w-4 h-4" />
+              <span className="hidden sm:inline">Usuarios</span>
+            </Link>
+          )}
         </nav>
 
         {/* User info + logout */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {user && (
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
                 {user.name.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-slate-700">{user.name}</span>
-              {user.role === 'admin' && (
+              <span className="text-sm font-medium text-slate-700 max-w-[100px] truncate">{user.name}</span>
+              {isAdmin && (
                 <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-semibold">Admin</span>
               )}
             </div>
@@ -74,7 +81,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 sm:p-6">
         {children}
       </main>
     </div>
@@ -89,38 +96,13 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Protegidas */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppLayout><SelectorPage /></AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/nueva/:companySlug"
-          element={
-            <ProtectedRoute>
-              <AppLayout><QuoteBuilderPage /></AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/lista"
-          element={
-            <ProtectedRoute>
-              <AppLayout><QuoteListPage /></AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/leads"
-          element={
-            <ProtectedRoute>
-              <AppLayout><LeadsPage /></AppLayout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<ProtectedRoute><AppLayout><SelectorPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/nueva/:companySlug" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/lista" element={<ProtectedRoute><AppLayout><QuoteListPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/leads" element={<ProtectedRoute><AppLayout><LeadsPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/usuarios" element={<ProtectedRoute><AppLayout><UsersPage /></AppLayout></ProtectedRoute>} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

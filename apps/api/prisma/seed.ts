@@ -487,10 +487,10 @@ async function main() {
   ];
 
   for (const tpl of plantillasVertex) {
-    const co = companiesMap.get(tpl.companySlug);
+    const co = tpl.companySlug === 'vertex-developers' ? vertex : null;
     if (!co) continue;
-    await prisma.template.upsert({
-      where: { code: tpl.code },
+    await prisma.quoteTemplate.upsert({
+      where: { companyId_code: { companyId: co.id, code: tpl.code } },
       update: {
         name: tpl.name,
         category: tpl.category,
