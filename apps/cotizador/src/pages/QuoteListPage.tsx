@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote } from '../types';
 import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown } from 'lucide-react';
+import { fetchWithAuth } from '../auth';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -59,7 +60,7 @@ function EstadoDropdown({ quoteId, currentEstado, onUpdate }: { quoteId: string;
     if (newEstado === currentEstado) { setOpen(false); return; }
     setUpdating(true);
     try {
-      const res = await fetch(`${API_URL}/quotes/${quoteId}`, {
+      const res = await fetchWithAuth(`${API_URL}/quotes/${quoteId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: newEstado }),
@@ -144,7 +145,7 @@ export function QuoteListPage() {
   // Fetch quotes with filters
   useEffect(() => {
     setLoading(true);
-    fetch(buildUrl())
+    fetchWithAuth(buildUrl())
       .then(res => res.json())
       .then(data => { setQuotes(data); setLoading(false); })
       .catch(() => { setError('No se pudieron cargar las cotizaciones'); setLoading(false); });

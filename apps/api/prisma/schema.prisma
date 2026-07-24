@@ -10,6 +10,17 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ventas") // admin, ventas
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Company {
   id                String  @id @default(uuid())
   name              String
@@ -89,15 +100,15 @@ model Quote {
   sections        Json?
   images          Json?
 
-  ubicacionProyecto        String?
-  sectorProyecto           String?
-  tipoProyecto             String?
-  tipoServicio             String?
-  tipoCliente              String?
-  clienteNuevoRecurrente   String?
-  fuenteCliente            String?
-  estado                   String    @default("borrador")
-  metadata                 Json?
+  ubicacionProyecto      String?
+  sectorProyecto         String?
+  tipoProyecto           String?
+  tipoServicio           String?
+  tipoCliente            String?
+  clienteNuevoRecurrente String?
+  fuenteCliente          String?
+  estado                 String  @default("borrador")
+  metadata               Json?
 
   company Company @relation(fields: [companyId], references: [id])
 
@@ -118,7 +129,7 @@ model QuoteTemplate {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  company     Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 
   @@unique([companyId, code])
 }

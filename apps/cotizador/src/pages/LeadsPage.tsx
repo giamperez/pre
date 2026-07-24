@@ -3,6 +3,7 @@ import { API_URL } from '../config';
 import type { Lead, Company } from '../types';
 import { Search, X, ChevronRight, FileText, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../auth';
 
 export function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -28,7 +29,7 @@ export function LeadsPage() {
   const fetchData = async () => {
     try {
       const [leadsRes, catalogRes] = await Promise.all([
-        fetch(`${API_URL}/leads`),
+        fetchWithAuth(`${API_URL}/leads`),
         fetch(`${API_URL}/catalog`)
       ]);
       const leadsData = await leadsRes.json();
@@ -52,7 +53,7 @@ export function LeadsPage() {
 
   const updateClassification = async (id: string, classification: string) => {
     try {
-      await fetch(`${API_URL}/leads/${id}`, {
+      await fetchWithAuth(`${API_URL}/leads/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ classification })
@@ -70,7 +71,7 @@ export function LeadsPage() {
     if (!selectedLead) return;
     setSavingNotes(true);
     try {
-      await fetch(`${API_URL}/leads/${selectedLead.id}`, {
+      await fetchWithAuth(`${API_URL}/leads/${selectedLead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes })

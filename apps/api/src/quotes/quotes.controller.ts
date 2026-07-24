@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Param, Body, Res, Query, Patch, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Res, Query, Patch, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { QuotesService } from './quotes.service';
 import { PdfService } from './pdf.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('quotes')
 export class QuotesController {
   constructor(

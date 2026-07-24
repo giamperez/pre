@@ -9,6 +9,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { LeadsModule } from './leads/leads.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { TemplatesModule } from './templates/templates.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { TemplatesModule } from './templates/templates.module';
       serveRoot: '/public',
     }),
     PrismaModule,
+    AuthModule,
     CatalogModule,
     LeadsModule,
     QuotesModule,

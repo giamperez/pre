@@ -1,12 +1,28 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Iniciando seed...');
+
+  // ---------------------------------------------------------
+  // USUARIO ADMIN
+  // ---------------------------------------------------------
+  await prisma.user.upsert({
+    where: { email: 'admin@vertexdev.tech' },
+    update: {},
+    create: {
+      email: 'admin@vertexdev.tech',
+      password: bcrypt.hashSync('Vertex2026!', 10),
+      name: 'Admin Vertex',
+      role: 'admin',
+    },
+  });
+  console.log('✅ Usuario admin creado/verificado');
 
   let companiesCount = 0;
   let catalogItemsCount = 0;

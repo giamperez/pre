@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
 import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star } from 'lucide-react';
+import { fetchWithAuth } from '../auth';
 
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
@@ -239,7 +240,7 @@ export function QuoteBuilderPage() {
     if (!companySlug) return;
     Promise.all([
       fetch(`${API_URL}/catalog/${companySlug}`).then(res => res.json()),
-      fetch(`${API_URL}/templates?companySlug=${companySlug}`).then(res => res.json())
+      fetchWithAuth(`${API_URL}/templates?companySlug=${companySlug}`).then(res => res.json())
     ])
     .then(([data, tpls]) => {
       const { catalogItems: _, ...co } = data;
@@ -291,7 +292,7 @@ export function QuoteBuilderPage() {
         images: images.length > 0 ? images : undefined,
       };
 
-      const res = await fetch(`${API_URL}/quotes`, {
+      const res = await fetchWithAuth(`${API_URL}/quotes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -321,7 +322,7 @@ export function QuoteBuilderPage() {
         sections: sections,
         isCustom: true
       };
-      const res = await fetch(`${API_URL}/templates`, {
+      const res = await fetchWithAuth(`${API_URL}/templates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
