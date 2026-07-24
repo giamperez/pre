@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote } from '../types';
-import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown } from 'lucide-react';
-import { fetchWithAuth } from '../auth';
+import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, FileText } from 'lucide-react';
+import { fetchWithAuth, getUser } from '../auth';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -106,11 +106,9 @@ function EstadoDropdown({ quoteId, currentEstado, onUpdate }: { quoteId: string;
 
 export function QuoteListPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
   const [companyId, setCompanyId] = useState('');
   const [estado, setEstado] = useState('');
   const [tipoServicio, setTipoServicio] = useState('');
@@ -118,6 +116,12 @@ export function QuoteListPage() {
   const [searchInput, setSearchInput] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{importadas: number, errores: number, detalles: string[]} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const user = getUser();
+  const isAdmin = user?.role === 'admin';
 
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -131,25 +135,17 @@ export function QuoteListPage() {
     return `${API_URL}/quotes${q ? '?' + q : ''}`;
   }, [companyId, estado, tipoServicio, search, from, to]);
 
-  // Fetch companies for filter dropdown
-  useEffect(() => {
-    fetch(`${API_URL}/catalog`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) setCompanies(data);
-        else if (data?.companies) setCompanies(data.companies);
-      })
-      .catch(() => {});
-  }, []);
-
-  // Fetch quotes with filters
-  useEffect(() => {
+  const loadQuotes = useCallback(() => {
     setLoading(true);
     fetchWithAuth(buildUrl())
       .then(res => res.json())
       .then(data => { setQuotes(data); setLoading(false); })
       .catch(() => { setError('No se pudieron cargar las cotizaciones'); setLoading(false); });
   }, [buildUrl]);
+
+  useEffect(() => {
+    loadQuotes();
+  }, [loadQuotes]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,35 +166,78 @@ export function QuoteListPage() {
     setQuotes(prev => prev.map(q => q.id === id ? { ...q, estado: newEstado } as any : q));
   };
 
-  const hasFilters = companyId || estado || tipoServicio || search || from || to;
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    setError(null);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetchWithAuth(`${API_URL}/quotes/import`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Error al importar cotizaciones');
+      const data = await res.json();
+      setImportResult(data);
+      loadQuotes();
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error al importar');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const hasFilters = companyId || estado || tipoServicio || search || from || to;
   const inputCls = "border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white";
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Cotizaciones guardadas</h1>
+            <h1 className="text-xl font-bold text-slate-800">Cotizaciones</h1>
             <p className="text-sm text-slate-400">
               {loading ? '…' : `${quotes.length} cotización${quotes.length !== 1 ? 'es' : ''} encontrada${quotes.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva cotización
-        </Link>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx, .xls" className="hidden" />
+              <button onClick={handleImportClick} disabled={importing} className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
+                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                Importar Excel
+              </button>
+            </>
+          )}
+          <Link to="/" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors">
+            <Plus className="w-4 h-4" /> Nueva cotización
+          </Link>
+        </div>
       </div>
 
-      {/* Filters Bar */}
+      {importResult && (
+        <div className={`mb-6 p-4 rounded-xl border ${importResult.errores > 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className={`font-semibold ${importResult.errores > 0 ? 'text-orange-800' : 'text-green-800'}`}>Importación completada</h3>
+            <button onClick={() => setImportResult(null)} className="text-slate-400 hover:text-slate-600">×</button>
+          </div>
+          <p className="text-sm text-slate-700"><strong>{importResult.importadas}</strong> cotizaciones importadas. {importResult.errores > 0 && <span><strong>{importResult.errores}</strong> errores.</span>}</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-400" />
