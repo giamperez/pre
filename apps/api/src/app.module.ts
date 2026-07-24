@@ -10,6 +10,8 @@ import { LeadsModule } from './leads/leads.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { TemplatesModule } from './templates/templates.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { AuthModule } from './auth/auth.module';
     LeadsModule,
     QuotesModule,
     TemplatesModule,
+    AnalyticsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

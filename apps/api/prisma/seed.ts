@@ -10,7 +10,7 @@ async function main() {
   console.log('🌱 Iniciando seed...');
 
   // ---------------------------------------------------------
-  // USUARIO ADMIN
+  // USUARIOS ADMIN Y VENTAS
   // ---------------------------------------------------------
   await prisma.user.upsert({
     where: { email: 'admin@vertexdev.tech' },
@@ -22,7 +22,17 @@ async function main() {
       role: 'admin',
     },
   });
-  console.log('✅ Usuario admin creado/verificado');
+  await prisma.user.upsert({
+    where: { email: 'ventas@vertexdev.tech' },
+    update: {},
+    create: {
+      email: 'ventas@vertexdev.tech',
+      password: bcrypt.hashSync('Vertex2026!', 10),
+      name: 'Equipo Ventas',
+      role: 'ventas',
+    },
+  });
+  console.log('✅ Usuarios admin y ventas creados/verificados');
 
   let companiesCount = 0;
   let catalogItemsCount = 0;
@@ -373,6 +383,125 @@ async function main() {
       create: {
         companyId: pyramid.id,
         code: tpl.code,
+        name: tpl.name,
+        category: tpl.category,
+        projectData: tpl.projectData,
+        items: tpl.items,
+        sections: tpl.sections,
+        isCustom: false,
+      }
+    });
+    templatesCount++;
+  }
+
+  // ---------------------------------------------------------
+  // PLANTILLAS: VERTEX DEVELOPERS
+  // ---------------------------------------------------------
+  const seccionesVertex = [
+    { title: "Alcance del Servicio", content: "El presente servicio comprende el desarrollo e implementación de las funcionalidades descritas en esta cotización, conforme a los requerimientos previamente definidos y aprobados por el cliente.\n\nCualquier modificación al alcance o incorporación de nuevas funcionalidades será evaluada y cotizada por separado.\n\nLa presente cotización comprende únicamente los entregables descritos en este documento.", enabled: true },
+    { title: "Condiciones para la realización del Servicio", content: "El cliente deberá proporcionar oportunamente toda la información necesaria para el desarrollo del proyecto, incluyendo textos, imágenes, logotipos, manual de identidad visual, catálogos de productos y demás recursos requeridos.\n\nEn caso de requerirse acceso a servicios de terceros (hosting, dominio, pasarelas de pago, correos corporativos, APIs, entre otros), el cliente deberá proporcionar las credenciales correspondientes.\n\nLos retrasos ocasionados por la entrega tardía de información, aprobaciones o accesos podrán modificar el cronograma de ejecución sin generar responsabilidad para Vertex Developers.", enabled: true },
+    { title: "Responsabilidades del Cliente", content: "• Proporcionar oportunamente la información y recursos necesarios.\n• Aprobar los requerimientos funcionales antes del inicio del desarrollo.\n• Designar un responsable de proyecto que pueda tomar decisiones y aprobar entregables.\n• Realizar las pruebas de aceptación en los plazos establecidos.", enabled: true },
+    { title: "Plazos de Ejecución", content: "El tiempo estimado para el desarrollo del proyecto es el indicado en esta cotización, distribuido entre las etapas de: análisis y levantamiento de requerimientos, diseño de interfaces (UI/UX), desarrollo, y pruebas e implementación.\n\n*El plazo es referencial y está sujeto a la entrega oportuna de información por parte del cliente y a la aceptación de servicios de terceros (pasarelas de pago, APIs externas).", enabled: true },
+    { title: "Pruebas y Aceptación", content: "Antes de la entrega final se realizarán pruebas funcionales para verificar el correcto funcionamiento de las funcionalidades incluidas en el alcance.\n\nEl cliente dispondrá de un período de revisión de hasta 5 días calendario para reportar observaciones relacionadas con el alcance contratado.\n\nLas observaciones que impliquen nuevas funcionalidades serán consideradas como requerimientos adicionales y serán cotizadas por separado.", enabled: true },
+    { title: "Forma de Pago", content: "• 40% del monto total al aceptar la cotización, como adelanto para el inicio del proyecto.\n• 30% al aprobar la maqueta funcional (frontend), una vez validado el diseño, la estructura y la experiencia de usuario.\n• 30% restante al concluir el desarrollo, luego de la demostración de las funcionalidades del sistema.\n\nLos entregables del proyecto serán entregados una vez confirmado el pago del 100% del monto contratado.", enabled: true },
+    { title: "Validez de la Cotización", content: "La presente cotización tiene una vigencia de 15 días calendario contados desde su fecha de emisión.\n\nLa presente cotización incluye IGV.", enabled: true },
+    { title: "Garantía del Servicio", content: "Vertex Developers brinda una garantía de 60 días calendario contados a partir de la entrega del proyecto.\n\nLa garantía cubre exclusivamente la corrección de errores de programación relacionados con las funcionalidades incluidas en el alcance aprobado.\n\nLa garantía no incluye:\n• Nuevas funcionalidades.\n• Cambios en los procesos del negocio.\n• Problemas ocasionados por terceros o por el servidor/hosting.", enabled: true },
+    { title: "Licencia de Uso del software", content: "Con la entrega del proyecto y una vez efectuado el pago total del servicio, el cliente adquiere una licencia de uso sobre la solución desarrollada.\n\nLos componentes tecnológicos, librerías, frameworks, plantillas y arquitecturas desarrollados previamente por Vertex Developers continúan siendo de su titularidad.\n\nLa entrega del código fuente únicamente se realizará cuando haya sido expresamente incluida en la presente cotización.", enabled: true },
+    { title: "Entrega de Productos Finales", content: "Al finalizar el proyecto se entregará:\n• Aplicación web/móvil completamente funcional e implementada.\n• Manual de usuario.\n• Credenciales de acceso a los servicios contratados.\n• Capacitación para el personal designado.\n• Acta de conformidad del servicio.", enabled: true }
+  ];
+
+  const plantillasVertex = [
+    {
+      code: "VX-TIP-LANDING",
+      name: "Landing page / Sitio corporativo simple",
+      category: "web",
+      companySlug: "vertex-developers",
+      projectData: { nombre: "Desarrollo de sitio web corporativo", modalidad: "Proyecto por alcance", plazo: "30 días calendario" },
+      items: [
+        { detalle: "DISEÑO UI/UX\nDiseño de wireframes y mockups\nDiseño responsive (desktop y mobile)\nPaleta de colores y tipografía según identidad de marca\nHasta 5 secciones: Hero, Nosotros, Servicios, Portafolio, Contacto", cantidad: 1, precioUnitario: 400, total: 400 },
+        { detalle: "DESARROLLO FRONTEND\nMaquetado HTML/CSS/JS o React\nAnimaciones y transiciones\nFormulario de contacto con envío a correo\nIntegración de mapa (Google Maps)\nOptimización de velocidad de carga", cantidad: 1, precioUnitario: 600, total: 600 },
+        { detalle: "SEO BÁSICO ON-PAGE\nMeta tags, títulos y descripciones\nEstructura de encabezados\nSitemap XML\nConfiguración Google Search Console", cantidad: 1, precioUnitario: 200, total: 200 },
+        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nConfiguración de hosting y dominio\nInstalación de certificado SSL\nDespliegue en producción\nPruebas de funcionamiento", cantidad: 1, precioUnitario: 300, total: 300 }
+      ],
+      sections: seccionesVertex
+    },
+    {
+      code: "VX-TIP-ECOMMERCE",
+      name: "E-commerce / Tienda online",
+      category: "web",
+      companySlug: "vertex-developers",
+      projectData: { nombre: "Desarrollo de tienda online", modalidad: "Proyecto por alcance", plazo: "60 días calendario" },
+      items: [
+        { detalle: "DISEÑO UI/UX\nDiseño de interfaces para tienda, carrito y checkout\nDiseño responsive\nDashboard administrativo", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "CATÁLOGO DE PRODUCTOS\nGestión de productos con categorías, variantes y stock\nGalería de imágenes por producto\nBúsqueda y filtros avanzados\nProductos relacionados y destacados", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "CARRITO Y CHECKOUT\nCarrito de compras persistente\nFlujo de checkout en pasos\nCálculo automático de envío\nResumen de pedido", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "INTEGRACIÓN DE PAGOS\nYape, Plin, transferencia bancaria\nPasarela de tarjetas (Culqi o Mercado Pago)\nConfirmación de pago automática\nNotificación por correo al cliente y administrador", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "PANEL ADMINISTRATIVO\nGestión de pedidos (pendiente, en proceso, enviado, entregado)\nGestión de clientes\nReportes de ventas\nControl de inventario", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nConfiguración de servidor y dominio\nSSL, backups automáticos\nPruebas de carga y seguridad", cantidad: 1, precioUnitario: 1500, total: 1500 }
+      ],
+      sections: seccionesVertex
+    },
+    {
+      code: "VX-TIP-SAAS",
+      name: "Software / SaaS a medida",
+      category: "software",
+      companySlug: "vertex-developers",
+      projectData: { nombre: "Desarrollo de software a medida", modalidad: "Proyecto por alcance", plazo: "90 días calendario" },
+      items: [
+        { detalle: "LEVANTAMIENTO DE REQUERIMIENTOS\nEntrevistas con stakeholders\nDocumentación de requerimientos funcionales y no funcionales\nDiagramas de flujo y casos de uso\nDefinición de arquitectura técnica", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "DISEÑO UI/UX\nPrototipo interactivo (Figma)\nSistema de diseño y componentes\nFlujos de usuario\nDiseño responsive", cantidad: 1, precioUnitario: 1500, total: 1500 },
+        { detalle: "DESARROLLO BACKEND\nAPI REST con NestJS\nBase de datos PostgreSQL\nAutenticación y autorización (JWT, roles)\nLógica de negocio según requerimientos\nDocumentación de API", cantidad: 1, precioUnitario: 3000, total: 3000 },
+        { detalle: "DESARROLLO FRONTEND\nInterface React/Vite\nConsumo de API\nGráficas y reportes\nExportación de datos (PDF, Excel)", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "PRUEBAS Y QA\nPruebas unitarias e integración\nPruebas de usuario (UAT)\nCorrección de bugs\nDocumentación técnica", cantidad: 1, precioUnitario: 500, total: 500 }
+      ],
+      sections: seccionesVertex
+    },
+    {
+      code: "VX-TIP-MOBILE",
+      name: "App móvil (Android / iOS)",
+      category: "mobile",
+      companySlug: "vertex-developers",
+      projectData: { nombre: "Desarrollo de aplicación móvil", modalidad: "Proyecto por alcance", plazo: "90 días calendario" },
+      items: [
+        { detalle: "DISEÑO UI/UX MOBILE\nPrototipo interactivo para móvil\nDiseño de pantallas y flujos\nSistema de diseño adaptado a iOS y Android\nAnimaciones y microinteracciones", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "DESARROLLO APP (React Native / Flutter)\nNavegación y estructura de la app\nIntegración con API backend\nNotificaciones push\nAlmacenamiento local\nSoporte Android e iOS", cantidad: 1, precioUnitario: 5000, total: 5000 },
+        { detalle: "BACKEND Y API\nAPI REST para la app\nAutenticación con JWT\nGestión de usuarios y perfiles\nBase de datos y almacenamiento", cantidad: 1, precioUnitario: 2000, total: 2000 },
+        { detalle: "PUBLICACIÓN EN TIENDAS\nConfiguración de cuenta Google Play y App Store\nPreparación de assets (íconos, capturas)\nPublicación y revisión\nSoporte post-publicación (30 días)", cantidad: 1, precioUnitario: 3000, total: 3000 }
+      ],
+      sections: seccionesVertex
+    },
+    {
+      code: "VX-TIP-CATALOGO",
+      name: "Página web con catálogo",
+      category: "web",
+      companySlug: "vertex-developers",
+      projectData: { nombre: "Desarrollo de web con catálogo", modalidad: "Proyecto por alcance", plazo: "45 días calendario" },
+      items: [
+        { detalle: "DISEÑO UI/UX\nDiseño de landing + catálogo\nDiseño responsive\nFichas de producto", cantidad: 1, precioUnitario: 600, total: 600 },
+        { detalle: "CATÁLOGO DE PRODUCTOS/SERVICIOS\nListado con categorías y filtros\nFicha de producto con galería de imágenes\nBúsqueda por nombre o categoría\nBotón de consulta vía WhatsApp por producto", cantidad: 1, precioUnitario: 1000, total: 1000 },
+        { detalle: "PANEL ADMINISTRATIVO\nGestión de productos y categorías (CRUD)\nCarga de imágenes\nActivar/desactivar productos", cantidad: 1, precioUnitario: 800, total: 800 },
+        { detalle: "DESPLIEGUE Y CONFIGURACIÓN\nHosting, dominio, SSL\nDespliegue en producción", cantidad: 1, precioUnitario: 600, total: 600 }
+      ],
+      sections: seccionesVertex
+    }
+  ];
+
+  for (const tpl of plantillasVertex) {
+    const co = companiesMap.get(tpl.companySlug);
+    if (!co) continue;
+    await prisma.template.upsert({
+      where: { code: tpl.code },
+      update: {
+        name: tpl.name,
+        category: tpl.category,
+        projectData: tpl.projectData,
+        items: tpl.items,
+        sections: tpl.sections,
+        isCustom: false,
+      },
+      create: {
+        code: tpl.code,
+        companyId: co.id,
         name: tpl.name,
         category: tpl.category,
         projectData: tpl.projectData,
