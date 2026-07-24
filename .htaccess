@@ -1,0 +1,24 @@
+Options -Indexes
+RewriteEngine On
+
+# Archivos estáticos de empresas — servir directo sin prefijo /api
+RewriteRule ^api/public/(.*)$ /api/public/$1 [L]
+
+# API proxy — quitar el prefijo /api antes de pasar al backend
+RewriteCond %{REQUEST_URI} ^/api [NC]
+RewriteRule ^api/(.*)$ http://127.0.0.1:3013/$1 [P,L]
+
+# Cotizador interno
+RewriteCond %{HTTP_HOST} ^cotizador\.vertexdev\.tech [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /cotizador/index.html [L]
+
+# Precotizador público
+RewriteCond %{HTTP_HOST} ^cotiza\.vertexdev\.tech [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /precotizador/index.html [L]
+
+DirectoryIndex cotizador/index.html index.html index.php
+Options -MultiViews
