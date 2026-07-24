@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote } from '../types';
 import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, FileText } from 'lucide-react';
-import { fetchWithAuth, getUser } from '../auth';
+import { fetchWithAuth, getUser, getToken } from '../auth';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -195,6 +195,22 @@ export function QuoteListPage() {
     }
   };
 
+  const openPdf = async (quoteId: string) => {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/quotes/${quoteId}/pdf`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!response.ok) {
+      alert('Error al generar el PDF');
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
   const hasFilters = companyId || estado || tipoServicio || search || from || to;
   const inputCls = "border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white";
 
@@ -355,7 +371,7 @@ export function QuoteListPage() {
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDate(q.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
                       <button
-                        onClick={() => window.open(`${API_URL}/quotes/${q.id}/pdf`, '_blank')}
+                        onClick={() => openPdf(q.id)}
                         className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2.5 py-1.5 rounded-lg transition-all"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />

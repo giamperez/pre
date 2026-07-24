@@ -104,18 +104,34 @@ export class PdfService {
   .page:last-child { page-break-after: auto; }
   .portada img, .contraportada img { display: block; width: 210mm; height: 297mm; object-fit: cover; }
   .contenido {
-    background-image: url('${membreteB64}');
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    padding: 145px 65px 110px 65px;
+    padding: 160px 80px 120px 80px;
     min-height: 297mm;
+    background: transparent;
+  }
+  .membrete-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 210mm;
+    height: 297mm;
+    z-index: -1;
+  }
+  .membrete-bg img {
+    width: 210mm;
+    height: 297mm;
+    object-fit: cover;
+    display: block;
   }
   hr { border: none; border-top: 2px solid ${secondary}; margin: 14px 0; }
   h3 { color: ${primary}; font-size: 13px; margin-top: 22px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 </style>
 </head>
 <body>
+
+<!-- ===== FONDO MEMBRETE (REPETIBLE) ===== -->
+<div class="membrete-bg">
+  <img src="${membreteB64}" alt="membrete-fondo" />
+</div>
 
 <!-- ===== PORTADA ===== -->
 <div class="page portada">

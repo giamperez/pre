@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
 import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star } from 'lucide-react';
-import { fetchWithAuth } from '../auth';
+import { fetchWithAuth, getToken } from '../auth';
 
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
@@ -300,7 +300,18 @@ export function QuoteBuilderPage() {
 
       if (!res.ok) throw new Error('Error al guardar');
       const quote = await res.json();
-      window.open(`${API_URL}/quotes/${quote.id}/pdf`, '_blank');
+      
+      const token = getToken();
+      const pdfRes = await fetch(`${API_URL}/quotes/${quote.id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (pdfRes.ok) {
+        const blob = await pdfRes.blob();
+        window.open(URL.createObjectURL(blob), '_blank');
+      } else {
+        alert('Cotización guardada, pero hubo un error al mostrar el PDF.');
+      }
+      
       navigate('/lista');
     } catch {
       alert('Hubo un error al guardar la cotización. Intenta nuevamente.');
