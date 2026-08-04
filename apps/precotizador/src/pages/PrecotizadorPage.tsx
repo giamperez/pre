@@ -4,6 +4,7 @@ import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquar
 import { useCatalog } from '../hooks/useCatalog';
 import { API_URL } from '../config';
 import { CalendarPicker } from '../components/CalendarPicker';
+import { QuoteSummaryModal } from '../components/QuoteSummaryModal';
 
 export function PrecotizadorPage() {
   const { companySlug } = useParams();
@@ -16,6 +17,7 @@ export function PrecotizadorPage() {
   const [formData, setFormData] = useState({ name: '', businessName: '', phone: '', email: '' });
   const [submitted, setSubmitted] = useState(false);
   const [booking, setBooking] = useState<{date: string, time: string} | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-slate-500">Cargando catálogo...</p></div>;
   if (error || !company) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-red-500">{error || 'Empresa no encontrada'}</p></div>;
@@ -31,19 +33,24 @@ export function PrecotizadorPage() {
   };
 
   const selectedMainServiceObj = mainServices.find(i => i.id === selectedMainService);
+  const selectedAddonObjs = addonServices.filter(i => selectedAddons.has(i.id));
+
   const subtotal = (selectedMainServiceObj ? selectedMainServiceObj.basePrice : 0) + 
-    addonServices.filter(i => selectedAddons.has(i.id)).reduce((sum, item) => sum + item.basePrice, 0);
+    selectedAddonObjs.reduce((sum, item) => sum + item.basePrice, 0);
   const igv = subtotal * 0.18;
   const total = subtotal + igv;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleOpenModal = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedMainServiceObj) return;
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmSubmission = async () => {
     if (!selectedMainServiceObj) return;
     setSubmitting(true);
     
     try {
-      const selectedAddonObjs = addonServices.filter(i => selectedAddons.has(i.id));
-      
       const payload = {
         ...formData,
         companyId: company.id,
@@ -84,6 +91,7 @@ export function PrecotizadorPage() {
       }
       
       setSubmitted(true);
+      setIsModalOpen(false);
     } catch (err) {
       alert('Hubo un error al enviar tu solicitud. Intenta nuevamente.');
     } finally {
@@ -266,7 +274,7 @@ export function PrecotizadorPage() {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleOpenModal} className="space-y-5">
               <div className="grid sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
@@ -318,6 +326,21 @@ export function PrecotizadorPage() {
           )}
         </section>
       </main>
+
+      {/* Modal de Resumen y Confirmación */}
+      <QuoteSummaryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmSubmission}
+        submitting={submitting}
+        company={company}
+        selectedMainService={selectedMainServiceObj || null}
+        selectedAddonItems={selectedAddonObjs}
+        onRemoveMainService={() => setSelectedMainService(null)}
+        onRemoveAddon={(id) => toggleAddon(id)}
+        formData={formData}
+        booking={booking}
+      />
     </div>
   );
 }
