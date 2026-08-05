@@ -11,7 +11,7 @@ export class WhatsappService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.connectionManager.restoreAllSessionsOnBoot();
+    // await this.connectionManager.restoreAllSessionsOnBoot(); // deshabilitado temporalmente - bug DI en boot
   }
 
   async isConnected(companyId: string): Promise<boolean> {
