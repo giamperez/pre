@@ -4,6 +4,8 @@ import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
 import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star } from 'lucide-react';
 import { fetchWithAuth, getToken } from '../auth';
+import { getTiposProyecto, getTiposServicio } from '../constants/projectTypes';
+import { getDefaultSections } from '../constants/legalSections';
 
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
@@ -15,59 +17,6 @@ const emptyItem = (): QuoteItem & { _key: string } => ({
   precioUnitario: 0,
   total: 0,
 });
-
-const defaultSections = [
-  {
-    title: "Alcance del Servicio",
-    content: "El presente servicio comprende el desarrollo e implementación de las funcionalidades descritas en esta cotización, conforme a los requerimientos previamente definidos y aprobados por el cliente.\n\nCualquier modificación al alcance o incorporación de nuevas funcionalidades será evaluada y cotizada por separado.\n\nLa presente cotización comprende únicamente los entregables descritos en este documento. Cualquier componente o activo técnico no contemplado expresamente en la sección «Entrega de Productos Finales» se entenderá excluido del alcance de la presente propuesta, salvo acuerdo escrito entre las partes.",
-    enabled: false
-  },
-  {
-    title: "Condiciones para la realización del Servicio",
-    content: "El cliente deberá proporcionar oportunamente toda la información necesaria para el desarrollo del proyecto, incluyendo textos, imágenes, logotipos, manual de identidad visual, catálogos de productos y demás recursos requeridos.\n\nEn caso de requerirse acceso a servicios de terceros (hosting, dominio, pasarelas de pago, correos corporativos, APIs, entre otros), el cliente deberá proporcionar las credenciales correspondientes.\n\nLos retrasos ocasionados por la entrega tardía de información, aprobaciones o accesos podrán modificar el cronograma de ejecución sin generar responsabilidad para Vertex Developers.",
-    enabled: false
-  },
-  {
-    title: "Responsabilidades del Cliente",
-    content: "• Proporcionar oportunamente la información y recursos necesarios.\n- Aprobar los requerimientos funcionales antes del inicio del desarrollo.",
-    enabled: false
-  },
-  {
-    title: "Plazos de Ejecución",
-    content: "El tiempo estimado para el desarrollo del proyecto es de 45 días calendario, distribuidos de la siguiente manera:\n\n- Análisis y levantamiento de requerimientos: 5 días calendario.\n- Diseño de interfaces (UI/UX): 5 días calendario.\n- Desarrollo de la aplicación: 30 días calendario.\n- Pruebas, ajustes e implementación: 5 días calendario.\n\n*El plazo es referencial a aceptación de servicios de terceros: Pasarelas de pago, APIs externas.",
-    enabled: false
-  },
-  {
-    title: "Pruebas y Aceptación",
-    content: "Antes de la entrega final se realizarán pruebas funcionales para verificar el correcto funcionamiento de las funcionalidades incluidas en el alcance.\n\nEl cliente dispondrá de un período de revisión de hasta 5 días calendario para reportar observaciones relacionadas con el alcance contratado.\n\nLas observaciones que impliquen nuevas funcionalidades serán consideradas como requerimientos adicionales y serán cotizadas por separado.",
-    enabled: false
-  },
-  {
-    title: "Forma de Pago",
-    content: "• 40% del monto total al aceptar la cotización, como adelanto para el inicio del proyecto.\n- 30% al aprobar la maqueta funcional (frontend), una vez validado el diseño, la estructura y la experiencia de usuario.\n- 30% restante al concluir el desarrollo, luego de la demostración de las funcionalidades del sistema mediante una reunión virtual y la conformidad del cliente.\n\nLos entregables del proyecto serán entregados una vez confirmado el pago del 100% del monto contratado.\n\nEn caso de retraso en cualquiera de los pagos establecidos, Vertex Developers podrá suspender temporalmente las actividades del proyecto hasta la regularización de los importes pendientes.",
-    enabled: false
-  },
-  {
-    title: "Validez de la Cotización",
-    content: "La presente cotización tiene una vigencia de 15 días calendario contados desde su fecha de emisión.\n\nLa presente cotización incluye IGV.",
-    enabled: false
-  },
-  {
-    title: "Garantía del Servicio",
-    content: "Vertex Developers brinda una garantía de 60 días calendario contados a partir de la entrega del proyecto.\n\nLa garantía cubre exclusivamente la corrección de errores de programación relacionados con las funcionalidades incluidas en el alcance aprobado.\n\nLa garantía no incluye:\n- Nuevas funcionalidades.\n- Cambios en los procesos del negocio.\n- Modificaciones solicitadas después de la aprobación del proyecto.\n- Problemas ocasionados por terceros.\n- Fallas derivadas de modificaciones realizadas por personas ajenas a Vertex Developers.\n- Problemas ocasionados por el servidor, hosting, proveedores de Internet o servicios externos.",
-    enabled: false
-  },
-  {
-    title: "Licencia de Uso del software",
-    content: "Con la entrega del proyecto y una vez efectuado el pago total del servicio, el cliente adquiere una licencia de uso sobre la solución desarrollada, que le permite utilizarla para las actividades propias de su organización conforme al alcance contratado.\n\nLos componentes tecnológicos, librerías, frameworks, plantillas, arquitecturas, metodologías, herramientas internas y demás elementos desarrollados previamente o reutilizables por Vertex Developers continúan siendo de su titularidad, pudiendo ser utilizados en otros proyectos sin afectar los derechos de uso otorgados al cliente.\n\nLa entrega del código fuente únicamente se realizará cuando haya sido expresamente incluida en la presente cotización o acordada posteriormente por escrito entre ambas partes.",
-    enabled: false
-  },
-  {
-    title: "Entrega de Productos Finales",
-    content: "Al finalizar el proyecto se entregará:\n\n- Aplicación web completamente funcional e implementada.\n- Respaldo de la base de datos (cuando corresponda).\n- Manual de usuario.\n- Documentación funcional incluida en la presente cotización (si aplica).\n- Credenciales de acceso a los servicios contratados por el cliente (cuando corresponda).\n- Capacitación para el personal designado.\n- Acta de conformidad del servicio.\n\nTodos los entregables serán proporcionados en formato digital mediante archivos electrónicos o mediante acceso a la infraestructura del cliente, según corresponda.",
-    enabled: false
-  }
-];
 
 function currency(n: number) {
   return n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -99,7 +48,7 @@ function ItemRow({
             className="w-full text-sm font-semibold border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all"
             placeholder="Título del ítem"
             value={item.titulo || item.detalle}
-            onChange={e => { handleField('titulo', e.target.value); handleField('detalle', e.target.value); }}
+            onChange={e => onChange({ ...item, titulo: e.target.value, detalle: e.target.value })}
           />
           <textarea
             rows={2}
@@ -203,7 +152,7 @@ export function QuoteBuilderPage() {
   const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
 
   const [templates, setTemplates] = useState<any[]>([]);
-  const [showStartModal, setShowStartModal] = useState(true);
+  const [showStartModal, setShowStartModal] = useState(!leadState);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateCode, setTemplateCode] = useState('');
   const [templateName, setTemplateName] = useState('');
@@ -238,13 +187,14 @@ export function QuoteBuilderPage() {
     leadState?.additionalItems?.length > 0 ? leadState.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : []
   );
   const [considerations, setConsiderations] = useState('');
-  const [sections, setSections] = useState(defaultSections);
+  const [sections, setSections] = useState(() => getDefaultSections(companySlug));
   const [images, setImages] = useState<string[]>([]);
   const [validity, setValidity] = useState('15 días calendario');
   const [paymentTerms, setPaymentTerms] = useState('40% adelanto, 30% al aprobar maqueta, 30% al finalizar');
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const autoTemplateAppliedRef = useRef(false);
 
   useEffect(() => {
     if (!companySlug) return;
@@ -261,14 +211,65 @@ export function QuoteBuilderPage() {
     .catch(() => setLoadingCompany(false));
   }, [companySlug]);
 
+  // Si la cotización viene de un lead, busca la plantilla cuyo nombre coincide con el
+  // servicio principal que eligió el cliente en el precotizador y la aplica automáticamente,
+  // conservando los datos de contacto/proyecto ya cargados desde el lead.
+  useEffect(() => {
+    if (autoTemplateAppliedRef.current) return;
+    if (!leadState?.matchServiceName || templates.length === 0) return;
+    autoTemplateAppliedRef.current = true;
+
+    const target = String(leadState.matchServiceName).toLowerCase().trim();
+    const match =
+      templates.find((t) => t.name?.toLowerCase().trim() === target) ||
+      templates.find((t) => {
+        const tname = t.name?.toLowerCase().trim() || '';
+        return tname && (target.includes(tname) || tname.includes(target));
+      });
+
+    if (match) {
+      applyTemplate(match);
+      if (leadState.proyecto) {
+        setProjectData((prev) => ({ ...prev, nombre: leadState.proyecto }));
+      }
+    }
+  }, [templates, leadState]);
+
+  const tiposProyecto = getTiposProyecto(company?.slug);
+  const tiposServicio = getTiposServicio(company?.slug);
+
   const itemsSubtotal = items.reduce((s, i) => s + i.total, 0);
   const addonsSubtotal = additionalItems.reduce((s, i) => s + i.total, 0);
   const subtotal = itemsSubtotal + addonsSubtotal;
   const igv = subtotal * 0.18;
   const total = subtotal + igv;
 
-  const hasItems = items.some(i => (i.titulo?.trim() || i.detalle?.trim()) && i.total > 0);
-  const canSave = hasItems && clientData.empresa.trim() && clientData.solicitante.trim() && projectData.nombre.trim();
+  const processedItems = items
+    .filter(i => (i.titulo?.trim() || i.detalle?.trim()))
+    .map(({ _key, ...rest }) => ({
+      ...rest,
+      titulo: rest.titulo || rest.detalle || '',
+      detalle: rest.detalle || rest.titulo || '',
+      contenido: rest.contenido || '',
+      cantidad: Number(rest.cantidad) || 1,
+      precioUnitario: Number(rest.precioUnitario) || 0,
+      total: Number(rest.total) > 0 ? Number(rest.total) : (Number(rest.cantidad || 1) * Number(rest.precioUnitario || 0))
+    }));
+
+  const processedAdditionalItems = additionalItems
+    .filter(i => (i.titulo?.trim() || i.detalle?.trim()))
+    .map(({ _key, ...rest }) => ({
+      ...rest,
+      titulo: rest.titulo || rest.detalle || '',
+      detalle: rest.detalle || rest.titulo || '',
+      contenido: rest.contenido || '',
+      cantidad: Number(rest.cantidad) || 1,
+      precioUnitario: Number(rest.precioUnitario) || 0,
+      total: Number(rest.total) > 0 ? Number(rest.total) : (Number(rest.cantidad || 1) * Number(rest.precioUnitario || 0))
+    }));
+
+  const hasItems = processedItems.length > 0;
+  const canSave = hasItems && Boolean(clientData.empresa.trim()) && Boolean(clientData.solicitante.trim()) && Boolean(projectData.nombre.trim());
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -281,7 +282,12 @@ export function QuoteBuilderPage() {
   };
 
   const handleSave = async () => {
-    if (!company || !canSave) return;
+    if (!company) return;
+    if (!clientData.empresa.trim()) return alert('Por favor ingresa la Empresa del cliente.');
+    if (!clientData.solicitante.trim()) return alert('Por favor ingresa el Solicitante.');
+    if (!projectData.nombre.trim()) return alert('Por favor ingresa el Nombre del proyecto.');
+    if (!hasItems) return alert('Por favor agrega al menos un ítem a la cotización.');
+
     setSaving(true);
     try {
       const payload = {
@@ -295,8 +301,8 @@ export function QuoteBuilderPage() {
         tipoCliente: clientData.tipoCliente || undefined,
         clienteNuevoRecurrente: clientData.clienteNuevoRecurrente || undefined,
         fuenteCliente: clientData.fuenteCliente || undefined,
-        items: items.filter(i => i.titulo?.trim() || i.detalle?.trim()).map(({ _key, ...rest }) => rest),
-        additionalItems: additionalItems.filter(i => i.titulo?.trim() || i.detalle?.trim()).map(({ _key, ...rest }) => rest),
+        items: processedItems,
+        additionalItems: processedAdditionalItems,
         considerations: considerations || undefined,
         sections: sections,
         images: images.length > 0 ? images : undefined,
@@ -308,7 +314,12 @@ export function QuoteBuilderPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Error al guardar');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Error al guardar la cotización:', errorData);
+        throw new Error(errorData.message || 'Error al guardar la cotización');
+      }
+
       const quote = await res.json();
       
       const token = getToken();
@@ -323,8 +334,8 @@ export function QuoteBuilderPage() {
       }
       
       navigate('/lista');
-    } catch {
-      alert('Hubo un error al guardar la cotización. Intenta nuevamente.');
+    } catch (err: any) {
+      alert(err?.message || 'Hubo un error al guardar la cotización. Intenta nuevamente.');
     } finally {
       setSaving(false);
     }
@@ -370,7 +381,8 @@ export function QuoteBuilderPage() {
       );
 
       // Map each default section, matching by normalized title
-      const mergedSections = defaultSections.map(defaultSection => {
+      const baseSections = getDefaultSections(companySlug);
+      const mergedSections = baseSections.map(defaultSection => {
         const key = defaultSection.title.toLowerCase().trim();
         const match = templateSectionsMap.get(key);
         if (match) {
@@ -380,7 +392,7 @@ export function QuoteBuilderPage() {
         return { ...defaultSection, enabled: false };
       });
 
-      // Append extra sections that exist in the template but not in defaultSections
+      // Append extra sections that exist in the template but not in baseSections
       templateSectionsMap.forEach((extraSection) => {
         mergedSections.push({
           title: extraSection.title,
@@ -610,28 +622,24 @@ export function QuoteBuilderPage() {
                 <option value="Otro">Otro</option>
               </select>
             </div>
-            <div>
-              <label className={labelCls}>Tipo de proyecto</label>
-              <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Edificio">Edificio</option>
-                <option value="Nave industrial">Nave industrial</option>
-                <option value="Vivienda unifamiliar">Vivienda unifamiliar</option>
-                <option value="Puente">Puente</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
+            {tiposProyecto.length > 0 && (
+              <div>
+                <label className={labelCls}>Tipo de proyecto</label>
+                <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {tiposProyecto.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className={labelCls}>Tipo de servicio</label>
               <select className={selectCls} value={projectData.tipoServicio} onChange={e => setProjectData({ ...projectData, tipoServicio: e.target.value })}>
                 <option value="">Seleccionar...</option>
-                <option value="Diseño estructural">Diseño estructural</option>
-                <option value="Revisión">Revisión</option>
-                <option value="Inspección y evaluación">Inspección y evaluación</option>
-                <option value="Construcción">Construcción</option>
-                <option value="Costos y presupuestos">Costos y presupuestos</option>
-                <option value="Software/Web">Software/Web</option>
-                <option value="Otro">Otro</option>
+                {tiposServicio.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
           </div>

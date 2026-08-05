@@ -22,6 +22,9 @@ node_modules/
 # Sí subir el ejemplo (sin valores reales)
 !.env.example
 
+# Sesiones de WhatsApp (credenciales, nunca subir)
+apps/api/whatsapp-sessions/
+
 # ----------------------------------------------------------
 # Build / compilación
 # ----------------------------------------------------------

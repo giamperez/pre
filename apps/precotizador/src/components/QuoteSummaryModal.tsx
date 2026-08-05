@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Trash2, Calendar, User, Mail, Phone, Briefcase, Send, AlertCircle } from 'lucide-react';
+import { X, Trash2, Calendar, User, Mail, Phone, Briefcase, Send, AlertCircle, MessageSquare, DollarSign } from 'lucide-react';
 import type { Company, ServiceItem } from '../types';
 import { API_URL } from '../config';
 
@@ -18,8 +17,11 @@ interface QuoteSummaryModalProps {
     businessName: string;
     phone: string;
     email: string;
+    notes?: string;
+    budget?: string;
   };
   booking: { date: string; time: string } | null;
+  isSubmitted?: boolean;
 }
 
 export function QuoteSummaryModal({
@@ -34,6 +36,7 @@ export function QuoteSummaryModal({
   onRemoveAddon,
   formData,
   booking,
+  isSubmitted = false,
 }: QuoteSummaryModalProps) {
   if (!isOpen) return null;
 
@@ -64,8 +67,12 @@ export function QuoteSummaryModal({
               </div>
             )}
             <div>
-              <h2 className="text-lg font-bold text-slate-800 leading-tight">Resumen de tu Cotización</h2>
-              <p className="text-xs text-slate-500">Verifica los productos solicitados antes de enviar</p>
+              <h2 className="text-lg font-bold text-slate-800 leading-tight">
+                {isSubmitted ? '¡Cotización Solicitada!' : 'Resumen de tu Cotización'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {isSubmitted ? 'Tus datos se registraron con éxito. Aquí tienes el monto estimado:' : 'Verifica los productos solicitados antes de enviar'}
+              </p>
             </div>
           </div>
           <button
@@ -174,7 +181,24 @@ export function QuoteSummaryModal({
                   <span className="truncate font-medium text-slate-700">{formData.businessName}</span>
                 </div>
               )}
+              {formData.budget && (
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="truncate font-medium text-slate-700">Presupuesto: {formData.budget}</span>
+                </div>
+              )}
             </div>
+            {formData.notes && (
+              <div className="border-t border-slate-200/60 pt-2.5 mt-2 space-y-1">
+                <div className="flex items-start gap-1.5 text-slate-600">
+                  <MessageSquare className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  <div>
+                    <span className="font-semibold text-slate-700 block text-xs">Detalles del proyecto:</span>
+                    <p className="text-slate-600 italic whitespace-pre-wrap leading-relaxed">{formData.notes}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Pricing Totals Breakdown */}
@@ -187,11 +211,17 @@ export function QuoteSummaryModal({
               <span>IGV (18%):</span>
               <span className="font-medium text-slate-800">PEN {igv.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
             </div>
-            <div className="flex justify-between font-bold text-base pt-2 border-t border-slate-100">
-              <span className="text-slate-800">Total Estimado:</span>
-              <span style={{ color: company.colorPrimary }}>
+            <div className="flex justify-between font-bold text-sm sm:text-base pt-2 border-t border-slate-100 items-center">
+              <span className="text-slate-800">Cotización Estimada (Inc. IGV):</span>
+              <span className="text-base sm:text-lg font-black" style={{ color: company.colorPrimary }}>
                 PEN {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
               </span>
+            </div>
+
+            <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-xs text-amber-900 leading-relaxed">
+              <p>
+                <strong>Nota:</strong> Esta es una estimación basada en la información proporcionada. El precio final puede variar después de la reunión de levantamiento de requerimientos.
+              </p>
             </div>
           </div>
         </div>

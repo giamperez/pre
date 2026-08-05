@@ -1,23 +1,27 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare } from 'lucide-react';
+import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, DollarSign } from 'lucide-react';
 import { useCatalog } from '../hooks/useCatalog';
 import { API_URL } from '../config';
 import { CalendarPicker } from '../components/CalendarPicker';
 import { QuoteSummaryModal } from '../components/QuoteSummaryModal';
+import { COUNTRY_CODES } from '../constants/countryCodes';
 
 export function PrecotizadorPage() {
   const { companySlug } = useParams();
   const { company, items, loading, error } = useCatalog(companySlug);
-  
+
   const [selectedMainService, setSelectedMainService] = useState<string | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
-  
+
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: '', businessName: '', phone: '', email: '' });
+  const [countryCode, setCountryCode] = useState('+51');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [formData, setFormData] = useState({ name: '', businessName: '', phone: '', email: '', notes: '', budget: '' });
   const [submitted, setSubmitted] = useState(false);
-  const [booking, setBooking] = useState<{date: string, time: string} | null>(null);
+  const [booking, setBooking] = useState<{ date: string, time: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quoteRequested, setQuoteRequested] = useState(false);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-slate-500">Cargando catálogo...</p></div>;
   if (error || !company) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-red-500">{error || 'Empresa no encontrada'}</p></div>;
@@ -35,32 +39,36 @@ export function PrecotizadorPage() {
   const selectedMainServiceObj = mainServices.find(i => i.id === selectedMainService);
   const selectedAddonObjs = addonServices.filter(i => selectedAddons.has(i.id));
 
-  const subtotal = (selectedMainServiceObj ? selectedMainServiceObj.basePrice : 0) + 
+  const subtotal = (selectedMainServiceObj ? selectedMainServiceObj.basePrice : 0) +
     selectedAddonObjs.reduce((sum, item) => sum + item.basePrice, 0);
   const igv = subtotal * 0.18;
   const total = subtotal + igv;
+  const showPrice = quoteRequested || submitted;
 
   const handleOpenModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMainServiceObj) return;
+    setQuoteRequested(true);
     setIsModalOpen(true);
   };
 
   const handleConfirmSubmission = async () => {
     if (!selectedMainServiceObj) return;
     setSubmitting(true);
-    
+
     try {
       const payload = {
         ...formData,
         companyId: company.id,
         source: 'precotizador-web',
         answers: {
-          serviciosPrincipales: [selectedMainServiceObj.name],
-          addons: selectedAddonObjs.map(a => a.name),
+          serviciosPrincipales: selectedMainServiceObj ? [{ name: selectedMainServiceObj.name, price: selectedMainServiceObj.basePrice }] : [],
+          addons: selectedAddonObjs.map(a => ({ name: a.name, price: a.basePrice })),
           subtotal,
           igv,
           total,
+          ...(formData.budget ? { presupuestoEstimadoCliente: formData.budget } : {}),
+          ...(formData.notes ? { detallesProyecto: formData.notes } : {}),
           ...(booking ? { booking } : {})
         }
       };
@@ -70,7 +78,7 @@ export function PrecotizadorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) throw new Error('Error al enviar la solicitud de cotización');
 
       if (booking) {
@@ -84,12 +92,12 @@ export function PrecotizadorPage() {
             clientPhone: formData.phone,
             date: booking.date,
             time: booking.time,
-            notes: 'Desde precotizador web'
+            notes: formData.notes || 'Desde precotizador web'
           })
         });
         if (!bookingRes.ok) console.error('Error al guardar booking');
       }
-      
+
       setSubmitted(true);
       setIsModalOpen(false);
     } catch (err) {
@@ -120,10 +128,18 @@ export function PrecotizadorPage() {
             </div>
           </div>
           <div className="text-right w-full sm:w-auto">
-            <p className="text-sm text-slate-500 font-medium">Cotización Estimada (Inc. IGV)</p>
-            <p className="text-2xl font-black" style={{ color: company.colorPrimary }}>
-              PEN {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-            </p>
+            {showPrice ? (
+              <>
+                <p className="text-sm text-slate-500 font-medium">Cotización Estimada (Inc. IGV)</p>
+                <p className="text-2xl font-black" style={{ color: company.colorPrimary }}>
+                  PEN {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                </p>
+              </>
+            ) : (
+              <div className="bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 inline-block text-center sm:text-right">
+                Llena los datos y solicita cotización formal para ver el monto.
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -140,7 +156,7 @@ export function PrecotizadorPage() {
             {mainServices.map(item => {
               const isSelected = selectedMainService === item.id;
               return (
-                <div 
+                <div
                   key={item.id}
                   onClick={() => setSelectedMainService(item.id)}
                   className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-white
@@ -156,7 +172,7 @@ export function PrecotizadorPage() {
                       <p className="text-sm text-slate-500 leading-relaxed mb-3">{item.description}</p>
                     </div>
                     <div className="shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors"
-                         style={isSelected ? { borderColor: company.colorPrimary, backgroundColor: company.colorPrimary, color: '#fff' } : { borderColor: '#cbd5e1' }}>
+                      style={isSelected ? { borderColor: company.colorPrimary, backgroundColor: company.colorPrimary, color: '#fff' } : { borderColor: '#cbd5e1' }}>
                       {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                     </div>
                   </div>
@@ -181,7 +197,7 @@ export function PrecotizadorPage() {
               {addonServices.map(item => {
                 const isSelected = selectedAddons.has(item.id);
                 return (
-                  <div 
+                  <div
                     key={item.id}
                     onClick={() => toggleAddon(item.id)}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-white
@@ -199,7 +215,7 @@ export function PrecotizadorPage() {
                         <p className="text-sm text-slate-500 leading-relaxed mb-3">{item.description}</p>
                       </div>
                       <div className="shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors"
-                           style={isSelected ? { borderColor: company.colorSecondary, backgroundColor: company.colorSecondary, color: '#fff' } : { borderColor: '#cbd5e1' }}>
+                        style={isSelected ? { borderColor: company.colorSecondary, backgroundColor: company.colorSecondary, color: '#fff' } : { borderColor: '#cbd5e1' }}>
                         {isSelected && <CheckSquare className="w-4 h-4" />}
                       </div>
                     </div>
@@ -226,7 +242,7 @@ export function PrecotizadorPage() {
         {/* Contact Form */}
         <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: company.colorPrimary }} />
-          
+
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-slate-800">Completa tu solicitud</h2>
             <p className="text-slate-500">Déjanos tus datos para enviarte la propuesta formal y conversar sobre tu proyecto.</p>
@@ -239,7 +255,7 @@ export function PrecotizadorPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">¡Solicitud Recibida!</h3>
               <p className="text-slate-600 mb-6">Nos pondremos en contacto contigo pronto.</p>
-              
+
               {booking && (
                 <div className="bg-white p-4 rounded-xl border border-green-200 text-left max-w-sm mx-auto shadow-sm mb-6 flex gap-3 items-center">
                   <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
@@ -253,7 +269,7 @@ export function PrecotizadorPage() {
               )}
 
               <div className="bg-white p-6 rounded-xl border border-slate-200 text-left max-w-sm mx-auto shadow-sm">
-                <p className="font-semibold text-slate-800 mb-4 text-center">Resumen de Cotización</p>
+                <p className="font-semibold text-slate-800 mb-4 text-center">Resumen de Pre-Cotización</p>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-500">Subtotal:</span>
                   <span className="font-medium text-slate-800">PEN {subtotal.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
@@ -262,10 +278,17 @@ export function PrecotizadorPage() {
                   <span className="text-slate-500">IGV (18%):</span>
                   <span className="font-medium text-slate-800">PEN {igv.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t border-slate-100">
-                  <span className="text-slate-800">Total:</span>
-                  <span style={{ color: company.colorPrimary }}>PEN {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
+                <div className="flex justify-between font-bold text-base mt-4 pt-4 border-t border-slate-100 items-center">
+                  <span className="text-slate-800 text-xs sm:text-sm">Cotización Estimada (Inc. IGV):</span>
+                  <span className="text-lg font-black" style={{ color: company.colorPrimary }}>PEN {total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}</span>
                 </div>
+
+                <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-xs text-amber-900 leading-relaxed">
+                  <p>
+                    <strong>Nota:</strong> Esta es una estimación basada en la información proporcionada. El precio final puede variar después de la reunión de levantamiento de requerimientos.
+                  </p>
+                </div>
+
                 <div className="mt-6 pt-4 border-t border-slate-100 text-sm text-center space-y-2">
                   <p className="text-slate-500">Contacto de la empresa:</p>
                   <p className="font-medium text-slate-800">{company.contactPhone}</p>
@@ -280,38 +303,87 @@ export function PrecotizadorPage() {
                   <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                     <User className="w-4 h-4 text-slate-400" /> Nombre
                   </label>
-                  <input required type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent" 
-                         style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                         value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Tu nombre" />
+                  <input required type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Tu nombre" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-slate-400" /> Empresa / Negocio
                   </label>
-                  <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent" 
-                         style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                         value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} placeholder="Opcional" />
+                  <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} placeholder="Opcional" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-slate-400" /> Correo
                   </label>
-                  <input required type="email" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent" 
-                         style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                         value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="tucorreo@ejemplo.com" />
+                  <input required type="email" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="tucorreo@ejemplo.com" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                     <Phone className="w-4 h-4 text-slate-400" /> WhatsApp
                   </label>
-                  <input required type="tel" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent" 
-                         style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                         value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+51 999 999 999" />
+                  <div className="flex gap-2">
+                    <select
+                      value={countryCode}
+                      onChange={e => {
+                        const newCode = e.target.value;
+                        setCountryCode(newCode);
+                        setFormData({ ...formData, phone: `${newCode} ${phoneNumber.trim()}` });
+                      }}
+                      className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm font-medium outline-none transition-all focus:ring-2 focus:border-transparent shrink-0 cursor-pointer shadow-sm"
+                      style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    >
+                      {COUNTRY_CODES.map(c => (
+                        <option key={c.code + c.country} value={c.code}>
+                          {c.flag} {c.code} ({c.country})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      required
+                      type="tel"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
+                      style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                      value={phoneNumber}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setPhoneNumber(val);
+                        setFormData({ ...formData, phone: `${countryCode} ${val.trim()}` });
+                      }}
+                      placeholder="999 999 999"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-slate-400" /> Presupuesto disponible
+                  </label>
+                  <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    value={formData.budget} onChange={e => setFormData({ ...formData, budget: e.target.value })} placeholder="Puede ser un monto exacto o un intervalo" />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-slate-400" /> Detalles de tu proyecto / ¿Qué necesitas?
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm resize-y"
+                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                    value={formData.notes}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Describe brevemente tus requerimientos o cualquier detalle importante..."
+                  />
                 </div>
               </div>
-              <button 
+              <button
                 disabled={!selectedMainService || submitting}
-                type="submit" 
+                type="submit"
                 className="w-full mt-6 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: (!selectedMainService || submitting) ? '#94a3b8' : company.colorPrimary }}
               >

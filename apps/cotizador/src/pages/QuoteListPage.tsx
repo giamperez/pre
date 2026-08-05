@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
-import type { Quote } from '../types';
+import type { Quote, Company } from '../types';
 import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2 } from 'lucide-react';
 import { fetchWithAuth, getUser, getToken } from '../auth';
+import { getTiposServicio } from '../constants/projectTypes';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -21,17 +22,6 @@ const ESTADOS = [
   { value: 'aprobada', label: 'Aprobada' },
   { value: 'rechazada', label: 'Rechazada' },
   { value: 'vencida', label: 'Vencida' },
-];
-
-const TIPOS_SERVICIO = [
-  { value: '', label: 'Todos los servicios' },
-  { value: 'Diseño estructural', label: 'Diseño estructural' },
-  { value: 'Revisión', label: 'Revisión' },
-  { value: 'Inspección y evaluación', label: 'Inspección y evaluación' },
-  { value: 'Construcción', label: 'Construcción' },
-  { value: 'Costos y presupuestos', label: 'Costos y presupuestos' },
-  { value: 'Software/Web', label: 'Software/Web' },
-  { value: 'Otro', label: 'Otro' },
 ];
 
 const ESTADO_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
@@ -109,6 +99,7 @@ export function QuoteListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState('');
   const [estado, setEstado] = useState('');
   const [tipoServicio, setTipoServicio] = useState('');
@@ -116,12 +107,31 @@ export function QuoteListPage() {
   const [searchInput, setSearchInput] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  
+
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{importadas: number, errores: number, detalles: string[]} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getUser();
   const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    fetch(`${API_URL}/catalog`)
+      .then(res => res.json())
+      .then(setCompanies)
+      .catch(() => {});
+  }, []);
+
+  const selectedCompanySlug = companies.find(c => c.id === companyId)?.slug;
+  const tiposServicio = getTiposServicio(selectedCompanySlug);
+
+  const handleCompanyChange = (id: string) => {
+    setCompanyId(id);
+    const newSlug = companies.find(c => c.id === id)?.slug;
+    const validValues = new Set(getTiposServicio(newSlug).map(o => o.value));
+    if (tipoServicio && !validValues.has(tipoServicio)) {
+      setTipoServicio('');
+    }
+  };
 
   const buildUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -265,7 +275,7 @@ export function QuoteListPage() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
           {/* Search */}
           <form onSubmit={handleSearch} className="col-span-2 flex gap-2">
             <input
@@ -280,6 +290,14 @@ export function QuoteListPage() {
             </button>
           </form>
 
+          {/* Empresa */}
+          <select className={inputCls} value={companyId} onChange={e => handleCompanyChange(e.target.value)}>
+            <option value="">Todas las empresas</option>
+            {companies.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
           {/* Estado */}
           <select className={inputCls} value={estado} onChange={e => setEstado(e.target.value)}>
             {ESTADOS.map(({ value, label }) => (
@@ -287,9 +305,10 @@ export function QuoteListPage() {
             ))}
           </select>
 
-          {/* Tipo de servicio */}
+          {/* Tipo de servicio (depende de la empresa seleccionada) */}
           <select className={inputCls} value={tipoServicio} onChange={e => setTipoServicio(e.target.value)}>
-            {TIPOS_SERVICIO.map(({ value, label }) => (
+            <option value="">Todos los servicios</option>
+            {tiposServicio.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>

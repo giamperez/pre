@@ -39,8 +39,17 @@ class ProjectDataDto {
 }
 
 class QuoteItemDto {
+  @IsOptional()
   @IsString()
-  detalle: string;
+  titulo?: string;
+
+  @IsOptional()
+  @IsString()
+  contenido?: string;
+
+  @IsOptional()
+  @IsString()
+  detalle?: string;
 
   @IsNumber()
   cantidad: number;

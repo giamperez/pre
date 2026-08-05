@@ -6,7 +6,7 @@ export class CatalogService {
   constructor(private prisma: PrismaService) {}
 
   async getCompanies() {
-    return this.prisma.company.findMany();
+    return this.prisma.company.findMany({ where: { isActive: true } });
   }
 
   async getCatalogByCompany(companySlug: string) {
