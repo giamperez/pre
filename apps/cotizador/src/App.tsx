@@ -7,9 +7,12 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { AgendaPage } from './pages/AgendaPage';
+import { WhatsappPage } from './pages/WhatsappPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { GlobalDisconnectBanner } from './components/whatsapp/GlobalDisconnectBanner';
+import { WhatsappProvider } from './whatsapp-context';
 import { getUser, logout } from './auth';
-import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar } from 'lucide-react';
+import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar, MessageCircle } from 'lucide-react';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -54,6 +57,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Agenda</span>
           </Link>
+          <Link to="/whatsapp" className={navLinkCls('/whatsapp')}>
+            <MessageCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </Link>
           {isAdmin && (
             <Link to="/usuarios" className={navLinkCls('/usuarios')}>
               <UserCog className="w-4 h-4" />
@@ -86,6 +93,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <GlobalDisconnectBanner />
+
       <main className="flex-1 p-4 sm:p-6">
         {children}
       </main>
@@ -95,23 +104,26 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Pública */}
-        <Route path="/login" element={<LoginPage />} />
+    <WhatsappProvider>
+      <Router>
+        <Routes>
+          {/* Pública */}
+          <Route path="/login" element={<LoginPage />} />
 
-        {/* Protegidas */}
-        <Route path="/" element={<ProtectedRoute><AppLayout><SelectorPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/nueva/:companySlug" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/lista" element={<ProtectedRoute><AppLayout><QuoteListPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/leads" element={<ProtectedRoute><AppLayout><LeadsPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/agenda" element={<ProtectedRoute><AppLayout><AgendaPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/usuarios" element={<ProtectedRoute><AppLayout><UsersPage /></AppLayout></ProtectedRoute>} />
+          {/* Protegidas */}
+          <Route path="/" element={<ProtectedRoute><AppLayout><SelectorPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/nueva/:companySlug" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/lista" element={<ProtectedRoute><AppLayout><QuoteListPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/leads" element={<ProtectedRoute><AppLayout><LeadsPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/agenda" element={<ProtectedRoute><AppLayout><AgendaPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/whatsapp" element={<ProtectedRoute><AppLayout><WhatsappPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/usuarios" element={<ProtectedRoute><AppLayout><UsersPage /></AppLayout></ProtectedRoute>} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </WhatsappProvider>
   );
 }
 

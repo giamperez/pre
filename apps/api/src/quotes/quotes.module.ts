@@ -8,5 +8,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [QuotesController],
   providers: [QuotesService, PdfService],
+  exports: [QuotesService],
 })
 export class QuotesModule {}

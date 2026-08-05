@@ -17,6 +17,20 @@ export class PdfService {
     return `data:${mime};base64,${buffer.toString('base64')}`;
   }
 
+  /**
+   * Empresas creadas/editadas desde el cotizador guardan la ruta real de la imagen subida
+   * (ej. coverImageUrl). Empresas antiguas (Vertex/Pyramid) no tienen ese campo lleno pero sí
+   * tienen el archivo en disco bajo la convención fija <slug>/<fallbackFilename>.
+   */
+  private resolveCompanyImage(dbPath: string | null | undefined, slug: string, fallbackFilename: string): string {
+    if (dbPath) {
+      const relative = dbPath.replace(/^\/?companies\//, '');
+      const fromDb = this.imageToBase64(relative);
+      if (fromDb) return fromDb;
+    }
+    return this.imageToBase64(`${slug}/${fallbackFilename}`);
+  }
+
   private fmt(n: number): string {
     return Number(n || 0).toLocaleString('es-PE', {
       minimumFractionDigits: 2,
@@ -37,16 +51,24 @@ export class PdfService {
     const primary: string = company.colorPrimary || '#0C2448';
     const secondary: string = company.colorSecondary || '#0397A3';
 
-    const portadaB64 = this.imageToBase64(`${slug}/portada.jpeg`);
-    const membreteB64 = this.imageToBase64(`${slug}/membrete.jpeg`);
-    const contraportadaB64 = this.imageToBase64(`${slug}/contraportada.jpeg`);
+    const portadaB64 = this.resolveCompanyImage(company.coverImageUrl, slug, 'portada.jpeg');
+    const membreteB64 = this.resolveCompanyImage(company.letterheadUrl, slug, 'membrete.jpeg');
+    const contraportadaB64 = this.resolveCompanyImage(company.backCoverImageUrl, slug, 'contraportada.jpeg');
 
     const clientData: Record<string, string> = (quote.clientData as any) || {};
     const projectData: Record<string, string> = (quote.projectData as any) || {};
     const items: any[] = (quote.items as any[]) || [];
     const additionalItems: any[] = (quote.additionalItems as any[]) || [];
     const sections: any[] = (quote.sections as any[]) || [];
-    const paymentInfo: Record<string, string> = (company.paymentInfo as any) || {};
+    let paymentInfo: Record<string, string> = {};
+    if (company.paymentInfo) {
+      try {
+        paymentInfo = JSON.parse(company.paymentInfo);
+      } catch {
+        paymentInfo = {};
+      }
+    }
+    const taxId: string | undefined = company.taxId || paymentInfo.ruc;
 
     // ── Helpers ────────────────────────────────────────────────────────────────
     const bg = `background-image:url('${membreteB64}');`;
@@ -165,7 +187,7 @@ export class PdfService {
         ${paymentInfo.banco ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600; min-width:120px;">Banco</td><td>${paymentInfo.banco}</td></tr>` : ''}
         ${paymentInfo.cuenta ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">Cuenta corriente</td><td>${paymentInfo.cuenta}</td></tr>` : ''}
         ${paymentInfo.cci ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">CCI</td><td>${paymentInfo.cci}</td></tr>` : ''}
-        ${paymentInfo.ruc ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">RUC</td><td>${paymentInfo.ruc}</td></tr>` : ''}
+        ${taxId ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">RUC</td><td>${taxId}</td></tr>` : ''}
       </table>
     `;
 

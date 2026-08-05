@@ -90,30 +90,47 @@ export function LeadsPage() {
     
     // Parse answers to create quote items
     const answers = selectedLead.answers || {};
-    const items = (answers.serviciosPrincipales || []).map((s: any) => ({
-      detalle: s.name,
-      cantidad: 1,
-      precioUnitario: s.price,
-      total: s.price
-    }));
+    const items = (answers.serviciosPrincipales || []).map((s: any) => {
+      const name = typeof s === 'string' ? s : (s?.name || s?.detalle || 'Servicio principal');
+      const price = typeof s === 'object' && s?.price ? Number(s.price) : 0;
+      return {
+        titulo: name,
+        detalle: name,
+        contenido: '',
+        cantidad: 1,
+        precioUnitario: price,
+        total: price
+      };
+    });
     
-    const additionalItems = (answers.addons || []).map((s: any) => ({
-      detalle: s.name,
-      cantidad: 1,
-      precioUnitario: s.price,
-      total: s.price
-    }));
+    const additionalItems = (answers.addons || []).map((s: any) => {
+      const name = typeof s === 'string' ? s : (s?.name || s?.detalle || 'Adicional');
+      const price = typeof s === 'object' && s?.price ? Number(s.price) : 0;
+      return {
+        titulo: name,
+        detalle: name,
+        contenido: '',
+        cantidad: 1,
+        precioUnitario: price,
+        total: price
+      };
+    });
+
+    const mainServiceName = (answers.serviciosPrincipales || [])
+      .map((s: any) => (typeof s === 'string' ? s : s?.name))
+      .find((n: any) => Boolean(n));
 
     navigate(`/nueva/${selectedLead.company.slug}`, {
       state: {
         leadData: {
-          empresa: selectedLead.businessName,
+          empresa: selectedLead.businessName || selectedLead.name,
           solicitante: selectedLead.name,
-          telefono: selectedLead.phone,
-          correo: selectedLead.email,
-          proyecto: 'Proyecto web',
+          telefono: selectedLead.phone || '',
+          correo: selectedLead.email || '',
+          proyecto: selectedLead.answers?.detallesProyecto || 'Proyecto web',
           items,
-          additionalItems
+          additionalItems,
+          matchServiceName: mainServiceName || null
         }
       }
     });
@@ -385,7 +402,7 @@ export function LeadsPage() {
                   className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <FileText className="w-4 h-4" />
-                  Crear cotización
+                  Abrir cotización
                 </button>
               )}
             </div>

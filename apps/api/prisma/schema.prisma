@@ -30,9 +30,17 @@ model Company {
   colorSecondary    String?
   coverImageUrl     String?
   backCoverImageUrl String?
+  letterheadUrl     String?
   contactPhone      String?
   contactEmail      String?
   paymentInfo       String?
+  isActive          Boolean @default(true)
+
+  legalName        String?
+  taxId            String?
+  country          String?
+  legalEntityType  String?
+  fiscalAddress    String?
 
   catalogItems ServiceCatalogItem[]
   leads        Lead[]
@@ -40,6 +48,9 @@ model Company {
   templates    QuoteTemplate[]
   availability Availability[]
   bookings     Booking[]
+
+  whatsappSession WhatsAppSession?
+  whatsappChats   WhatsAppChat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,7 +92,8 @@ model Lead {
   classification LeadClassification @default(pendiente)
   notes          String?
 
-  company Company @relation(fields: [companyId], references: [id])
+  company       Company        @relation(fields: [companyId], references: [id])
+  whatsappChats WhatsAppChat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,5 +173,67 @@ model Booking {
   notes       String?
   createdAt   DateTime @default(now())
   company     Company  @relation(fields: [companyId], references: [id])
+}
+
+enum WhatsAppSessionStatus {
+  disconnected
+  qr_pending
+  connecting
+  connected
+}
+
+model WhatsAppSession {
+  id                 String                @id @default(uuid())
+  companyId          String                @unique
+  status             WhatsAppSessionStatus @default(disconnected)
+  qrCode             String?
+  phoneNumber        String?
+  authDir            String?
+  lastConnectedAt    DateTime?
+  lastDisconnectedAt DateTime?
+  disconnectReason   String?
+
+  company Company        @relation(fields: [companyId], references: [id])
+  chats   WhatsAppChat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppChat {
+  id                 String    @id @default(uuid())
+  companyId          String
+  sessionId          String
+  waJid              String
+  contactName        String?
+  leadId             String?
+  lastMessageAt      DateTime?
+  lastMessagePreview String?
+  unreadCount        Int       @default(0)
+
+  session  WhatsAppSession   @relation(fields: [sessionId], references: [id])
+  company  Company           @relation(fields: [companyId], references: [id])
+  lead     Lead?             @relation(fields: [leadId], references: [id])
+  messages WhatsAppMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sessionId, waJid])
+}
+
+model WhatsAppMessage {
+  id           String   @id @default(uuid())
+  chatId       String
+  waMessageId  String?
+  direction    String // "in" | "out"
+  body         String   @db.Text
+  status       String   @default("sent") // sent, delivered, read, failed
+  sentByUserId String?
+  createdAt    DateTime @default(now())
+
+  chat WhatsAppChat @relation(fields: [chatId], references: [id])
+
+  @@unique([chatId, waMessageId])
 }
 
