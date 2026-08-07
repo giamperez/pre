@@ -8,7 +8,7 @@ import { CompanyCustomFieldsEditor, type CustomFieldDefinition } from '../compon
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, LayoutTemplate,
   FileText, Bot, Search, PlusCircle, Layers, MoveUp, MoveDown, Power, Sparkles, Calendar,
-  ShieldAlert, ImagePlus, Sliders
+  ShieldAlert, ImagePlus, Sliders, Pencil, Film
 } from 'lucide-react';
 
 const REFERENCE_COMPANY_SLUG = 'vertex-developers';
@@ -45,6 +45,9 @@ interface PrequoteCard {
   subtitle: string;
   whyIdeal: string;
   includedAddons: string[];
+  basePrice?: number;
+  ctaText?: string;
+  videoUrl?: string;
 }
 
 const emptyItem = (): TemplateItem => ({
@@ -62,11 +65,71 @@ const emptyPrequoteCard = (): PrequoteCard => ({
   subtitle: '',
   whyIdeal: '',
   includedAddons: [],
+  basePrice: 0,
+  ctaText: 'Precotizar paquete',
+  videoUrl: '',
 });
 
 function currency(n: number) {
   return n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+export interface FieldConfig {
+  label: string;
+  defaultValue?: string;
+  placeholder?: string;
+  enabled: boolean;
+  options?: string[];
+}
+
+const defaultFieldConfigs: Record<string, FieldConfig> = {
+  empresa: { label: 'Empresa / Cliente', defaultValue: '', placeholder: 'Nombre de la empresa', enabled: true },
+  ruc: { label: 'RUC / DNI', defaultValue: '', placeholder: '20XXXXXXXXX / DNI', enabled: true },
+  solicitante: { label: 'Solicitante', defaultValue: '', placeholder: 'Nombre completo', enabled: true },
+  direccion: { label: 'Dirección', defaultValue: '', placeholder: 'Av. / Calle / Urb.', enabled: true },
+  telefono: { label: 'Teléfono', defaultValue: '', placeholder: '+51 999 000 000', enabled: true },
+  correo: { label: 'Correo', defaultValue: '', placeholder: 'correo@empresa.com', enabled: true },
+  tipoCliente: {
+    label: 'Tipo de cliente',
+    defaultValue: '',
+    enabled: true,
+    options: ['Persona natural', 'Empresa privada', 'Entidad pública'],
+  },
+  recurrencia: {
+    label: 'Recurrencia',
+    defaultValue: '',
+    enabled: true,
+    options: ['Nuevo', 'Recurrente'],
+  },
+  fuenteCliente: {
+    label: 'Fuente del cliente',
+    defaultValue: '',
+    enabled: true,
+    options: ['Referido', 'Redes sociales', 'Web', 'Anuncio', 'Directo', 'Otro'],
+  },
+  ubicacionProyecto: { label: 'Ubicación del proyecto', defaultValue: '', placeholder: 'Ciudad, Distrito', enabled: true },
+  sectorProyecto: {
+    label: 'Sector',
+    defaultValue: '',
+    enabled: true,
+    options: ['Residencial', 'Comercial', 'Industrial', 'Educativo', 'Salud', 'Institucional', 'Otro'],
+  },
+  tipoProyecto: {
+    label: 'Tipo de proyecto',
+    defaultValue: '',
+    enabled: true,
+    options: ['Edificio', 'Nave industrial', 'Vivienda unifamiliar', 'Puente', 'Otro'],
+  },
+  tipoServicio: {
+    label: 'Tipo de servicio',
+    defaultValue: '',
+    enabled: true,
+    options: ['Diseño estructural', 'Revisión', 'Inspección y evaluación', 'Construcción', 'Costos y presupuestos', 'Otro'],
+  },
+  nombreProyecto: { label: 'Nombre del proyecto', defaultValue: '', placeholder: 'Ej: Desarrollo web para Empresa XYZ', enabled: true },
+  modalidad: { label: 'Modalidad', defaultValue: 'Proyecto por alcance', placeholder: 'Proyecto por alcance', enabled: true },
+  plazo: { label: 'Plazo estimado', defaultValue: '45 días calendario', placeholder: '45 días calendario', enabled: true },
+};
 
 export function TemplateEditorPage() {
   const { templateId } = useParams();
@@ -87,10 +150,106 @@ export function TemplateEditorPage() {
   const [type, setType] = useState<'cotizacion' | 'precotizacion'>(
     paramType === 'precotizacion' ? 'precotizacion' : 'cotizacion'
   );
+
+  useEffect(() => {
+    if (paramType === 'precotizacion') {
+      setType('precotizacion');
+    }
+  }, [paramType]);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('General');
   const [showConfigPanel, setShowConfigPanel] = useState(false);
+
+  const [fieldConfigs, setFieldConfigs] = useState<Record<string, FieldConfig>>(defaultFieldConfigs);
+
+  const updateFieldConfig = (key: string, updates: Partial<FieldConfig>) => {
+    setFieldConfigs(prev => ({
+      ...prev,
+      [key]: { ...(prev[key] || { label: key, enabled: true }), ...updates }
+    }));
+  };
+
+  const renderFieldEditor = (key: string, isSelect = false) => {
+    const cfg = fieldConfigs[key] || { label: key, enabled: true };
+    return (
+      <div key={key} className={`p-3.5 rounded-xl border transition-all ${cfg.enabled ? 'border-slate-200 bg-slate-50/50 hover:border-slate-300' : 'border-dashed border-slate-200 bg-slate-100/50 opacity-60'}`}>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5 flex-1">
+            <input
+              type="text"
+              className="text-xs font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-indigo-400 focus:border-indigo-600 outline-none px-1 py-0.5 w-full"
+              value={cfg.label}
+              onChange={e => updateFieldConfig(key, { label: e.target.value })}
+              title="Haz clic para renombrar el campo"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => updateFieldConfig(key, { enabled: !cfg.enabled })}
+            className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+              cfg.enabled ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50'
+            }`}
+            title={cfg.enabled ? 'Eliminar / Ocultar campo de la plantilla' : 'Restaurar campo'}
+          >
+            {cfg.enabled ? <Trash2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            {cfg.enabled ? 'Eliminar' : 'Restaurar'}
+          </button>
+        </div>
+
+        {cfg.enabled && (
+          <div className="space-y-2 mt-2">
+            {isSelect ? (
+              <>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+                    Opciones del desplegable (separadas por coma)
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none bg-white"
+                    value={(cfg.options || []).join(', ')}
+                    onChange={e => updateFieldConfig(key, {
+                      options: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                    })}
+                    placeholder="Ej: Opción 1, Opción 2, Opción 3"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+                    Valor por defecto seleccionado
+                  </label>
+                  <select
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-300 outline-none bg-white"
+                    value={cfg.defaultValue || ''}
+                    onChange={e => updateFieldConfig(key, { defaultValue: e.target.value })}
+                  >
+                    <option value="">Sin selección predeterminada</option>
+                    {(cfg.options || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+                  Texto / Valor por defecto (pre-llenado)
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none bg-white placeholder:text-slate-300"
+                  placeholder={cfg.placeholder || `Texto predeterminado para ${cfg.label}`}
+                  value={cfg.defaultValue || ''}
+                  onChange={e => updateFieldConfig(key, { defaultValue: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Section 1: Datos del cliente (defaults & custom fields)
   const [clientData, setClientData] = useState({
@@ -150,9 +309,14 @@ export function TemplateEditorPage() {
   // Global / Precotización state
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>([]);
   const [botEnabled, setBotEnabled] = useState(true);
+  const [botWelcome, setBotWelcome] = useState(
+    '¡Hola! Soy el asistente virtual comercial de la empresa. ¿En qué solución o proyecto estás interesado hoy?'
+  );
   const [botPrompt, setBotPrompt] = useState(
     'Eres el asistente comercial virtual de la empresa. Tu objetivo es saludar cordialmente, consultar los datos de contacto del cliente y guiarlo a través de nuestras opciones y paquetes de servicio.'
   );
+  const [botTone, setBotTone] = useState('comercial');
+  const [mandatoryFields, setMandatoryFields] = useState<string[]>(['nombre', 'telefono', 'correo', 'empresa']);
   const [prequoteCards, setPrequoteCards] = useState<PrequoteCard[]>([emptyPrequoteCard()]);
 
   // Reusable Items Drawer State
@@ -175,9 +339,17 @@ export function TemplateEditorPage() {
             setSections(getDefaultSections(match.slug));
           }
         }
+        if (!templateId) {
+          setLoading(false);
+        }
       })
-      .catch(console.error);
-  }, [paramCompanySlug]);
+      .catch(err => {
+        console.error(err);
+        if (!templateId) {
+          setLoading(false);
+        }
+      });
+  }, [paramCompanySlug, templateId]);
 
   // Load Reusable Items/Cards
   useEffect(() => {
@@ -250,6 +422,7 @@ export function TemplateEditorPage() {
 
           if (tpl.projectData) {
             const pd = tpl.projectData as any;
+            if (pd.fieldConfigs) setFieldConfigs(prev => ({ ...prev, ...pd.fieldConfigs }));
             if (pd.modalidad || pd.plazo || pd.nombre) {
               setProjectDetails({
                 nombre: pd.nombre || '',
@@ -317,7 +490,10 @@ export function TemplateEditorPage() {
 
           if (tpl.cardsConfig) {
             if (typeof tpl.cardsConfig.botEnabled === 'boolean') setBotEnabled(tpl.cardsConfig.botEnabled);
+            if (tpl.cardsConfig.botWelcome) setBotWelcome(tpl.cardsConfig.botWelcome);
             if (tpl.cardsConfig.botPrompt) setBotPrompt(tpl.cardsConfig.botPrompt);
+            if (tpl.cardsConfig.botTone) setBotTone(tpl.cardsConfig.botTone);
+            if (Array.isArray(tpl.cardsConfig.mandatoryFields)) setMandatoryFields(tpl.cardsConfig.mandatoryFields);
             if (Array.isArray(tpl.cardsConfig.cards)) {
               setPrequoteCards(tpl.cardsConfig.cards.map((c: any) => ({
                 _key: Math.random().toString(36).slice(2),
@@ -325,6 +501,9 @@ export function TemplateEditorPage() {
                 subtitle: c.subtitle || '',
                 whyIdeal: c.whyIdeal || '',
                 includedAddons: Array.isArray(c.includedAddons) ? c.includedAddons : [],
+                basePrice: Number(c.basePrice) || 0,
+                ctaText: c.ctaText || 'Precotizar paquete',
+                videoUrl: c.videoUrl || '',
               })));
             }
           }
@@ -465,6 +644,7 @@ export function TemplateEditorPage() {
           tipoProyecto: projectClassification.tipoProyecto.trim(),
           tipoServicio: projectClassification.tipoServicio.trim(),
           clientData,
+          fieldConfigs,
           considerations,
           validity: commercialConditions.validity,
           paymentTerms: commercialConditions.paymentTerms,
@@ -485,8 +665,10 @@ export function TemplateEditorPage() {
         cardsConfig: type === 'precotizacion'
           ? {
               botEnabled,
+              botWelcome,
               botPrompt,
-              mandatoryFields: ['fecha', 'nombre', 'telefono', 'correo'],
+              botTone,
+              mandatoryFields,
               cards: prequoteCards,
             }
           : undefined,
@@ -666,7 +848,7 @@ export function TemplateEditorPage() {
                   onChange={e => setType(e.target.value as any)}
                 >
                   <option value="cotizacion">Cotización Formal</option>
-                  <option value="precotizacion">Precotización (Chatbot Assistant)</option>
+                  <option value="precotizacion">Precotización</option>
                 </select>
               </div>
 
@@ -706,125 +888,278 @@ export function TemplateEditorPage() {
         )}
 
         {/* Sections Container matching exact prompt HTML structure */}
-        <div className="space-y-6">
+        {type === 'precotizacion' ? (
+          <div className="space-y-6">
+            {/* Panel 1: Asistente Virtual (Bot IA) */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800">Asistente Virtual (Bot de IA)</h2>
+                    <p className="text-xs text-slate-500">Configura el comportamiento, prompt y reglas del chatbot de precotización.</p>
+                  </div>
+                </div>
 
-          {/* SECTION 1: Datos del cliente */}
+                <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={botEnabled}
+                    onChange={e => setBotEnabled(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Power className={`w-3.5 h-3.5 ${botEnabled ? 'text-emerald-500' : 'text-slate-400'}`} />
+                    {botEnabled ? 'Bot Habilitado' : 'Bot Desactivado'}
+                  </span>
+                </label>
+              </div>
+
+              {botEnabled && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Saludo / Mensaje Inicial del Bot
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-300 outline-none"
+                      placeholder="Ej: ¡Hola! Soy el asistente virtual comercial. ¿En qué solución estás interesado hoy?"
+                      value={botWelcome}
+                      onChange={e => setBotWelcome(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-indigo-500" /> Instrucciones / Prompt Personalizado del Bot
+                    </label>
+                    <textarea
+                      rows={4}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 font-mono focus:ring-2 focus:ring-indigo-300 outline-none"
+                      placeholder="Instrucciones del bot..."
+                      value={botPrompt}
+                      onChange={e => setBotPrompt(e.target.value)}
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Define cómo debe responder la IA, guiar a prospectos y calificar clientes potenciales.
+                    </p>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Tono de Comunicación del Bot</label>
+                      <select
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 bg-white focus:ring-2 focus:ring-indigo-300 outline-none"
+                        value={botTone}
+                        onChange={e => setBotTone(e.target.value)}
+                      >
+                        <option value="comercial">Comercial y Persuasivo</option>
+                        <option value="tecnico">Técnico e Ingenieril</option>
+                        <option value="amigable">Amigable y Cercano</option>
+                        <option value="formal">Formal y Corporativo</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Campos Obligatorios a Solicitar por Chat</label>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {[
+                          { id: 'nombre', label: 'Nombre' },
+                          { id: 'telefono', label: 'Teléfono' },
+                          { id: 'correo', label: 'Correo' },
+                          { id: 'empresa', label: 'Empresa' },
+                          { id: 'presupuesto', label: 'Presupuesto' },
+                          { id: 'plazo', label: 'Plazo' },
+                        ].map(f => {
+                          const isChecked = mandatoryFields.includes(f.id);
+                          return (
+                            <label key={f.id} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all ${
+                              isChecked ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setMandatoryFields(prev =>
+                                    isChecked ? prev.filter(x => x !== f.id) : [...prev, f.id]
+                                  );
+                                }}
+                                className="rounded text-indigo-600 focus:ring-indigo-500 w-3 h-3"
+                              />
+                              {f.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Panel 2: Tarjetas de Soluciones / Paquetes */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800">Tarjetas de Soluciones / Servicios</h2>
+                    <p className="text-xs text-slate-500">Configura los paquetes y recomendaciones de la precotización.</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addPrequoteCard}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Agregar Tarjeta
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {prequoteCards.map((card, cIdx) => (
+                  <div key={card._key} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Tarjeta / Paquete #{cIdx + 1}
+                      </span>
+                      {prequoteCards.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removePrequoteCard(card._key)}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Servicio Principal</label>
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white font-semibold outline-none focus:ring-2 focus:ring-indigo-300"
+                          placeholder="Ej: Desarrollo Web Responsive & PWA"
+                          value={card.serviceName}
+                          onChange={e => updatePrequoteCard(card._key, 'serviceName', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Subtítulo / Breve Explicación</label>
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600"
+                          placeholder="Ej: UX/UI + SEO + Hosting + Mantenimiento"
+                          value={card.subtitle}
+                          onChange={e => updatePrequoteCard(card._key, 'subtitle', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Precio Base Estimado (S/)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600"
+                          placeholder="1500.00"
+                          value={card.basePrice || ''}
+                          onChange={e => updatePrequoteCard(card._key, 'basePrice', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">¿Por qué es ideal para el cliente?</label>
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600"
+                          placeholder="Ej: Ideal para pequeñas y medianas empresas..."
+                          value={card.whyIdeal}
+                          onChange={e => updatePrequoteCard(card._key, 'whyIdeal', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                        <Film className="w-3.5 h-3.5 text-indigo-500" /> URL del Video Demostrativo (Opcional, 30s)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600 font-mono"
+                        placeholder="Ej: /companies/vertex-developers/video1.mp4"
+                        value={card.videoUrl || ''}
+                        onChange={e => updatePrequoteCard(card._key, 'videoUrl', e.target.value)}
+                      />
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Si ingresas la URL del video, aparecerá el botón de reproducción rápida (30s) en el precotizador.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Características Incluidas (separadas por coma)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600"
+                        placeholder="Ej: Maquetación, SEO Básico, SSL Gratuito, Integración WhatsApp"
+                        value={(card.includedAddons || []).join(', ')}
+                        onChange={e => updatePrequoteCard(card._key, 'includedAddons', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Panel 3: Campos del Formulario de Precotización */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <h2 className="text-base font-bold text-slate-800 mb-2">Campos del Formulario de Precotización</h2>
+              <p className="text-xs text-slate-500 mb-5">
+                Personaliza los nombres de etiquetas y opciones de los campos solicitados en el formulario web.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {renderFieldEditor('empresa')}
+                {renderFieldEditor('solicitante')}
+                {renderFieldEditor('telefono')}
+                {renderFieldEditor('correo')}
+                {renderFieldEditor('sectorProyecto', true)}
+                {renderFieldEditor('tipoServicio', true)}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* SECTION 1: Datos del cliente */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">
                 1
               </span>
               Datos del cliente
             </h2>
+            <p className="text-xs text-slate-500 mb-5">
+              Personaliza el nombre, texto predeterminado u opciones de cada campo. Usa el botón "Eliminar" para ocultar campos no deseados.
+            </p>
+
             <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Empresa / Cliente <span className="text-red-400">*</span>
-                </label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Nombre de la empresa"
-                  value={clientData.empresa}
-                  onChange={e => setClientData(prev => ({ ...prev, empresa: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">RUC</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="20XXXXXXXXX"
-                  value={clientData.ruc}
-                  onChange={e => setClientData(prev => ({ ...prev, ruc: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Solicitante <span className="text-red-400">*</span>
-                </label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Nombre completo"
-                  value={clientData.solicitante}
-                  onChange={e => setClientData(prev => ({ ...prev, solicitante: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Dirección</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Av. / Calle / Urb."
-                  value={clientData.direccion}
-                  onChange={e => setClientData(prev => ({ ...prev, direccion: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Teléfono</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="+51 999 000 000"
-                  value={clientData.telefono}
-                  onChange={e => setClientData(prev => ({ ...prev, telefono: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Correo</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="correo@empresa.com"
-                  type="email"
-                  value={clientData.correo}
-                  onChange={e => setClientData(prev => ({ ...prev, correo: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Tipo de cliente</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={clientData.tipoCliente}
-                  onChange={e => setClientData(prev => ({ ...prev, tipoCliente: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Persona natural">Persona natural</option>
-                  <option value="Empresa privada">Empresa privada</option>
-                  <option value="Entidad pública">Entidad pública</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Recurrencia</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={clientData.clienteNuevoRecurrente}
-                  onChange={e => setClientData(prev => ({ ...prev, clienteNuevoRecurrente: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Nuevo">Nuevo</option>
-                  <option value="Recurrente">Recurrente</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Fuente del cliente</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={clientData.fuenteCliente}
-                  onChange={e => setClientData(prev => ({ ...prev, fuenteCliente: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Referido">Referido</option>
-                  <option value="Redes sociales">Redes sociales</option>
-                  <option value="Web">Web</option>
-                  <option value="Anuncio">Anuncio</option>
-                  <option value="Directo">Directo</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
+              {renderFieldEditor('empresa')}
+              {renderFieldEditor('ruc')}
+              {renderFieldEditor('solicitante')}
+              {renderFieldEditor('direccion')}
+              {renderFieldEditor('telefono')}
+              {renderFieldEditor('correo')}
+              {renderFieldEditor('tipoCliente', true)}
+              {renderFieldEditor('recurrencia', true)}
+              {renderFieldEditor('fuenteCliente', true)}
             </div>
 
             {/* Custom fields editor for Section 1 */}
@@ -842,73 +1177,21 @@ export function TemplateEditorPage() {
 
           {/* SECTION 2: Clasificación del proyecto */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">
                 2
               </span>
               Clasificación del proyecto
             </h2>
+            <p className="text-xs text-slate-500 mb-5">
+              Configura los nombres de campos y desplegables de clasificación para esta plantilla.
+            </p>
+
             <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Ubicación del proyecto</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Ciudad, Distrito"
-                  value={projectClassification.ubicacionProyecto}
-                  onChange={e => setProjectClassification(prev => ({ ...prev, ubicacionProyecto: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Sector</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={projectClassification.sectorProyecto}
-                  onChange={e => setProjectClassification(prev => ({ ...prev, sectorProyecto: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Residencial">Residencial</option>
-                  <option value="Comercial">Comercial</option>
-                  <option value="Industrial">Industrial</option>
-                  <option value="Educativo">Educativo</option>
-                  <option value="Salud">Salud</option>
-                  <option value="Institucional">Institucional</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Tipo de proyecto</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={projectClassification.tipoProyecto}
-                  onChange={e => setProjectClassification(prev => ({ ...prev, tipoProyecto: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Edificio">Edificio</option>
-                  <option value="Nave industrial">Nave industrial</option>
-                  <option value="Vivienda unifamiliar">Vivienda unifamiliar</option>
-                  <option value="Puente">Puente</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Tipo de servicio</label>
-                <select
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white"
-                  value={projectClassification.tipoServicio}
-                  onChange={e => setProjectClassification(prev => ({ ...prev, tipoServicio: e.target.value }))}
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="Diseño estructural">Diseño estructural</option>
-                  <option value="Revisión">Revisión</option>
-                  <option value="Inspección y evaluación">Inspección y evaluación</option>
-                  <option value="Construcción">Construcción</option>
-                  <option value="Costos y presupuestos">Costos y presupuestos</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
+              {renderFieldEditor('ubicacionProyecto')}
+              {renderFieldEditor('sectorProyecto', true)}
+              {renderFieldEditor('tipoProyecto', true)}
+              {renderFieldEditor('tipoServicio', true)}
             </div>
 
             {/* Custom fields editor for Section 2 */}
@@ -926,44 +1209,22 @@ export function TemplateEditorPage() {
 
           {/* SECTION 3: Detalles del proyecto */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">
                 3
               </span>
               Detalles del proyecto
             </h2>
+            <p className="text-xs text-slate-500 mb-5">
+              Establece el nombre predeterminado, modalidad o plazos estándar para este tipo de cotización.
+            </p>
+
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="sm:col-span-3">
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Nombre del proyecto <span className="text-red-400">*</span>
-                </label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Ej: Desarrollo web para Empresa XYZ"
-                  value={projectDetails.nombre}
-                  onChange={e => setProjectDetails(prev => ({ ...prev, nombre: e.target.value }))}
-                />
+                {renderFieldEditor('nombreProyecto')}
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Modalidad</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="Proyecto por alcance"
-                  value={projectDetails.modalidad}
-                  onChange={e => setProjectDetails(prev => ({ ...prev, modalidad: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Plazo estimado</label>
-                <input
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300"
-                  placeholder="45 días calendario"
-                  value={projectDetails.plazo}
-                  onChange={e => setProjectDetails(prev => ({ ...prev, plazo: e.target.value }))}
-                />
-              </div>
+              <div>{renderFieldEditor('modalidad')}</div>
+              <div className="sm:col-span-2">{renderFieldEditor('plazo')}</div>
             </div>
 
             {/* Custom fields editor for Section 3 */}
@@ -1464,123 +1725,9 @@ export function TemplateEditorPage() {
               )}
             </div>
           </section>
-
-          {/* Mode: PRECOTIZACIÓN CHATBOT (IF APPLICABLE) */}
-          {type === 'precotizacion' && (
-            <div className="space-y-6">
-              <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div>
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-indigo-600" /> Configuración del Asistente Bot (IA)
-                    </h2>
-                    <p className="text-xs text-slate-400">Activa o desactiva el Bot y personaliza su prompt de atención</p>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-                    <input
-                      type="checkbox"
-                      checked={botEnabled}
-                      onChange={e => setBotEnabled(e.target.checked)}
-                      className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                    />
-                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                      <Power className={`w-3.5 h-3.5 ${botEnabled ? 'text-emerald-500' : 'text-slate-400'}`} />
-                      {botEnabled ? 'Bot Habilitado' : 'Bot Desactivado'}
-                    </span>
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Prompt e Instrucciones para el Bot
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-700 font-medium"
-                    placeholder="Instrucciones para el bot de IA..."
-                    value={botPrompt}
-                    onChange={e => setBotPrompt(e.target.value)}
-                  />
-                </div>
-              </section>
-
-              <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-indigo-600" /> Tarjetas de Opciones para el Precotizador
-                    </h2>
-                    <p className="text-xs text-slate-400">Edita, agrega o elimina las tarjetas de servicio que se ofrecerán al cliente</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addPrequoteCard}
-                    className="inline-flex items-center gap-1 text-xs text-indigo-600 font-semibold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Agregar Opción
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {prequoteCards.map((card, cIdx) => (
-                    <div key={card._key} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 relative">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          Opción / Tarjeta #{cIdx + 1}
-                        </span>
-                        {prequoteCards.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removePrequoteCard(card._key)}
-                            className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre del Servicio Principal</label>
-                          <input
-                            type="text"
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white font-semibold outline-none focus:border-indigo-400"
-                            placeholder="Ej. Diseño de Estructuras / Nave Industrial"
-                            value={card.serviceName}
-                            onChange={e => updatePrequoteCard(card._key, 'serviceName', e.target.value)}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">Subtítulo / Breve Explicación</label>
-                          <input
-                            type="text"
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:border-indigo-400 text-slate-600"
-                            placeholder="Ej. Memoria de cálculo, planos BIM, especificaciones técnicas."
-                            value={card.subtitle}
-                            onChange={e => updatePrequoteCard(card._key, 'subtitle', e.target.value)}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-600 mb-1">¿Por qué es ideal para ti? (Análisis IA)</label>
-                          <textarea
-                            rows={2}
-                            className="w-full border border-slate-200 rounded-lg p-2.5 text-xs bg-white outline-none focus:border-indigo-400 text-slate-600 resize-none"
-                            placeholder="Explicación inteligente que verá el cliente al seleccionar esta opción..."
-                            value={card.whyIdeal}
-                            onChange={e => updatePrequoteCard(card._key, 'whyIdeal', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          )}
-
         </div>
+      )}
+
       </div>
 
       {/* Drawer Overlay for Reusable Items */}

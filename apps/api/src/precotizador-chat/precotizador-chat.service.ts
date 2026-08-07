@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -8,6 +8,11 @@ export class PrecotizadorChatService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getOrCreateSession(companyId: string, sessionId?: string, customerInfo?: { name?: string; email?: string; phone?: string }) {
+    const company = await this.prisma.company.findUnique({ where: { id: companyId } });
+    if (!company || !company.isActive) {
+      throw new BadRequestException('Esta empresa se encuentra archivada y no está disponible para precotización');
+    }
+
     if (sessionId) {
       const existing = await this.prisma.precotizadorChatSession.findUnique({
         where: { id: sessionId },

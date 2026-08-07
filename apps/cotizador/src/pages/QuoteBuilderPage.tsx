@@ -196,6 +196,8 @@ export function QuoteBuilderPage() {
 
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [activeTemplateCustomFields, setActiveTemplateCustomFields] = useState<any[]>([]);
+  const [fieldLabels, setFieldLabels] = useState<Record<string, string>>({});
+  const [fieldConfigs, setFieldConfigs] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoTemplateAppliedRef = useRef(false);
 
@@ -359,7 +361,7 @@ export function QuoteBuilderPage() {
       const payload = {
         companyId: company.id,
         clientData: { empresa: clientData.empresa, ruc: clientData.ruc || undefined, solicitante: clientData.solicitante, direccion: clientData.direccion || undefined, telefono: clientData.telefono || undefined, correo: clientData.correo || undefined },
-        projectData: { nombre: projectData.nombre, modalidad: projectData.modalidad || undefined, plazo: projectData.plazo || undefined },
+        projectData: { nombre: projectData.nombre, modalidad: projectData.modalidad || undefined, plazo: projectData.plazo || undefined, fieldLabels },
         ubicacionProyecto: projectData.ubicacionProyecto || undefined,
         sectorProyecto: projectData.sectorProyecto || undefined,
         tipoProyecto: projectData.tipoProyecto || undefined,
@@ -372,7 +374,7 @@ export function QuoteBuilderPage() {
         considerations: considerations || undefined,
         sections: sections,
         images: images.length > 0 ? images : undefined,
-        metadata: { customFields: customFieldValues },
+        metadata: { customFields: customFieldValues, fieldLabels },
       };
 
       const url = quoteId ? `${API_URL}/quotes/${quoteId}` : `${API_URL}/quotes`;
@@ -440,6 +442,35 @@ export function QuoteBuilderPage() {
   const applyTemplate = (tpl: any) => {
     if (tpl.projectData) {
       setProjectData(prev => ({ ...prev, ...tpl.projectData }));
+      if (tpl.projectData.fieldLabels) {
+        setFieldLabels(tpl.projectData.fieldLabels);
+      }
+      if (tpl.projectData.fieldConfigs) {
+        setFieldConfigs(tpl.projectData.fieldConfigs);
+        const fc = tpl.projectData.fieldConfigs;
+        setClientData(prev => ({
+          ...prev,
+          ...(fc.empresa?.defaultValue ? { empresa: fc.empresa.defaultValue } : {}),
+          ...(fc.ruc?.defaultValue ? { ruc: fc.ruc.defaultValue } : {}),
+          ...(fc.solicitante?.defaultValue ? { solicitante: fc.solicitante.defaultValue } : {}),
+          ...(fc.direccion?.defaultValue ? { direccion: fc.direccion.defaultValue } : {}),
+          ...(fc.telefono?.defaultValue ? { telefono: fc.telefono.defaultValue } : {}),
+          ...(fc.correo?.defaultValue ? { correo: fc.correo.defaultValue } : {}),
+          ...(fc.tipoCliente?.defaultValue ? { tipoCliente: fc.tipoCliente.defaultValue } : {}),
+          ...(fc.recurrencia?.defaultValue ? { clienteNuevoRecurrente: fc.recurrencia.defaultValue } : {}),
+          ...(fc.fuenteCliente?.defaultValue ? { fuenteCliente: fc.fuenteCliente.defaultValue } : {}),
+        }));
+        setProjectData(prev => ({
+          ...prev,
+          ...(fc.nombreProyecto?.defaultValue ? { nombre: fc.nombreProyecto.defaultValue } : {}),
+          ...(fc.modalidad?.defaultValue ? { modalidad: fc.modalidad.defaultValue } : {}),
+          ...(fc.plazo?.defaultValue ? { plazo: fc.plazo.defaultValue } : {}),
+          ...(fc.ubicacionProyecto?.defaultValue ? { ubicacionProyecto: fc.ubicacionProyecto.defaultValue } : {}),
+          ...(fc.sectorProyecto?.defaultValue ? { sectorProyecto: fc.sectorProyecto.defaultValue } : {}),
+          ...(fc.tipoProyecto?.defaultValue ? { tipoProyecto: fc.tipoProyecto.defaultValue } : {}),
+          ...(fc.tipoServicio?.defaultValue ? { tipoServicio: fc.tipoServicio.defaultValue } : {}),
+        }));
+      }
     }
     if (tpl.items?.length > 0) {
       setItems(tpl.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
@@ -717,59 +748,83 @@ export function QuoteBuilderPage() {
             Datos del cliente
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Empresa / Cliente <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Nombre de la empresa" value={clientData.empresa} onChange={e => setClientData({ ...clientData, empresa: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>RUC</label>
-              <input className={inputCls} placeholder="20XXXXXXXXX" value={clientData.ruc} onChange={e => setClientData({ ...clientData, ruc: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Solicitante <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Nombre completo" value={clientData.solicitante} onChange={e => setClientData({ ...clientData, solicitante: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Dirección</label>
-              <input className={inputCls} placeholder="Av. / Calle / Urb." value={clientData.direccion} onChange={e => setClientData({ ...clientData, direccion: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Teléfono</label>
-              <input className={inputCls} placeholder="+51 999 000 000" value={clientData.telefono} onChange={e => setClientData({ ...clientData, telefono: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Correo</label>
-              <input type="email" className={inputCls} placeholder="correo@empresa.com" value={clientData.correo} onChange={e => setClientData({ ...clientData, correo: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Tipo de cliente</label>
-              <select className={selectCls} value={clientData.tipoCliente} onChange={e => setClientData({ ...clientData, tipoCliente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Persona natural">Persona natural</option>
-                <option value="Empresa privada">Empresa privada</option>
-                <option value="Entidad pública">Entidad pública</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Recurrencia</label>
-              <select className={selectCls} value={clientData.clienteNuevoRecurrente} onChange={e => setClientData({ ...clientData, clienteNuevoRecurrente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Nuevo">Nuevo</option>
-                <option value="Recurrente">Recurrente</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Fuente del cliente</label>
-              <select className={selectCls} value={clientData.fuenteCliente} onChange={e => setClientData({ ...clientData, fuenteCliente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Referido">Referido</option>
-                <option value="Redes sociales">Redes sociales</option>
-                <option value="Web">Web</option>
-                <option value="Anuncio">Anuncio</option>
-                <option value="Directo">Directo</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
+            {fieldConfigs.empresa?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.empresa?.label || fieldLabels.empresaLabel || 'Empresa / Cliente'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.empresa?.placeholder || "Nombre de la empresa"} value={clientData.empresa} onChange={e => setClientData({ ...clientData, empresa: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.ruc?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.ruc?.label || fieldLabels.rucLabel || 'RUC'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.ruc?.placeholder || "20XXXXXXXXX"} value={clientData.ruc} onChange={e => setClientData({ ...clientData, ruc: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.solicitante?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.solicitante?.label || fieldLabels.solicitanteLabel || 'Solicitante'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.solicitante?.placeholder || "Nombre completo"} value={clientData.solicitante} onChange={e => setClientData({ ...clientData, solicitante: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.direccion?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.direccion?.label || fieldLabels.direccionLabel || 'Dirección'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.direccion?.placeholder || "Av. / Calle / Urb."} value={clientData.direccion} onChange={e => setClientData({ ...clientData, direccion: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.telefono?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.telefono?.label || fieldLabels.telefonoLabel || 'Teléfono'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.telefono?.placeholder || "+51 999 000 000"} value={clientData.telefono} onChange={e => setClientData({ ...clientData, telefono: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.correo?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.correo?.label || fieldLabels.correoLabel || 'Correo'}</label>
+                <input type="email" className={inputCls} placeholder={fieldConfigs.correo?.placeholder || "correo@empresa.com"} value={clientData.correo} onChange={e => setClientData({ ...clientData, correo: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.tipoCliente?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoCliente?.label || fieldLabels.tipoClienteLabel || 'Tipo de cliente'}</label>
+                <select className={selectCls} value={clientData.tipoCliente} onChange={e => setClientData({ ...clientData, tipoCliente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoCliente?.options || ['Persona natural', 'Empresa privada', 'Entidad pública']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.recurrencia?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.recurrencia?.label || fieldLabels.recurrenciaLabel || 'Recurrencia'}</label>
+                <select className={selectCls} value={clientData.clienteNuevoRecurrente} onChange={e => setClientData({ ...clientData, clienteNuevoRecurrente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.recurrencia?.options || ['Nuevo', 'Recurrente']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.fuenteCliente?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.fuenteCliente?.label || fieldLabels.fuenteClienteLabel || 'Fuente del cliente'}</label>
+                <select className={selectCls} value={clientData.fuenteCliente} onChange={e => setClientData({ ...clientData, fuenteCliente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.fuenteCliente?.options || ['Referido', 'Redes sociales', 'Web', 'Anuncio', 'Directo', 'Otro']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             {customClientFields.map(renderCustomField)}
           </div>
         </section>
@@ -780,43 +835,48 @@ export function QuoteBuilderPage() {
             Clasificación del proyecto
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Ubicación del proyecto</label>
-              <input className={inputCls} placeholder="Ciudad, Distrito" value={projectData.ubicacionProyecto} onChange={e => setProjectData({ ...projectData, ubicacionProyecto: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Sector</label>
-              <select className={selectCls} value={projectData.sectorProyecto} onChange={e => setProjectData({ ...projectData, sectorProyecto: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Residencial">Residencial</option>
-                <option value="Comercial">Comercial</option>
-                <option value="Industrial">Industrial</option>
-                <option value="Educativo">Educativo</option>
-                <option value="Salud">Salud</option>
-                <option value="Institucional">Institucional</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-            {tiposProyecto.length > 0 && (
+            {fieldConfigs.ubicacionProyecto?.enabled !== false && (
               <div>
-                <label className={labelCls}>Tipo de proyecto</label>
-                <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
+                <label className={labelCls}>{fieldConfigs.ubicacionProyecto?.label || fieldLabels.ubicacionLabel || 'Ubicación del proyecto'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.ubicacionProyecto?.placeholder || "Ciudad, Distrito"} value={projectData.ubicacionProyecto} onChange={e => setProjectData({ ...projectData, ubicacionProyecto: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.sectorProyecto?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.sectorProyecto?.label || fieldLabels.sectorLabel || 'Sector'}</label>
+                <select className={selectCls} value={projectData.sectorProyecto} onChange={e => setProjectData({ ...projectData, sectorProyecto: e.target.value })}>
                   <option value="">Seleccionar...</option>
-                  {tiposProyecto.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                  {(fieldConfigs.sectorProyecto?.options || ['Residencial', 'Comercial', 'Industrial', 'Educativo', 'Salud', 'Institucional', 'Otro']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
               </div>
             )}
-            <div>
-              <label className={labelCls}>Tipo de servicio</label>
-              <select className={selectCls} value={projectData.tipoServicio} onChange={e => setProjectData({ ...projectData, tipoServicio: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                {tiposServicio.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
+
+            {fieldConfigs.tipoProyecto?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoProyecto?.label || fieldLabels.tipoProyectoLabel || 'Tipo de proyecto'}</label>
+                <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoProyecto?.options || (tiposProyecto.map(t => t.label))).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.tipoServicio?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoServicio?.label || fieldLabels.tipoServicioLabel || 'Tipo de servicio'}</label>
+                <select className={selectCls} value={projectData.tipoServicio} onChange={e => setProjectData({ ...projectData, tipoServicio: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoServicio?.options || (tiposServicio.map(t => t.label))).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </section>
 
@@ -826,18 +886,24 @@ export function QuoteBuilderPage() {
             Detalles del proyecto
           </h2>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-3">
-              <label className={labelCls}>Nombre del proyecto <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Ej: Desarrollo web para Empresa XYZ" value={projectData.nombre} onChange={e => setProjectData({ ...projectData, nombre: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Modalidad</label>
-              <input className={inputCls} placeholder="Proyecto por alcance" value={projectData.modalidad} onChange={e => setProjectData({ ...projectData, modalidad: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Plazo estimado</label>
-              <input className={inputCls} placeholder="45 días calendario" value={projectData.plazo} onChange={e => setProjectData({ ...projectData, plazo: e.target.value })} />
-            </div>
+            {fieldConfigs.nombreProyecto?.enabled !== false && (
+              <div className="sm:col-span-3">
+                <label className={labelCls}>{fieldConfigs.nombreProyecto?.label || fieldLabels.nombreProyectoLabel || 'Nombre del proyecto'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.nombreProyecto?.placeholder || "Ej: Desarrollo web para Empresa XYZ"} value={projectData.nombre} onChange={e => setProjectData({ ...projectData, nombre: e.target.value })} />
+              </div>
+            )}
+            {fieldConfigs.modalidad?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.modalidad?.label || fieldLabels.modalidadLabel || 'Modalidad'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.modalidad?.placeholder || "Proyecto por alcance"} value={projectData.modalidad} onChange={e => setProjectData({ ...projectData, modalidad: e.target.value })} />
+              </div>
+            )}
+            {fieldConfigs.plazo?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.plazo?.label || fieldLabels.plazoLabel || 'Plazo estimado'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.plazo?.placeholder || "45 días calendario"} value={projectData.plazo} onChange={e => setProjectData({ ...projectData, plazo: e.target.value })} />
+              </div>
+            )}
             {customProjectFields.map(renderCustomField)}
           </div>
         </section>

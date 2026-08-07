@@ -109,6 +109,9 @@ export class PdfService {
       tableHeader(title) + buildItemsTableBody(rows, startIdx) + tableFooter;
 
     // ── Bloques de contenido ──────────────────────────────────────────────────
+    const metadata = (quote.metadata as any) || {};
+    const fieldLabels = metadata.fieldLabels || projectData.fieldLabels || {};
+
     const headerBlock = `
       <h2 style="color:${primary}; font-size:18px; font-weight:700; margin-bottom:6px;">COTIZACIÓN N° ${quote.number}</h2>
       <p style="color:#666; font-size:10.5px; margin-bottom:6px;">Fecha: ${this.formatDate(new Date(quote.createdAt))} &nbsp;|&nbsp; Válida por: 15 días calendario</p>
@@ -119,16 +122,16 @@ export class PdfService {
       <h3 style="color:${primary}; font-size:12px; margin-top:4px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Datos del Cliente</h3>
       <table style="width:100%; font-size:10.5px; border-collapse:collapse; margin-bottom:10px;">
         <tr>
-          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Empresa:</strong> ${clientData.empresa || '-'}</td>
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">RUC:</strong> ${clientData.ruc || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">${fieldLabels.empresaLabel || 'Empresa'}:</strong> ${clientData.empresa || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.rucLabel || 'RUC'}:</strong> ${clientData.ruc || '-'}</td>
         </tr>
         <tr style="background:#f9f9f9;">
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Solicitante:</strong> ${clientData.solicitante || '-'}</td>
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Teléfono:</strong> ${clientData.telefono || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.solicitanteLabel || 'Solicitante'}:</strong> ${clientData.solicitante || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.telefonoLabel || 'Teléfono'}:</strong> ${clientData.telefono || '-'}</td>
         </tr>
         <tr>
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Dirección:</strong> ${clientData.direccion || '-'}</td>
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Correo:</strong> ${clientData.correo || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.direccionLabel || 'Dirección'}:</strong> ${clientData.direccion || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.correoLabel || 'Correo'}:</strong> ${clientData.correo || '-'}</td>
         </tr>
       </table>
     `;
@@ -137,11 +140,11 @@ export class PdfService {
       <h3 style="color:${primary}; font-size:12px; margin-top:0; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Proyecto</h3>
       <table style="width:100%; font-size:10.5px; border-collapse:collapse; margin-bottom:10px;">
         <tr>
-          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Nombre:</strong> ${projectData.nombre || '-'}</td>
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Modalidad:</strong> ${projectData.modalidad || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">${fieldLabels.nombreProyectoLabel || 'Nombre'}:</strong> ${projectData.nombre || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.modalidadLabel || 'Modalidad'}:</strong> ${projectData.modalidad || '-'}</td>
         </tr>
         <tr style="background:#f9f9f9;">
-          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Plazo:</strong> ${projectData.plazo || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.plazoLabel || 'Plazo'}:</strong> ${projectData.plazo || '-'}</td>
           <td style="padding:4px 8px; border:1px solid #ddd;"></td>
         </tr>
       </table>

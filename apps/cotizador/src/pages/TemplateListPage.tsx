@@ -135,7 +135,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
             }`}
           >
             <Bot className="w-4 h-4" />
-            Precotización (Chatbot Único)
+            Precotización
           </button>
         </div>
 
@@ -192,7 +192,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
                     </span>
                   </div>
                   <h3 className="font-bold text-slate-800 text-lg mt-1">
-                    {prequoteTemplate.name || 'Configuración de Precotización con Asistente Bot'}
+                    {prequoteTemplate.name || 'Configuración de Precotización'}
                   </h3>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs shadow-md shadow-indigo-200 transition-all shrink-0"
               >
                 <Pencil className="w-4 h-4" />
-                Editar Bot y Precotización
+                Editar Precotización
               </button>
             </div>
 
@@ -245,17 +245,17 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
               <Bot className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-bold text-slate-800 mb-1">
-              Configurar Bot de Precotización
+              Precotización
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              Esta empresa aún no tiene configurada su plantilla de precotización ni el prompt para el Bot Asistente.
+              Esta empresa aún no tiene configurada su plantilla de precotización ni las opciones del servicio.
             </p>
             <button
               onClick={() => navigateToNewTemplate('precotizacion')}
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md"
             >
               <Plus className="w-4 h-4" />
-              Configurar Bot de Precotización
+              Precotización
             </button>
           </div>
         )
