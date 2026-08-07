@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
-import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star, Pencil } from 'lucide-react';
 import { fetchWithAuth, getToken } from '../auth';
 import { getTiposProyecto, getTiposServicio } from '../constants/projectTypes';
 import { getDefaultSections } from '../constants/legalSections';
@@ -141,7 +141,7 @@ function ItemsTable({
 }
 
 export function QuoteBuilderPage() {
-  const { companySlug } = useParams();
+  const { companySlug: paramCompanySlug, quoteId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const leadState = location.state?.leadData;
@@ -150,9 +150,10 @@ export function QuoteBuilderPage() {
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
+  const [quoteNumber, setQuoteNumber] = useState<string | null>(null);
 
   const [templates, setTemplates] = useState<any[]>([]);
-  const [showStartModal, setShowStartModal] = useState(!leadState);
+  const [showStartModal, setShowStartModal] = useState(!leadState && !quoteId);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateCode, setTemplateCode] = useState('');
   const [templateName, setTemplateName] = useState('');
@@ -187,29 +188,94 @@ export function QuoteBuilderPage() {
     leadState?.additionalItems?.length > 0 ? leadState.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : []
   );
   const [considerations, setConsiderations] = useState('');
-  const [sections, setSections] = useState(() => getDefaultSections(companySlug));
+  const [sections, setSections] = useState(() => getDefaultSections(paramCompanySlug));
   const [images, setImages] = useState<string[]>([]);
   const [validity, setValidity] = useState('15 días calendario');
   const [paymentTerms, setPaymentTerms] = useState('40% adelanto, 30% al aprobar maqueta, 30% al finalizar');
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  const [activeTemplateCustomFields, setActiveTemplateCustomFields] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoTemplateAppliedRef = useRef(false);
 
   useEffect(() => {
-    if (!companySlug) return;
-    Promise.all([
-      fetch(`${API_URL}/catalog/${companySlug}`).then(res => res.json()),
-      fetchWithAuth(`${API_URL}/templates?companySlug=${companySlug}`).then(res => res.json())
-    ])
-    .then(([data, tpls]) => {
-      const { catalogItems: _, ...co } = data;
-      setCompany(co);
-      setTemplates(tpls);
-      setLoadingCompany(false);
-    })
-    .catch(() => setLoadingCompany(false));
-  }, [companySlug]);
+    if (quoteId) {
+      setLoadingCompany(true);
+      fetchWithAuth(`${API_URL}/quotes/${quoteId}`)
+        .then(res => res.json())
+        .then(quote => {
+          if (!quote || quote.message) throw new Error('Cotización no encontrada');
+          
+          setCompany(quote.company);
+          setQuoteNumber(quote.number);
+          setShowStartModal(false);
+
+          const cData = quote.clientData || {};
+          setClientData({
+            empresa: cData.empresa || '',
+            ruc: cData.ruc || '',
+            solicitante: cData.solicitante || '',
+            direccion: cData.direccion || '',
+            telefono: cData.telefono || '',
+            correo: cData.correo || '',
+            tipoCliente: quote.tipoCliente || cData.tipoCliente || '',
+            clienteNuevoRecurrente: quote.clienteNuevoRecurrente || cData.clienteNuevoRecurrente || '',
+            fuenteCliente: quote.fuenteCliente || cData.fuenteCliente || '',
+          });
+
+          setClientData(quote.clientData || {});
+          setProjectData(quote.projectData || {});
+          if (quote.ubicacionProyecto) setProjectData(prev => ({ ...prev, ubicacionProyecto: quote.ubicacionProyecto }));
+          if (quote.sectorProyecto) setProjectData(prev => ({ ...prev, sectorProyecto: quote.sectorProyecto }));
+          if (quote.tipoProyecto) setProjectData(prev => ({ ...prev, tipoProyecto: quote.tipoProyecto }));
+          if (quote.tipoServicio) setProjectData(prev => ({ ...prev, tipoServicio: quote.tipoServicio }));
+
+          if (quote.company) setCompany(quote.company);
+
+          if (quote.items && Array.isArray(quote.items)) {
+            setItems(quote.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
+          }
+          if (quote.additionalItems && Array.isArray(quote.additionalItems)) {
+            setAdditionalItems(quote.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
+          }
+
+          if (quote.considerations) setConsiderations(quote.considerations);
+          if (quote.sections) setSections(quote.sections);
+          if (quote.images) setImages(quote.images);
+          if (quote.metadata && (quote.metadata as any).customFields) {
+            setCustomFieldValues((quote.metadata as any).customFields);
+          }
+
+          if (quote.company?.slug) {
+            fetchWithAuth(`${API_URL}/templates?companySlug=${quote.company.slug}`)
+              .then(res => res.json())
+              .then(setTemplates)
+              .catch(() => {});
+
+          }
+
+          setLoadingCompany(false);
+        })
+        .catch(err => {
+          alert(err.message || 'Error al cargar la cotización.');
+          setLoadingCompany(false);
+          navigate('/lista');
+        });
+    } else if (paramCompanySlug) {
+      Promise.all([
+        fetch(`${API_URL}/catalog/${paramCompanySlug}`).then(res => res.json()),
+        fetchWithAuth(`${API_URL}/templates?companySlug=${paramCompanySlug}`).then(res => res.json())
+      ])
+      .then(([data, tpls]) => {
+        const { catalogItems: _, ...co } = data;
+        setCompany(co);
+        setTemplates(tpls);
+        setLoadingCompany(false);
+      })
+      .catch(() => setLoadingCompany(false));
+    }
+  }, [quoteId, paramCompanySlug]);
 
   // Si la cotización viene de un lead, busca la plantilla cuyo nombre coincide con el
   // servicio principal que eligió el cliente en el precotizador y la aplica automáticamente,
@@ -306,10 +372,14 @@ export function QuoteBuilderPage() {
         considerations: considerations || undefined,
         sections: sections,
         images: images.length > 0 ? images : undefined,
+        metadata: { customFields: customFieldValues },
       };
 
-      const res = await fetchWithAuth(`${API_URL}/quotes`, {
-        method: 'POST',
+      const url = quoteId ? `${API_URL}/quotes/${quoteId}` : `${API_URL}/quotes`;
+      const method = quoteId ? 'PATCH' : 'POST';
+
+      const res = await fetchWithAuth(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -381,7 +451,7 @@ export function QuoteBuilderPage() {
       );
 
       // Map each default section, matching by normalized title
-      const baseSections = getDefaultSections(companySlug);
+      const baseSections = getDefaultSections(company?.slug || paramCompanySlug);
       const mergedSections = baseSections.map(defaultSection => {
         const key = defaultSection.title.toLowerCase().trim();
         const match = templateSectionsMap.get(key);
@@ -403,6 +473,9 @@ export function QuoteBuilderPage() {
 
       setSections(mergedSections);
     }
+    if (tpl.customFields && Array.isArray(tpl.customFields)) {
+      setActiveTemplateCustomFields(tpl.customFields);
+    }
     setShowStartModal(false);
   };
 
@@ -415,6 +488,73 @@ export function QuoteBuilderPage() {
   const inputCls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300";
   const labelCls = "block text-xs font-semibold text-slate-500 mb-1";
   const selectCls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white";
+
+  const allCustomFields = activeTemplateCustomFields.length > 0 ? activeTemplateCustomFields : ((company?.customFields as any[]) || []);
+  const customClientFields = allCustomFields.filter(f => f.category === 'client');
+  const customProjectFields = allCustomFields.filter(f => f.category === 'project');
+
+  const renderCustomField = (f: any) => {
+    const val = customFieldValues[f.id] || '';
+    const handleChange = (v: any) => setCustomFieldValues(prev => ({ ...prev, [f.id]: v }));
+
+    if (f.type === 'textarea') {
+      return (
+        <div key={f.id} className="sm:col-span-2">
+          <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+          <textarea
+            rows={2}
+            className={`${inputCls} resize-none`}
+            placeholder={`Ingresa ${f.label.toLowerCase()}`}
+            value={val}
+            onChange={e => handleChange(e.target.value)}
+          />
+        </div>
+      );
+    }
+
+    if (f.type === 'select') {
+      return (
+        <div key={f.id}>
+          <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+          <select className={selectCls} value={val} onChange={e => handleChange(e.target.value)}>
+            <option value="">Seleccionar...</option>
+            {(f.options || []).map((opt: string) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (f.type === 'checkbox') {
+      return (
+        <div key={f.id} className="flex items-center pt-5">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={Boolean(val)}
+              onChange={e => handleChange(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {f.label} {f.required && <span className="text-red-400">*</span>}
+          </label>
+        </div>
+      );
+    }
+
+    return (
+      <div key={f.id}>
+        <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+        <input
+          type={f.type === 'number' ? 'number' : 'text'}
+          className={inputCls}
+          placeholder={`Ingresa ${f.label.toLowerCase()}`}
+          value={val}
+          onChange={e => handleChange(e.target.value)}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto pb-16 relative">
@@ -444,22 +584,54 @@ export function QuoteBuilderPage() {
                 </h3>
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
                   {templates.map(tpl => (
-                    <button
+                    <div
                       key={tpl.id}
-                      onClick={() => applyTemplate(tpl)}
-                      className="w-full text-left bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md rounded-xl p-4 transition-all group"
+                      className="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md rounded-xl p-4 transition-all group flex flex-col justify-between"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md">
-                          {tpl.code}
-                        </span>
-                        {tpl.isCustom && <Star className="w-4 h-4 text-yellow-400" />}
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md">
+                            {tpl.code}
+                          </span>
+                          {tpl.isCustom && <Star className="w-4 h-4 text-yellow-400" />}
+                        </div>
+                        <p className="font-semibold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{tpl.name}</p>
+                        <p className="text-xs text-slate-500 capitalize">{tpl.category}</p>
                       </div>
-                      <p className="font-semibold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{tpl.name}</p>
-                      <p className="text-xs text-slate-500">{tpl.category}</p>
-                    </button>
+
+                      <div className="flex items-center gap-2 pt-3 mt-3 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => applyTemplate(tpl)}
+                          className="flex-1 py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors text-center shadow-xs"
+                        >
+                          Usar plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            applyTemplate(tpl);
+                            setShowStartModal(false);
+                          }}
+                          className="py-1.5 px-3 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shrink-0"
+                          title="Cargar y editar esta plantilla para la cotización"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Editar
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {templates.length === 0 && <p className="text-xs text-slate-500 text-center py-4">No hay plantillas disponibles</p>}
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-slate-200/80 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">¿Deseas crear o modificar plantillas maestras?</span>
+                  <Link
+                    to={`/empresa/${company?.slug || paramCompanySlug}?tab=plantillas`}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:underline"
+                  >
+                    Gestor de Plantillas ↗
+                  </Link>
                 </div>
               </div>
             </div>
@@ -504,7 +676,9 @@ export function QuoteBuilderPage() {
                 </div>
               )}
               <div>
-                <p className="text-xs text-slate-400 leading-none">Nueva cotización</p>
+                <p className="text-xs text-slate-400 leading-none">
+                  {quoteId ? `Editando Cotización N° ${quoteNumber || ''}` : 'Nueva cotización'}
+                </p>
                 <p className="font-semibold text-slate-800">{company.name}</p>
               </div>
             </div>
@@ -531,7 +705,7 @@ export function QuoteBuilderPage() {
             style={{ backgroundColor: company?.colorPrimary || '#1e293b' }}
           >
             <Save className="w-4 h-4" />
-            {saving ? 'Guardando…' : 'Guardar y Exportar PDF'}
+            {saving ? 'Guardando…' : quoteId ? 'Guardar Cambios y PDF' : 'Guardar y Exportar PDF'}
           </button>
         </div>
       </div>
@@ -596,6 +770,7 @@ export function QuoteBuilderPage() {
                 <option value="Otro">Otro</option>
               </select>
             </div>
+            {customClientFields.map(renderCustomField)}
           </div>
         </section>
 
@@ -663,6 +838,7 @@ export function QuoteBuilderPage() {
               <label className={labelCls}>Plazo estimado</label>
               <input className={inputCls} placeholder="45 días calendario" value={projectData.plazo} onChange={e => setProjectData({ ...projectData, plazo: e.target.value })} />
             </div>
+            {customProjectFields.map(renderCustomField)}
           </div>
         </section>
 
@@ -827,13 +1003,21 @@ export function QuoteBuilderPage() {
                     </button>
                   </div>
                   {isExpanded && (
-                    <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+                    <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-3">
                       <textarea
                         rows={6}
                         className={inputCls + " resize-none text-xs"}
                         value={section.content}
                         onChange={e => setSections(prev => prev.map((s, i) => i === idx ? { ...s, content: e.target.value } : s))}
                       />
+
+                      {activeTemplateCustomFields.filter(f => f.category === `section_${section.title}`).length > 0 && (
+                        <div className="pt-2 border-t border-slate-200 grid sm:grid-cols-2 gap-3">
+                          {activeTemplateCustomFields
+                            .filter(f => f.category === `section_${section.title}`)
+                            .map(renderCustomField)}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

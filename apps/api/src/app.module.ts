@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { MailModule } from './mail/mail.module';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
+import { PrecotizadorChatModule } from './precotizador-chat/precotizador-chat.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
     CompaniesModule,
     MailModule,
     WhatsappModule,
+    PrecotizadorChatModule,
     LeadsModule,
     QuotesModule,
     TemplatesModule,

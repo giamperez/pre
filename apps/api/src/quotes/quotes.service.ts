@@ -143,9 +143,24 @@ export class QuotesService {
   }
 
   async update(id: string, updateData: any) {
+    const dataToUpdate = { ...updateData };
+
+    if (dataToUpdate.items !== undefined || dataToUpdate.additionalItems !== undefined) {
+      const items = dataToUpdate.items || [];
+      const additionalItems = dataToUpdate.additionalItems || [];
+      const itemsTotal = items.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+      const addonsTotal = additionalItems.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0);
+      dataToUpdate.subtotal = itemsTotal + addonsTotal;
+      dataToUpdate.igv = dataToUpdate.subtotal * 0.18;
+      dataToUpdate.total = dataToUpdate.subtotal + dataToUpdate.igv;
+    }
+
     return this.prisma.quote.update({
       where: { id },
-      data: updateData,
+      data: dataToUpdate,
+      include: {
+        company: true,
+      },
     });
   }
 }

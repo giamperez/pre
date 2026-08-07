@@ -69,8 +69,29 @@ export class CompaniesService {
         legalEntityType: data.legalEntityType || undefined,
         fiscalAddress: data.fiscalAddress || undefined,
         paymentInfo: data.paymentInfo ? JSON.stringify(data.paymentInfo) : undefined,
+        customFields: data.customFields ? (data.customFields as object[]) : undefined,
       },
     });
+
+    if (data.initialTemplates && Array.isArray(data.initialTemplates) && data.initialTemplates.length > 0) {
+      for (const tpl of data.initialTemplates) {
+        if (!tpl.name || !tpl.name.trim()) continue;
+        const code = tpl.code?.trim() || `COT-${slug.toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+        await this.prisma.quoteTemplate.create({
+          data: {
+            companyId: created.id,
+            code,
+            name: tpl.name.trim(),
+            category: tpl.category?.trim() || 'General',
+            projectData: (tpl.projectData as object) || { modalidad: 'Proyecto por alcance', plazo: '30 días calendario' },
+            items: (tpl.items as object[]) || [],
+            sections: tpl.sections ? (tpl.sections as object[]) : undefined,
+            isCustom: true,
+          },
+        });
+      }
+    }
+
     return serialize(created);
   }
 
@@ -90,6 +111,7 @@ export class CompaniesService {
       country: data.country,
       legalEntityType: data.legalEntityType,
       fiscalAddress: data.fiscalAddress,
+      customFields: data.customFields,
     };
 
     if (data.slug !== undefined) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, DollarSign } from 'lucide-react';
 import { useCatalog } from '../hooks/useCatalog';
@@ -6,6 +6,8 @@ import { API_URL } from '../config';
 import { CalendarPicker } from '../components/CalendarPicker';
 import { QuoteSummaryModal } from '../components/QuoteSummaryModal';
 import { COUNTRY_CODES } from '../constants/countryCodes';
+import { PrecotizadorChatWidget } from '../components/PrecotizadorChatWidget';
+import { AiAnalysisCard } from '../components/AiAnalysisCard';
 
 export function PrecotizadorPage() {
   const { companySlug } = useParams();
@@ -22,6 +24,55 @@ export function PrecotizadorPage() {
   const [booking, setBooking] = useState<{ date: string, time: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quoteRequested, setQuoteRequested] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    mainServiceName?: string;
+    summary?: string;
+    explanation?: string;
+    addonNames?: string[];
+  } | null>(null);
+
+  const contactSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleConfirmRecommendation = (rec: {
+    mainServiceId?: string;
+    addonIds?: string[];
+    summary?: string;
+    explanation?: string;
+    mainServiceName?: string;
+  }) => {
+    if (rec.mainServiceId) {
+      setSelectedMainService(rec.mainServiceId);
+    }
+    if (rec.addonIds) {
+      setSelectedAddons(new Set(rec.addonIds));
+    }
+
+    const matchedAddonNames = (rec.addonIds || [])
+      .map(id => items.find(i => i.id === id)?.name)
+      .filter(Boolean) as string[];
+
+    setAiAnalysis({
+      mainServiceName: rec.mainServiceName || items.find(i => i.id === rec.mainServiceId)?.name,
+      summary: rec.summary,
+      explanation: rec.explanation,
+      addonNames: matchedAddonNames,
+    });
+
+    if (rec.summary) {
+      setFormData(prev => {
+        const existingNotes = prev.notes ? prev.notes.trim() : '';
+        const summaryText = `[Asistente Virtual]: ${rec.summary}`;
+        return {
+          ...prev,
+          notes: existingNotes ? `${existingNotes}\n\n${summaryText}` : summaryText,
+        };
+      });
+    }
+
+    setTimeout(() => {
+      contactSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-slate-500">Cargando catálogo...</p></div>;
   if (error || !company) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-red-500">{error || 'Empresa no encontrada'}</p></div>;
@@ -110,7 +161,7 @@ export function PrecotizadorPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -176,9 +227,13 @@ export function PrecotizadorPage() {
                       {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                     </div>
                   </div>
-                  <div className="mt-2 font-bold text-slate-800">
-                    {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                  </div>
+                  {showPrice && (
+                    <div className="mt-2">
+                      <span className="font-bold text-slate-800">
+                        {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -219,9 +274,13 @@ export function PrecotizadorPage() {
                         {isSelected && <CheckSquare className="w-4 h-4" />}
                       </div>
                     </div>
-                    <div className="mt-2 font-bold text-slate-800">
-                      + {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                    </div>
+                    {showPrice && (
+                      <div className="mt-2">
+                        <span className="font-bold text-slate-800">
+                          + {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -239,13 +298,21 @@ export function PrecotizadorPage() {
           />
         </section>
 
-        {/* Contact Form */}
-        <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: company.colorPrimary }} />
+        {/* SECCIÓN AI ANALYSIS CARD (SI FUE RECOMENDADO POR EL BOT) */}
+        {aiAnalysis && (
+          <AiAnalysisCard analysis={aiAnalysis} onClear={() => setAiAnalysis(null)} />
+        )}
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-800">Completa tu solicitud</h2>
-            <p className="text-slate-500">Déjanos tus datos para enviarte la propuesta formal y conversar sobre tu proyecto.</p>
+        {/* PASO 3: TUS DATOS */}
+        <section ref={contactSectionRef} className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm scroll-mt-20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm" style={{ backgroundColor: company.colorPrimary }}>
+              3
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Tus Datos de Contacto</h2>
+              <p className="text-sm text-slate-500">Completa tus datos para enviarte la propuesta formal.</p>
+            </div>
           </div>
 
           {submitted ? (
@@ -412,6 +479,12 @@ export function PrecotizadorPage() {
         onRemoveAddon={(id) => toggleAddon(id)}
         formData={formData}
         booking={booking}
+      />
+
+      {/* CHATBOT WIDGET FLOTANTE (ESTILO TIDIO) */}
+      <PrecotizadorChatWidget
+        company={company}
+        onConfirmRecommendation={handleConfirmRecommendation}
       />
     </div>
   );

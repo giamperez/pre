@@ -1,4 +1,30 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject, IsArray } from 'class-validator';
+
+export class CreateInitialTemplateDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsObject()
+  projectData?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsArray()
+  items?: Array<Record<string, unknown>>;
+
+  @IsOptional()
+  @IsArray()
+  sections?: Array<Record<string, unknown>>;
+}
 
 export class CreateCompanyDto {
   @IsString()
@@ -48,4 +74,12 @@ export class CreateCompanyDto {
   @IsOptional()
   @IsObject()
   paymentInfo?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsArray()
+  customFields?: Array<Record<string, unknown>>;
+
+  @IsOptional()
+  @IsArray()
+  initialTemplates?: CreateInitialTemplateDto[];
 }

@@ -1,7 +1,10 @@
+import type { CustomFieldDefinition } from '../components/company/CompanyCustomFieldsEditor';
+
 export interface LegalSection {
   title: string;
   content: string;
   enabled: boolean;
+  fields?: CustomFieldDefinition[];
 }
 
 const VERTEX_SECTIONS: LegalSection[] = [
@@ -120,5 +123,5 @@ const SECTIONS_BY_COMPANY: Record<string, LegalSection[]> = {
 
 export function getDefaultSections(companySlug?: string | null): LegalSection[] {
   const list = (companySlug && SECTIONS_BY_COMPANY[companySlug]) || VERTEX_SECTIONS;
-  return list.map((s) => ({ ...s }));
+  return list.map((s) => ({ ...s, enabled: true }));
 }

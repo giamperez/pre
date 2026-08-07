@@ -54,4 +54,7 @@ export class UpdateCompanyDto {
   @IsOptional()
   @IsObject()
   paymentInfo?: Record<string, unknown>;
+
+  @IsOptional()
+  customFields?: any;
 }

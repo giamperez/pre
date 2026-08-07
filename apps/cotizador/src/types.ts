@@ -26,6 +26,7 @@ export interface Company {
   backCoverImageUrl?: string | null;
   letterheadUrl?: string | null;
   paymentInfo?: CompanyPaymentInfo | null;
+  customFields?: any[];
 }
 
 export interface QuoteItem {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote, Company } from '../types';
-import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, Pencil } from 'lucide-react';
 import { fetchWithAuth, getUser, getToken } from '../auth';
 import { getTiposServicio } from '../constants/projectTypes';
 
@@ -389,13 +389,22 @@ export function QuoteListPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDate(q.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => openPdf(q.id)}
-                        className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2.5 py-1.5 rounded-lg transition-all"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        Ver PDF
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <Link
+                          to={`/editar/${q.id}`}
+                          className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 font-medium border border-amber-200 px-2.5 py-1.5 rounded-lg transition-all"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Editar
+                        </Link>
+                        <button
+                          onClick={() => openPdf(q.id)}
+                          className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2.5 py-1.5 rounded-lg transition-all"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

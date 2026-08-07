@@ -42,11 +42,33 @@ export class TemplatesService {
         code: createTemplateDto.code,
         name: createTemplateDto.name,
         category: createTemplateDto.category,
-        projectData: createTemplateDto.projectData as object,
-        items: createTemplateDto.items as object[],
-        sections: createTemplateDto.sections ? createTemplateDto.sections as object[] : undefined,
+        type: createTemplateDto.type || 'cotizacion',
+        projectData: (createTemplateDto.projectData as object) || {},
+        items: (createTemplateDto.items as object[]) || [],
+        sections: createTemplateDto.sections ? (createTemplateDto.sections as object[]) : undefined,
+        cardsConfig: createTemplateDto.cardsConfig ? (createTemplateDto.cardsConfig as object) : undefined,
+        customFields: createTemplateDto.customFields ? (createTemplateDto.customFields as object[]) : undefined,
         isCustom: createTemplateDto.isCustom ?? true,
       },
+    });
+  }
+
+  async update(id: string, updateData: any) {
+    const existing = await this.prisma.quoteTemplate.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Template not found');
+
+    return this.prisma.quoteTemplate.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
+  async remove(id: string) {
+    const existing = await this.prisma.quoteTemplate.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Template not found');
+
+    return this.prisma.quoteTemplate.delete({
+      where: { id },
     });
   }
 }
