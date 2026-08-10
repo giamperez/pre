@@ -1,11 +1,56 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, DollarSign } from 'lucide-react';
+import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, DollarSign, Play, Film } from 'lucide-react';
 import { useCatalog } from '../hooks/useCatalog';
 import { API_URL } from '../config';
 import { CalendarPicker } from '../components/CalendarPicker';
 import { QuoteSummaryModal } from '../components/QuoteSummaryModal';
 import { COUNTRY_CODES } from '../constants/countryCodes';
+import { PrecotizadorChatWidget } from '../components/PrecotizadorChatWidget';
+import { AiAnalysisCard } from '../components/AiAnalysisCard';
+import { VideoDemoModal } from '../components/VideoDemoModal';
+
+function ServiceVideoThumbnail({
+  videoUrl,
+  isHovered,
+  onHoverStart,
+  onHoverEnd,
+  onOpen,
+}: {
+  videoUrl: string;
+  isHovered: boolean;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
+  onOpen: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <div
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
+      onClick={onOpen}
+      className="group/thumb relative mb-3 aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer"
+    >
+      {isHovered ? (
+        <video
+          src={videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover/thumb:text-slate-500 transition-colors">
+          <Film className="w-5 h-5 mb-1" />
+          <span className="text-[11px] font-medium">Pasa el cursor o toca para ver la demo</span>
+        </div>
+      )}
+      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none">
+        <Play className="w-2.5 h-2.5 fill-white" /> 30s
+      </span>
+    </div>
+  );
+}
 
 export function PrecotizadorPage() {
   const { companySlug } = useParams();
@@ -22,9 +67,94 @@ export function PrecotizadorPage() {
   const [booking, setBooking] = useState<{ date: string, time: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quoteRequested, setQuoteRequested] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    mainServiceName?: string;
+    summary?: string;
+    explanation?: string;
+    addonNames?: string[];
+  } | null>(null);
+  const [activeVideoModal, setActiveVideoModal] = useState<{
+    serviceName: string;
+    videoUrl: string;
+    onSelect?: () => void;
+    isSelected?: boolean;
+  } | null>(null);
+  const [hoveredPreviewId, setHoveredPreviewId] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<number | null>(null);
+
+  const scheduleHoverPreview = (id: string) => {
+    if (hoverTimeoutRef.current) window.clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = window.setTimeout(() => setHoveredPreviewId(id), 250);
+  };
+  const cancelHoverPreview = () => {
+    if (hoverTimeoutRef.current) window.clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = null;
+    setHoveredPreviewId(null);
+  };
+
+  const contactSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleConfirmRecommendation = (rec: {
+    mainServiceId?: string;
+    addonIds?: string[];
+    summary?: string;
+    explanation?: string;
+    mainServiceName?: string;
+  }) => {
+    if (rec.mainServiceId) {
+      setSelectedMainService(rec.mainServiceId);
+    }
+    if (rec.addonIds) {
+      setSelectedAddons(new Set(rec.addonIds));
+    }
+
+    const matchedAddonNames = (rec.addonIds || [])
+      .map(id => items.find(i => i.id === id)?.name)
+      .filter(Boolean) as string[];
+
+    setAiAnalysis({
+      mainServiceName: rec.mainServiceName || items.find(i => i.id === rec.mainServiceId)?.name,
+      summary: rec.summary,
+      explanation: rec.explanation,
+      addonNames: matchedAddonNames,
+    });
+
+    if (rec.summary) {
+      setFormData(prev => {
+        const existingNotes = prev.notes ? prev.notes.trim() : '';
+        const summaryText = `[Asistente Virtual]: ${rec.summary}`;
+        return {
+          ...prev,
+          notes: existingNotes ? `${existingNotes}\n\n${summaryText}` : summaryText,
+        };
+      });
+    }
+
+    setTimeout(() => {
+      contactSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-slate-500">Cargando catálogo...</p></div>;
-  if (error || !company) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xl font-medium text-red-500">{error || 'Empresa no encontrada'}</p></div>;
+  if (error || !company) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-md w-full text-center shadow-xl space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl font-bold">
+          ⚠️
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Precotizador No Disponible</h2>
+        <p className="text-sm text-slate-500">
+          Esta empresa se encuentra archivada o deshabilitada y no está disponible para recibir precotizaciones en este momento.
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Volver al Inicio
+        </Link>
+      </div>
+    </div>
+  );
 
   const mainServices = items.filter(i => !i.isAddon);
   const addonServices = items.filter(i => i.isAddon);
@@ -110,7 +240,7 @@ export function PrecotizadorPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -155,6 +285,8 @@ export function PrecotizadorPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {mainServices.map(item => {
               const isSelected = selectedMainService === item.id;
+              const videoUrl = (item as any).videoUrl || (company.slug === 'vertex-developers' ? `${API_URL}/public/companies/vertex-developers/video1.mp4` : null);
+
               return (
                 <div
                   key={item.id}
@@ -164,6 +296,23 @@ export function PrecotizadorPage() {
                   `}
                   style={isSelected ? { borderColor: company.colorPrimary, boxShadow: `0 0 0 4px ${company.colorPrimary}15` } : {}}
                 >
+                  {videoUrl && (
+                    <ServiceVideoThumbnail
+                      videoUrl={videoUrl}
+                      isHovered={hoveredPreviewId === item.id}
+                      onHoverStart={() => scheduleHoverPreview(item.id)}
+                      onHoverEnd={cancelHoverPreview}
+                      onOpen={(e) => {
+                        e.stopPropagation();
+                        setActiveVideoModal({
+                          serviceName: item.name,
+                          videoUrl,
+                          onSelect: () => setSelectedMainService(item.id),
+                          isSelected,
+                        });
+                      }}
+                    />
+                  )}
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold mb-1" style={isSelected ? { color: company.colorPrimary } : { color: '#1e293b' }}>
@@ -176,9 +325,13 @@ export function PrecotizadorPage() {
                       {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                     </div>
                   </div>
-                  <div className="mt-2 font-bold text-slate-800">
-                    {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                  </div>
+                  {showPrice && (
+                    <div className="flex items-center justify-end mt-3 pt-2 border-t border-slate-100">
+                      <span className="font-bold text-slate-800 text-sm">
+                        {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -219,9 +372,13 @@ export function PrecotizadorPage() {
                         {isSelected && <CheckSquare className="w-4 h-4" />}
                       </div>
                     </div>
-                    <div className="mt-2 font-bold text-slate-800">
-                      + {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                    </div>
+                    {showPrice && (
+                      <div className="flex items-center justify-end mt-3 pt-2 border-t border-slate-100">
+                        <span className="font-bold text-slate-800 text-sm">
+                          + {item.currency} {item.basePrice.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -239,13 +396,21 @@ export function PrecotizadorPage() {
           />
         </section>
 
-        {/* Contact Form */}
-        <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: company.colorPrimary }} />
+        {/* SECCIÓN AI ANALYSIS CARD (SI FUE RECOMENDADO POR EL BOT) */}
+        {aiAnalysis && (
+          <AiAnalysisCard analysis={aiAnalysis} onClear={() => setAiAnalysis(null)} />
+        )}
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-800">Completa tu solicitud</h2>
-            <p className="text-slate-500">Déjanos tus datos para enviarte la propuesta formal y conversar sobre tu proyecto.</p>
+        {/* PASO 3: TUS DATOS */}
+        <section ref={contactSectionRef} className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm scroll-mt-20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm" style={{ backgroundColor: company.colorPrimary }}>
+              3
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Tus Datos de Contacto</h2>
+              <p className="text-sm text-slate-500">Completa tus datos para enviarte la propuesta formal.</p>
+            </div>
           </div>
 
           {submitted ? (
@@ -413,6 +578,25 @@ export function PrecotizadorPage() {
         formData={formData}
         booking={booking}
       />
+
+      {/* CHATBOT WIDGET FLOTANTE (ESTILO TIDIO) */}
+      <PrecotizadorChatWidget
+        company={company}
+        onConfirmRecommendation={handleConfirmRecommendation}
+      />
+
+      {/* MODAL DE VIDEO DEMO (30s) */}
+      {activeVideoModal && (
+        <VideoDemoModal
+          isOpen={Boolean(activeVideoModal)}
+          onClose={() => setActiveVideoModal(null)}
+          serviceName={activeVideoModal.serviceName}
+          videoUrl={activeVideoModal.videoUrl}
+          colorPrimary={company.colorPrimary || '#0ea5e9'}
+          onSelectService={activeVideoModal.onSelect}
+          isSelected={activeVideoModal.isSelected}
+        />
+      )}
     </div>
   );
 }

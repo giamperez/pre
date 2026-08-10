@@ -83,7 +83,7 @@ export function EditCompanyModal({ company, onClose, onUpdated }: { company: Com
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-800">Editar empresa</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">

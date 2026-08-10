@@ -34,6 +34,7 @@ model Company {
   contactPhone      String?
   contactEmail      String?
   paymentInfo       String?
+  customFields      Json?
   isActive          Boolean @default(true)
 
   legalName        String?
@@ -51,6 +52,7 @@ model Company {
 
   whatsappSession WhatsAppSession?
   whatsappChats   WhatsAppChat[]
+  precotizadorChats PrecotizadorChatSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,9 +138,12 @@ model QuoteTemplate {
   code        String
   name        String
   category    String
+  type        String   @default("cotizacion") // "cotizacion" | "precotizacion"
   projectData Json
   items       Json
   sections    Json?
+  cardsConfig  Json?
+  customFields Json?
   isCustom    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -235,5 +240,39 @@ model WhatsAppMessage {
   chat WhatsAppChat @relation(fields: [chatId], references: [id])
 
   @@unique([chatId, waMessageId])
+}
+
+model PrecotizadorChatSession {
+  id               String   @id @default(uuid())
+  companyId        String
+  customerName     String?  @default("Cliente Precotizador")
+  customerPhone    String?
+  customerEmail    String?
+  status           String   @default("BOT_ACTIVE") // BOT_ACTIVE, HUMAN_TAKEOVER, CLOSED
+  assignedUserId   String?
+  assignedUserName String?
+  unreadCountSales Int      @default(0)
+  lastMessageAt    DateTime @default(now())
+  summary          String?  @db.Text
+  analysisResult   Json?
+
+  company          Company  @relation(fields: [companyId], references: [id])
+  messages         PrecotizadorChatMessage[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model PrecotizadorChatMessage {
+  id          String   @id @default(uuid())
+  sessionId   String
+  sender      String   // "user", "bot", "agent"
+  senderName  String?
+  content     String   @db.Text
+  metadata    Json?
+
+  session     PrecotizadorChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
 }
 

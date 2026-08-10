@@ -84,7 +84,7 @@ export function SelectorPage() {
         {activeCompanies.map(company => (
           <div key={company.id} className="relative group">
             <Link
-              to={`/nueva/${company.slug}`}
+              to={`/empresa/${company.slug}`}
               className="block bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-2xl p-6 flex items-center gap-4 transition-all hover:shadow-md"
             >
               {company.logoUrl ? (
@@ -96,7 +96,7 @@ export function SelectorPage() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-800 truncate">{company.name}</p>
-                <p className="text-sm text-slate-400 mt-0.5">Nueva cotización</p>
+                <p className="text-sm text-slate-400 mt-0.5">Cotizaciones y plantillas</p>
               </div>
               <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-400 transition-colors shrink-0" />
             </Link>

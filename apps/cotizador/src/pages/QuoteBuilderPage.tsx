@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
-import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star, Pencil } from 'lucide-react';
 import { fetchWithAuth, getToken } from '../auth';
 import { getTiposProyecto, getTiposServicio } from '../constants/projectTypes';
 import { getDefaultSections } from '../constants/legalSections';
@@ -141,7 +141,7 @@ function ItemsTable({
 }
 
 export function QuoteBuilderPage() {
-  const { companySlug } = useParams();
+  const { companySlug: paramCompanySlug, quoteId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const leadState = location.state?.leadData;
@@ -150,9 +150,10 @@ export function QuoteBuilderPage() {
   const [loadingCompany, setLoadingCompany] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
+  const [quoteNumber, setQuoteNumber] = useState<string | null>(null);
 
   const [templates, setTemplates] = useState<any[]>([]);
-  const [showStartModal, setShowStartModal] = useState(!leadState);
+  const [showStartModal, setShowStartModal] = useState(!leadState && !quoteId);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateCode, setTemplateCode] = useState('');
   const [templateName, setTemplateName] = useState('');
@@ -187,29 +188,96 @@ export function QuoteBuilderPage() {
     leadState?.additionalItems?.length > 0 ? leadState.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })) : []
   );
   const [considerations, setConsiderations] = useState('');
-  const [sections, setSections] = useState(() => getDefaultSections(companySlug));
+  const [sections, setSections] = useState(() => getDefaultSections(paramCompanySlug));
   const [images, setImages] = useState<string[]>([]);
   const [validity, setValidity] = useState('15 días calendario');
   const [paymentTerms, setPaymentTerms] = useState('40% adelanto, 30% al aprobar maqueta, 30% al finalizar');
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  const [activeTemplateCustomFields, setActiveTemplateCustomFields] = useState<any[]>([]);
+  const [fieldLabels, setFieldLabels] = useState<Record<string, string>>({});
+  const [fieldConfigs, setFieldConfigs] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoTemplateAppliedRef = useRef(false);
 
   useEffect(() => {
-    if (!companySlug) return;
-    Promise.all([
-      fetch(`${API_URL}/catalog/${companySlug}`).then(res => res.json()),
-      fetchWithAuth(`${API_URL}/templates?companySlug=${companySlug}`).then(res => res.json())
-    ])
-    .then(([data, tpls]) => {
-      const { catalogItems: _, ...co } = data;
-      setCompany(co);
-      setTemplates(tpls);
-      setLoadingCompany(false);
-    })
-    .catch(() => setLoadingCompany(false));
-  }, [companySlug]);
+    if (quoteId) {
+      setLoadingCompany(true);
+      fetchWithAuth(`${API_URL}/quotes/${quoteId}`)
+        .then(res => res.json())
+        .then(quote => {
+          if (!quote || quote.message) throw new Error('Cotización no encontrada');
+          
+          setCompany(quote.company);
+          setQuoteNumber(quote.number);
+          setShowStartModal(false);
+
+          const cData = quote.clientData || {};
+          setClientData({
+            empresa: cData.empresa || '',
+            ruc: cData.ruc || '',
+            solicitante: cData.solicitante || '',
+            direccion: cData.direccion || '',
+            telefono: cData.telefono || '',
+            correo: cData.correo || '',
+            tipoCliente: quote.tipoCliente || cData.tipoCliente || '',
+            clienteNuevoRecurrente: quote.clienteNuevoRecurrente || cData.clienteNuevoRecurrente || '',
+            fuenteCliente: quote.fuenteCliente || cData.fuenteCliente || '',
+          });
+
+          setClientData(quote.clientData || {});
+          setProjectData(quote.projectData || {});
+          if (quote.ubicacionProyecto) setProjectData(prev => ({ ...prev, ubicacionProyecto: quote.ubicacionProyecto }));
+          if (quote.sectorProyecto) setProjectData(prev => ({ ...prev, sectorProyecto: quote.sectorProyecto }));
+          if (quote.tipoProyecto) setProjectData(prev => ({ ...prev, tipoProyecto: quote.tipoProyecto }));
+          if (quote.tipoServicio) setProjectData(prev => ({ ...prev, tipoServicio: quote.tipoServicio }));
+
+          if (quote.company) setCompany(quote.company);
+
+          if (quote.items && Array.isArray(quote.items)) {
+            setItems(quote.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
+          }
+          if (quote.additionalItems && Array.isArray(quote.additionalItems)) {
+            setAdditionalItems(quote.additionalItems.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
+          }
+
+          if (quote.considerations) setConsiderations(quote.considerations);
+          if (quote.sections) setSections(quote.sections);
+          if (quote.images) setImages(quote.images);
+          if (quote.metadata && (quote.metadata as any).customFields) {
+            setCustomFieldValues((quote.metadata as any).customFields);
+          }
+
+          if (quote.company?.slug) {
+            fetchWithAuth(`${API_URL}/templates?companySlug=${quote.company.slug}`)
+              .then(res => res.json())
+              .then(setTemplates)
+              .catch(() => {});
+
+          }
+
+          setLoadingCompany(false);
+        })
+        .catch(err => {
+          alert(err.message || 'Error al cargar la cotización.');
+          setLoadingCompany(false);
+          navigate('/lista');
+        });
+    } else if (paramCompanySlug) {
+      Promise.all([
+        fetch(`${API_URL}/catalog/${paramCompanySlug}`).then(res => res.json()),
+        fetchWithAuth(`${API_URL}/templates?companySlug=${paramCompanySlug}`).then(res => res.json())
+      ])
+      .then(([data, tpls]) => {
+        const { catalogItems: _, ...co } = data;
+        setCompany(co);
+        setTemplates(tpls);
+        setLoadingCompany(false);
+      })
+      .catch(() => setLoadingCompany(false));
+    }
+  }, [quoteId, paramCompanySlug]);
 
   // Si la cotización viene de un lead, busca la plantilla cuyo nombre coincide con el
   // servicio principal que eligió el cliente en el precotizador y la aplica automáticamente,
@@ -293,7 +361,7 @@ export function QuoteBuilderPage() {
       const payload = {
         companyId: company.id,
         clientData: { empresa: clientData.empresa, ruc: clientData.ruc || undefined, solicitante: clientData.solicitante, direccion: clientData.direccion || undefined, telefono: clientData.telefono || undefined, correo: clientData.correo || undefined },
-        projectData: { nombre: projectData.nombre, modalidad: projectData.modalidad || undefined, plazo: projectData.plazo || undefined },
+        projectData: { nombre: projectData.nombre, modalidad: projectData.modalidad || undefined, plazo: projectData.plazo || undefined, fieldLabels },
         ubicacionProyecto: projectData.ubicacionProyecto || undefined,
         sectorProyecto: projectData.sectorProyecto || undefined,
         tipoProyecto: projectData.tipoProyecto || undefined,
@@ -306,10 +374,14 @@ export function QuoteBuilderPage() {
         considerations: considerations || undefined,
         sections: sections,
         images: images.length > 0 ? images : undefined,
+        metadata: { customFields: customFieldValues, fieldLabels },
       };
 
-      const res = await fetchWithAuth(`${API_URL}/quotes`, {
-        method: 'POST',
+      const url = quoteId ? `${API_URL}/quotes/${quoteId}` : `${API_URL}/quotes`;
+      const method = quoteId ? 'PATCH' : 'POST';
+
+      const res = await fetchWithAuth(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -370,6 +442,35 @@ export function QuoteBuilderPage() {
   const applyTemplate = (tpl: any) => {
     if (tpl.projectData) {
       setProjectData(prev => ({ ...prev, ...tpl.projectData }));
+      if (tpl.projectData.fieldLabels) {
+        setFieldLabels(tpl.projectData.fieldLabels);
+      }
+      if (tpl.projectData.fieldConfigs) {
+        setFieldConfigs(tpl.projectData.fieldConfigs);
+        const fc = tpl.projectData.fieldConfigs;
+        setClientData(prev => ({
+          ...prev,
+          ...(fc.empresa?.defaultValue ? { empresa: fc.empresa.defaultValue } : {}),
+          ...(fc.ruc?.defaultValue ? { ruc: fc.ruc.defaultValue } : {}),
+          ...(fc.solicitante?.defaultValue ? { solicitante: fc.solicitante.defaultValue } : {}),
+          ...(fc.direccion?.defaultValue ? { direccion: fc.direccion.defaultValue } : {}),
+          ...(fc.telefono?.defaultValue ? { telefono: fc.telefono.defaultValue } : {}),
+          ...(fc.correo?.defaultValue ? { correo: fc.correo.defaultValue } : {}),
+          ...(fc.tipoCliente?.defaultValue ? { tipoCliente: fc.tipoCliente.defaultValue } : {}),
+          ...(fc.recurrencia?.defaultValue ? { clienteNuevoRecurrente: fc.recurrencia.defaultValue } : {}),
+          ...(fc.fuenteCliente?.defaultValue ? { fuenteCliente: fc.fuenteCliente.defaultValue } : {}),
+        }));
+        setProjectData(prev => ({
+          ...prev,
+          ...(fc.nombreProyecto?.defaultValue ? { nombre: fc.nombreProyecto.defaultValue } : {}),
+          ...(fc.modalidad?.defaultValue ? { modalidad: fc.modalidad.defaultValue } : {}),
+          ...(fc.plazo?.defaultValue ? { plazo: fc.plazo.defaultValue } : {}),
+          ...(fc.ubicacionProyecto?.defaultValue ? { ubicacionProyecto: fc.ubicacionProyecto.defaultValue } : {}),
+          ...(fc.sectorProyecto?.defaultValue ? { sectorProyecto: fc.sectorProyecto.defaultValue } : {}),
+          ...(fc.tipoProyecto?.defaultValue ? { tipoProyecto: fc.tipoProyecto.defaultValue } : {}),
+          ...(fc.tipoServicio?.defaultValue ? { tipoServicio: fc.tipoServicio.defaultValue } : {}),
+        }));
+      }
     }
     if (tpl.items?.length > 0) {
       setItems(tpl.items.map((i: any) => ({ ...i, _key: Math.random().toString(36).slice(2) })));
@@ -381,7 +482,7 @@ export function QuoteBuilderPage() {
       );
 
       // Map each default section, matching by normalized title
-      const baseSections = getDefaultSections(companySlug);
+      const baseSections = getDefaultSections(company?.slug || paramCompanySlug);
       const mergedSections = baseSections.map(defaultSection => {
         const key = defaultSection.title.toLowerCase().trim();
         const match = templateSectionsMap.get(key);
@@ -403,6 +504,9 @@ export function QuoteBuilderPage() {
 
       setSections(mergedSections);
     }
+    if (tpl.customFields && Array.isArray(tpl.customFields)) {
+      setActiveTemplateCustomFields(tpl.customFields);
+    }
     setShowStartModal(false);
   };
 
@@ -415,6 +519,73 @@ export function QuoteBuilderPage() {
   const inputCls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-300";
   const labelCls = "block text-xs font-semibold text-slate-500 mb-1";
   const selectCls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white";
+
+  const allCustomFields = activeTemplateCustomFields.length > 0 ? activeTemplateCustomFields : ((company?.customFields as any[]) || []);
+  const customClientFields = allCustomFields.filter(f => f.category === 'client');
+  const customProjectFields = allCustomFields.filter(f => f.category === 'project');
+
+  const renderCustomField = (f: any) => {
+    const val = customFieldValues[f.id] || '';
+    const handleChange = (v: any) => setCustomFieldValues(prev => ({ ...prev, [f.id]: v }));
+
+    if (f.type === 'textarea') {
+      return (
+        <div key={f.id} className="sm:col-span-2">
+          <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+          <textarea
+            rows={2}
+            className={`${inputCls} resize-none`}
+            placeholder={`Ingresa ${f.label.toLowerCase()}`}
+            value={val}
+            onChange={e => handleChange(e.target.value)}
+          />
+        </div>
+      );
+    }
+
+    if (f.type === 'select') {
+      return (
+        <div key={f.id}>
+          <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+          <select className={selectCls} value={val} onChange={e => handleChange(e.target.value)}>
+            <option value="">Seleccionar...</option>
+            {(f.options || []).map((opt: string) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (f.type === 'checkbox') {
+      return (
+        <div key={f.id} className="flex items-center pt-5">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={Boolean(val)}
+              onChange={e => handleChange(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {f.label} {f.required && <span className="text-red-400">*</span>}
+          </label>
+        </div>
+      );
+    }
+
+    return (
+      <div key={f.id}>
+        <label className={labelCls}>{f.label} {f.required && <span className="text-red-400">*</span>}</label>
+        <input
+          type={f.type === 'number' ? 'number' : 'text'}
+          className={inputCls}
+          placeholder={`Ingresa ${f.label.toLowerCase()}`}
+          value={val}
+          onChange={e => handleChange(e.target.value)}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto pb-16 relative">
@@ -444,22 +615,54 @@ export function QuoteBuilderPage() {
                 </h3>
                 <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
                   {templates.map(tpl => (
-                    <button
+                    <div
                       key={tpl.id}
-                      onClick={() => applyTemplate(tpl)}
-                      className="w-full text-left bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md rounded-xl p-4 transition-all group"
+                      className="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md rounded-xl p-4 transition-all group flex flex-col justify-between"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md">
-                          {tpl.code}
-                        </span>
-                        {tpl.isCustom && <Star className="w-4 h-4 text-yellow-400" />}
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md">
+                            {tpl.code}
+                          </span>
+                          {tpl.isCustom && <Star className="w-4 h-4 text-yellow-400" />}
+                        </div>
+                        <p className="font-semibold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{tpl.name}</p>
+                        <p className="text-xs text-slate-500 capitalize">{tpl.category}</p>
                       </div>
-                      <p className="font-semibold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{tpl.name}</p>
-                      <p className="text-xs text-slate-500">{tpl.category}</p>
-                    </button>
+
+                      <div className="flex items-center gap-2 pt-3 mt-3 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => applyTemplate(tpl)}
+                          className="flex-1 py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors text-center shadow-xs"
+                        >
+                          Usar plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            applyTemplate(tpl);
+                            setShowStartModal(false);
+                          }}
+                          className="py-1.5 px-3 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 shrink-0"
+                          title="Cargar y editar esta plantilla para la cotización"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Editar
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {templates.length === 0 && <p className="text-xs text-slate-500 text-center py-4">No hay plantillas disponibles</p>}
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-slate-200/80 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">¿Deseas crear o modificar plantillas maestras?</span>
+                  <Link
+                    to={`/empresa/${company?.slug || paramCompanySlug}?tab=plantillas`}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:underline"
+                  >
+                    Gestor de Plantillas ↗
+                  </Link>
                 </div>
               </div>
             </div>
@@ -504,7 +707,9 @@ export function QuoteBuilderPage() {
                 </div>
               )}
               <div>
-                <p className="text-xs text-slate-400 leading-none">Nueva cotización</p>
+                <p className="text-xs text-slate-400 leading-none">
+                  {quoteId ? `Editando Cotización N° ${quoteNumber || ''}` : 'Nueva cotización'}
+                </p>
                 <p className="font-semibold text-slate-800">{company.name}</p>
               </div>
             </div>
@@ -531,7 +736,7 @@ export function QuoteBuilderPage() {
             style={{ backgroundColor: company?.colorPrimary || '#1e293b' }}
           >
             <Save className="w-4 h-4" />
-            {saving ? 'Guardando…' : 'Guardar y Exportar PDF'}
+            {saving ? 'Guardando…' : quoteId ? 'Guardar Cambios y PDF' : 'Guardar y Exportar PDF'}
           </button>
         </div>
       </div>
@@ -543,59 +748,84 @@ export function QuoteBuilderPage() {
             Datos del cliente
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Empresa / Cliente <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Nombre de la empresa" value={clientData.empresa} onChange={e => setClientData({ ...clientData, empresa: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>RUC</label>
-              <input className={inputCls} placeholder="20XXXXXXXXX" value={clientData.ruc} onChange={e => setClientData({ ...clientData, ruc: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Solicitante <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Nombre completo" value={clientData.solicitante} onChange={e => setClientData({ ...clientData, solicitante: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Dirección</label>
-              <input className={inputCls} placeholder="Av. / Calle / Urb." value={clientData.direccion} onChange={e => setClientData({ ...clientData, direccion: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Teléfono</label>
-              <input className={inputCls} placeholder="+51 999 000 000" value={clientData.telefono} onChange={e => setClientData({ ...clientData, telefono: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Correo</label>
-              <input type="email" className={inputCls} placeholder="correo@empresa.com" value={clientData.correo} onChange={e => setClientData({ ...clientData, correo: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Tipo de cliente</label>
-              <select className={selectCls} value={clientData.tipoCliente} onChange={e => setClientData({ ...clientData, tipoCliente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Persona natural">Persona natural</option>
-                <option value="Empresa privada">Empresa privada</option>
-                <option value="Entidad pública">Entidad pública</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Recurrencia</label>
-              <select className={selectCls} value={clientData.clienteNuevoRecurrente} onChange={e => setClientData({ ...clientData, clienteNuevoRecurrente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Nuevo">Nuevo</option>
-                <option value="Recurrente">Recurrente</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Fuente del cliente</label>
-              <select className={selectCls} value={clientData.fuenteCliente} onChange={e => setClientData({ ...clientData, fuenteCliente: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Referido">Referido</option>
-                <option value="Redes sociales">Redes sociales</option>
-                <option value="Web">Web</option>
-                <option value="Anuncio">Anuncio</option>
-                <option value="Directo">Directo</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
+            {fieldConfigs.empresa?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.empresa?.label || fieldLabels.empresaLabel || 'Empresa / Cliente'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.empresa?.placeholder || "Nombre de la empresa"} value={clientData.empresa} onChange={e => setClientData({ ...clientData, empresa: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.ruc?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.ruc?.label || fieldLabels.rucLabel || 'RUC'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.ruc?.placeholder || "20XXXXXXXXX"} value={clientData.ruc} onChange={e => setClientData({ ...clientData, ruc: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.solicitante?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.solicitante?.label || fieldLabels.solicitanteLabel || 'Solicitante'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.solicitante?.placeholder || "Nombre completo"} value={clientData.solicitante} onChange={e => setClientData({ ...clientData, solicitante: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.direccion?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.direccion?.label || fieldLabels.direccionLabel || 'Dirección'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.direccion?.placeholder || "Av. / Calle / Urb."} value={clientData.direccion} onChange={e => setClientData({ ...clientData, direccion: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.telefono?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.telefono?.label || fieldLabels.telefonoLabel || 'Teléfono'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.telefono?.placeholder || "+51 999 000 000"} value={clientData.telefono} onChange={e => setClientData({ ...clientData, telefono: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.correo?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.correo?.label || fieldLabels.correoLabel || 'Correo'}</label>
+                <input type="email" className={inputCls} placeholder={fieldConfigs.correo?.placeholder || "correo@empresa.com"} value={clientData.correo} onChange={e => setClientData({ ...clientData, correo: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.tipoCliente?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoCliente?.label || fieldLabels.tipoClienteLabel || 'Tipo de cliente'}</label>
+                <select className={selectCls} value={clientData.tipoCliente} onChange={e => setClientData({ ...clientData, tipoCliente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoCliente?.options || ['Persona natural', 'Empresa privada', 'Entidad pública']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.recurrencia?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.recurrencia?.label || fieldLabels.recurrenciaLabel || 'Recurrencia'}</label>
+                <select className={selectCls} value={clientData.clienteNuevoRecurrente} onChange={e => setClientData({ ...clientData, clienteNuevoRecurrente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.recurrencia?.options || ['Nuevo', 'Recurrente']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.fuenteCliente?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.fuenteCliente?.label || fieldLabels.fuenteClienteLabel || 'Fuente del cliente'}</label>
+                <select className={selectCls} value={clientData.fuenteCliente} onChange={e => setClientData({ ...clientData, fuenteCliente: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.fuenteCliente?.options || ['Referido', 'Redes sociales', 'Web', 'Anuncio', 'Directo', 'Otro']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {customClientFields.map(renderCustomField)}
           </div>
         </section>
 
@@ -605,43 +835,48 @@ export function QuoteBuilderPage() {
             Clasificación del proyecto
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Ubicación del proyecto</label>
-              <input className={inputCls} placeholder="Ciudad, Distrito" value={projectData.ubicacionProyecto} onChange={e => setProjectData({ ...projectData, ubicacionProyecto: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Sector</label>
-              <select className={selectCls} value={projectData.sectorProyecto} onChange={e => setProjectData({ ...projectData, sectorProyecto: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                <option value="Residencial">Residencial</option>
-                <option value="Comercial">Comercial</option>
-                <option value="Industrial">Industrial</option>
-                <option value="Educativo">Educativo</option>
-                <option value="Salud">Salud</option>
-                <option value="Institucional">Institucional</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-            {tiposProyecto.length > 0 && (
+            {fieldConfigs.ubicacionProyecto?.enabled !== false && (
               <div>
-                <label className={labelCls}>Tipo de proyecto</label>
-                <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
+                <label className={labelCls}>{fieldConfigs.ubicacionProyecto?.label || fieldLabels.ubicacionLabel || 'Ubicación del proyecto'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.ubicacionProyecto?.placeholder || "Ciudad, Distrito"} value={projectData.ubicacionProyecto} onChange={e => setProjectData({ ...projectData, ubicacionProyecto: e.target.value })} />
+              </div>
+            )}
+
+            {fieldConfigs.sectorProyecto?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.sectorProyecto?.label || fieldLabels.sectorLabel || 'Sector'}</label>
+                <select className={selectCls} value={projectData.sectorProyecto} onChange={e => setProjectData({ ...projectData, sectorProyecto: e.target.value })}>
                   <option value="">Seleccionar...</option>
-                  {tiposProyecto.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                  {(fieldConfigs.sectorProyecto?.options || ['Residencial', 'Comercial', 'Industrial', 'Educativo', 'Salud', 'Institucional', 'Otro']).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
               </div>
             )}
-            <div>
-              <label className={labelCls}>Tipo de servicio</label>
-              <select className={selectCls} value={projectData.tipoServicio} onChange={e => setProjectData({ ...projectData, tipoServicio: e.target.value })}>
-                <option value="">Seleccionar...</option>
-                {tiposServicio.map(({ value, label }) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
+
+            {fieldConfigs.tipoProyecto?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoProyecto?.label || fieldLabels.tipoProyectoLabel || 'Tipo de proyecto'}</label>
+                <select className={selectCls} value={projectData.tipoProyecto} onChange={e => setProjectData({ ...projectData, tipoProyecto: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoProyecto?.options || (tiposProyecto.map(t => t.label))).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {fieldConfigs.tipoServicio?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.tipoServicio?.label || fieldLabels.tipoServicioLabel || 'Tipo de servicio'}</label>
+                <select className={selectCls} value={projectData.tipoServicio} onChange={e => setProjectData({ ...projectData, tipoServicio: e.target.value })}>
+                  <option value="">Seleccionar...</option>
+                  {(fieldConfigs.tipoServicio?.options || (tiposServicio.map(t => t.label))).map((opt: string) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </section>
 
@@ -651,18 +886,25 @@ export function QuoteBuilderPage() {
             Detalles del proyecto
           </h2>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-3">
-              <label className={labelCls}>Nombre del proyecto <span className="text-red-400">*</span></label>
-              <input className={inputCls} placeholder="Ej: Desarrollo web para Empresa XYZ" value={projectData.nombre} onChange={e => setProjectData({ ...projectData, nombre: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Modalidad</label>
-              <input className={inputCls} placeholder="Proyecto por alcance" value={projectData.modalidad} onChange={e => setProjectData({ ...projectData, modalidad: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Plazo estimado</label>
-              <input className={inputCls} placeholder="45 días calendario" value={projectData.plazo} onChange={e => setProjectData({ ...projectData, plazo: e.target.value })} />
-            </div>
+            {fieldConfigs.nombreProyecto?.enabled !== false && (
+              <div className="sm:col-span-3">
+                <label className={labelCls}>{fieldConfigs.nombreProyecto?.label || fieldLabels.nombreProyectoLabel || 'Nombre del proyecto'} <span className="text-red-400">*</span></label>
+                <input className={inputCls} placeholder={fieldConfigs.nombreProyecto?.placeholder || "Ej: Desarrollo web para Empresa XYZ"} value={projectData.nombre} onChange={e => setProjectData({ ...projectData, nombre: e.target.value })} />
+              </div>
+            )}
+            {fieldConfigs.modalidad?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.modalidad?.label || fieldLabels.modalidadLabel || 'Modalidad'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.modalidad?.placeholder || "Proyecto por alcance"} value={projectData.modalidad} onChange={e => setProjectData({ ...projectData, modalidad: e.target.value })} />
+              </div>
+            )}
+            {fieldConfigs.plazo?.enabled !== false && (
+              <div>
+                <label className={labelCls}>{fieldConfigs.plazo?.label || fieldLabels.plazoLabel || 'Plazo estimado'}</label>
+                <input className={inputCls} placeholder={fieldConfigs.plazo?.placeholder || "45 días calendario"} value={projectData.plazo} onChange={e => setProjectData({ ...projectData, plazo: e.target.value })} />
+              </div>
+            )}
+            {customProjectFields.map(renderCustomField)}
           </div>
         </section>
 
@@ -827,13 +1069,21 @@ export function QuoteBuilderPage() {
                     </button>
                   </div>
                   {isExpanded && (
-                    <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+                    <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-3">
                       <textarea
                         rows={6}
                         className={inputCls + " resize-none text-xs"}
                         value={section.content}
                         onChange={e => setSections(prev => prev.map((s, i) => i === idx ? { ...s, content: e.target.value } : s))}
                       />
+
+                      {activeTemplateCustomFields.filter(f => f.category === `section_${section.title}`).length > 0 && (
+                        <div className="pt-2 border-t border-slate-200 grid sm:grid-cols-2 gap-3">
+                          {activeTemplateCustomFields
+                            .filter(f => f.category === `section_${section.title}`)
+                            .map(renderCustomField)}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

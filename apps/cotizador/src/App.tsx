@@ -8,11 +8,14 @@ import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { AgendaPage } from './pages/AgendaPage';
 import { WhatsappPage } from './pages/WhatsappPage';
+import { PrecotizadorChatPage } from './pages/PrecotizadorChatPage';
+import { CompanyPanelPage } from './pages/CompanyPanelPage';
+import { TemplateEditorPage } from './pages/TemplateEditorPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { GlobalDisconnectBanner } from './components/whatsapp/GlobalDisconnectBanner';
 import { WhatsappProvider } from './whatsapp-context';
 import { getUser, logout } from './auth';
-import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar, MessageCircle } from 'lucide-react';
+import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar, MessageCircle, Bot, LayoutTemplate } from 'lucide-react';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -49,6 +52,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">Cotizaciones</span>
           </Link>
+          {isAdmin && (
+            <Link to="/plantillas" className={navLinkCls('/plantillas')}>
+              <LayoutTemplate className="w-4 h-4" />
+              <span className="hidden sm:inline">Plantillas</span>
+            </Link>
+          )}
           <Link to="/leads" className={navLinkCls('/leads')}>
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Leads</span>
@@ -56,6 +65,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <Link to="/agenda" className={navLinkCls('/agenda')}>
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">Agenda</span>
+          </Link>
+          <Link to="/precotizador-chats" className={navLinkCls('/precotizador-chats')}>
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">Chat AI</span>
           </Link>
           <Link to="/whatsapp" className={navLinkCls('/whatsapp')}>
             <MessageCircle className="w-4 h-4" />
@@ -114,9 +127,14 @@ function App() {
           <Route path="/" element={<ProtectedRoute><AppLayout><SelectorPage /></AppLayout></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
           <Route path="/nueva/:companySlug" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/editar/:quoteId" element={<ProtectedRoute><AppLayout><QuoteBuilderPage /></AppLayout></ProtectedRoute>} />
           <Route path="/lista" element={<ProtectedRoute><AppLayout><QuoteListPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/empresa/:companySlug" element={<ProtectedRoute><AppLayout><CompanyPanelPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/plantillas/nueva" element={<ProtectedRoute><AppLayout><TemplateEditorPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/plantillas/editar/:templateId" element={<ProtectedRoute><AppLayout><TemplateEditorPage /></AppLayout></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><AppLayout><LeadsPage /></AppLayout></ProtectedRoute>} />
           <Route path="/agenda" element={<ProtectedRoute><AppLayout><AgendaPage /></AppLayout></ProtectedRoute>} />
+          <Route path="/precotizador-chats" element={<ProtectedRoute><AppLayout><PrecotizadorChatPage /></AppLayout></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute><AppLayout><WhatsappPage /></AppLayout></ProtectedRoute>} />
           <Route path="/usuarios" element={<ProtectedRoute><AppLayout><UsersPage /></AppLayout></ProtectedRoute>} />
 

@@ -23,6 +23,7 @@ export function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
       const res = await fetchWithAuth(`${API_URL}/companies`, {
         method: 'POST',
@@ -42,10 +43,12 @@ export function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void
           paymentInfo: buildPaymentInfo(form),
         }),
       });
+
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.message || 'Error al crear la empresa');
       }
+
       const company = await res.json();
       onCreated(company);
       onClose();
@@ -58,14 +61,18 @@ export function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">Nueva empresa</h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Nueva empresa</h2>
+            <p className="text-xs text-slate-500">Registra los datos comerciales y campos personalizados de la empresa</p>
+          </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <CompanyForm form={form} setForm={setForm} />
 
           {error && (
@@ -76,10 +83,10 @@ export function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void
           )}
 
           <p className="text-xs text-slate-400">
-            Podrás subir el logo, portada, contraportada y membrete justo después de crearla.
+            Podrás subir el logo, portada, contraportada y membrete justo después de crear la empresa.
           </p>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 border-t border-slate-100">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
               Cancelar
             </button>

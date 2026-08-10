@@ -82,7 +82,7 @@ export class PdfService {
           <td style="padding:6px; border:1px solid #ddd; text-align:center;">${startIdx + i + 1}</td>
           <td style="padding:6px; border:1px solid #ddd; white-space:pre-wrap;">
             <strong>${item.titulo || item.detalle || ''}</strong>
-            ${item.contenido ? `<br/><span style="font-size:11px; color:#444;">${item.contenido}</span>` : ''}
+            ${item.contenido ? `<br/><span style="font-size:10.5px; color:#444;">${item.contenido}</span>` : ''}
           </td>
           <td style="padding:6px; border:1px solid #ddd; text-align:center;">${item.cantidad || 1}</td>
           <td style="padding:6px; border:1px solid #ddd; text-align:right;">S/ ${this.fmt(item.precioUnitario)}</td>
@@ -90,15 +90,15 @@ export class PdfService {
         </tr>`).join('');
 
     const tableHeader = (title: string) => `
-      <h3 style="color:${primary}; font-size:14px; margin-top:15px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${title}</h3>
-      <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:12px;">
+      <h3 style="color:${primary}; font-size:13px; margin-top:12px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">${title}</h3>
+      <table style="width:100%; font-size:10.5px; border-collapse:collapse; margin-bottom:10px;">
         <thead>
           <tr style="background-color:${primary}; color:white;">
-            <th style="padding:8px; text-align:center; width:40px; border:1px solid ${primary};">N°</th>
-            <th style="padding:8px; text-align:left; border:1px solid ${primary};">Detalle</th>
-            <th style="padding:8px; text-align:center; width:50px; border:1px solid ${primary};">Cant.</th>
-            <th style="padding:8px; text-align:right; width:110px; border:1px solid ${primary};">P. Unitario</th>
-            <th style="padding:8px; text-align:right; width:110px; border:1px solid ${primary};">Total</th>
+            <th style="padding:7px; text-align:center; width:35px; border:1px solid ${primary};">N°</th>
+            <th style="padding:7px; text-align:left; border:1px solid ${primary};">Detalle</th>
+            <th style="padding:7px; text-align:center; width:45px; border:1px solid ${primary};">Cant.</th>
+            <th style="padding:7px; text-align:right; width:100px; border:1px solid ${primary};">P. Unitario</th>
+            <th style="padding:7px; text-align:right; width:100px; border:1px solid ${primary};">Total</th>
           </tr>
         </thead>
         <tbody>`;
@@ -108,72 +108,60 @@ export class PdfService {
     const buildFullTable = (rows: any[], title: string, startIdx = 0): string =>
       tableHeader(title) + buildItemsTableBody(rows, startIdx) + tableFooter;
 
-    // ── Paginación de ítems ────────────────────────────────────────────────────
-    const ITEMS_POR_PAGINA = 6;
-    const paginasItems: any[][] = [];
-    for (let i = 0; i < items.length; i += ITEMS_POR_PAGINA) {
-      paginasItems.push(items.slice(i, i + ITEMS_POR_PAGINA));
-    }
-    if (paginasItems.length === 0) paginasItems.push([]);
-
-    // ── Secciones legales: grupos de 3 ────────────────────────────────────────
-    const enabledSections = sections.filter(s => s.enabled);
-    const gruposSecciones: any[][] = [];
-    for (let i = 0; i < enabledSections.length; i += 3) {
-      gruposSecciones.push(enabledSections.slice(i, i + 3));
-    }
-
     // ── Bloques de contenido ──────────────────────────────────────────────────
+    const metadata = (quote.metadata as any) || {};
+    const fieldLabels = metadata.fieldLabels || projectData.fieldLabels || {};
+
     const headerBlock = `
-      <h2 style="color:${primary}; font-size:20px; font-weight:700; margin-bottom:8px;">COTIZACIÓN N° ${quote.number}</h2>
-      <p style="color:#666; font-size:11px; margin-bottom:8px;">Fecha: ${this.formatDate(new Date(quote.createdAt))} &nbsp;|&nbsp; Válida por: 15 días calendario</p>
-      <hr style="border:none; border-top:2px solid ${secondary}; margin:10px 0;" />
+      <h2 style="color:${primary}; font-size:18px; font-weight:700; margin-bottom:6px;">COTIZACIÓN N° ${quote.number}</h2>
+      <p style="color:#666; font-size:10.5px; margin-bottom:6px;">Fecha: ${this.formatDate(new Date(quote.createdAt))} &nbsp;|&nbsp; Válida por: 15 días calendario</p>
+      <hr style="border:none; border-top:2px solid ${secondary}; margin:8px 0 12px 0;" />
     `;
 
     const clientBlock = `
-      <h3 style="color:${primary}; font-size:13px; margin-top:12px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Datos del Cliente</h3>
-      <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:12px;">
+      <h3 style="color:${primary}; font-size:12px; margin-top:4px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Datos del Cliente</h3>
+      <table style="width:100%; font-size:10.5px; border-collapse:collapse; margin-bottom:10px;">
         <tr>
-          <td style="padding:5px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Empresa:</strong> ${clientData.empresa || '-'}</td>
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">RUC:</strong> ${clientData.ruc || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">${fieldLabels.empresaLabel || 'Empresa'}:</strong> ${clientData.empresa || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.rucLabel || 'RUC'}:</strong> ${clientData.ruc || '-'}</td>
         </tr>
         <tr style="background:#f9f9f9;">
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Solicitante:</strong> ${clientData.solicitante || '-'}</td>
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Teléfono:</strong> ${clientData.telefono || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.solicitanteLabel || 'Solicitante'}:</strong> ${clientData.solicitante || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.telefonoLabel || 'Teléfono'}:</strong> ${clientData.telefono || '-'}</td>
         </tr>
         <tr>
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Dirección:</strong> ${clientData.direccion || '-'}</td>
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Correo:</strong> ${clientData.correo || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.direccionLabel || 'Dirección'}:</strong> ${clientData.direccion || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.correoLabel || 'Correo'}:</strong> ${clientData.correo || '-'}</td>
         </tr>
       </table>
     `;
 
     const projectBlock = `
-      <h3 style="color:${primary}; font-size:13px; margin-top:0; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Proyecto</h3>
-      <table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:12px;">
+      <h3 style="color:${primary}; font-size:12px; margin-top:0; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Proyecto</h3>
+      <table style="width:100%; font-size:10.5px; border-collapse:collapse; margin-bottom:10px;">
         <tr>
-          <td style="padding:5px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">Nombre:</strong> ${projectData.nombre || '-'}</td>
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Modalidad:</strong> ${projectData.modalidad || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd; width:50%;"><strong style="color:${primary};">${fieldLabels.nombreProyectoLabel || 'Nombre'}:</strong> ${projectData.nombre || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.modalidadLabel || 'Modalidad'}:</strong> ${projectData.modalidad || '-'}</td>
         </tr>
         <tr style="background:#f9f9f9;">
-          <td style="padding:5px 8px; border:1px solid #ddd;"><strong style="color:${primary};">Plazo:</strong> ${projectData.plazo || '-'}</td>
-          <td style="padding:5px 8px; border:1px solid #ddd;"></td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"><strong style="color:${primary};">${fieldLabels.plazoLabel || 'Plazo'}:</strong> ${projectData.plazo || '-'}</td>
+          <td style="padding:4px 8px; border:1px solid #ddd;"></td>
         </tr>
       </table>
     `;
 
     const totalesBlock = `
-      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-        <div style="min-width:280px; border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
-          <div style="display:flex; justify-content:space-between; padding:8px 16px; font-size:12px; background:#f9f9f9; border-bottom:1px solid #e5e7eb;">
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <div style="min-width:260px; border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; padding:6px 14px; font-size:11px; background:#f9f9f9; border-bottom:1px solid #e5e7eb;">
             <span style="color:#555;">SUB TOTAL</span>
             <strong>S/ ${this.fmt(quote.subtotal)}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 16px; font-size:12px; border-bottom:1px solid #e5e7eb;">
+          <div style="display:flex; justify-content:space-between; padding:6px 14px; font-size:11px; border-bottom:1px solid #e5e7eb;">
             <span style="color:#555;">IGV (18%)</span>
             <strong>S/ ${this.fmt(quote.igv)}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; padding:10px 16px; font-size:15px; background:${primary}; color:white;">
+          <div style="display:flex; justify-content:space-between; padding:8px 14px; font-size:14px; background:${primary}; color:white;">
             <strong>TOTAL</strong>
             <strong>S/ ${this.fmt(quote.total)}</strong>
           </div>
@@ -182,54 +170,88 @@ export class PdfService {
     `;
 
     const pagoBlock = `
-      <h3 style="color:${primary}; font-size:13px; margin-top:20px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Forma de Pago</h3>
-      <table style="font-size:11px; border-collapse:collapse;">
-        ${paymentInfo.banco ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600; min-width:120px;">Banco</td><td>${paymentInfo.banco}</td></tr>` : ''}
-        ${paymentInfo.cuenta ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">Cuenta corriente</td><td>${paymentInfo.cuenta}</td></tr>` : ''}
-        ${paymentInfo.cci ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">CCI</td><td>${paymentInfo.cci}</td></tr>` : ''}
-        ${taxId ? `<tr><td style="color:#555; padding:3px 16px 3px 0; font-weight:600;">RUC</td><td>${taxId}</td></tr>` : ''}
+      <h3 style="color:${primary}; font-size:12px; margin-top:14px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Forma de Pago</h3>
+      <table style="font-size:10.5px; border-collapse:collapse;">
+        ${paymentInfo.banco ? `<tr><td style="color:#555; padding:2px 14px 2px 0; font-weight:600; min-width:110px;">Banco</td><td>${paymentInfo.banco}</td></tr>` : ''}
+        ${paymentInfo.cuenta ? `<tr><td style="color:#555; padding:2px 14px 2px 0; font-weight:600;">Cuenta corriente</td><td>${paymentInfo.cuenta}</td></tr>` : ''}
+        ${paymentInfo.cci ? `<tr><td style="color:#555; padding:2px 14px 2px 0; font-weight:600;">CCI</td><td>${paymentInfo.cci}</td></tr>` : ''}
+        ${taxId ? `<tr><td style="color:#555; padding:2px 14px 2px 0; font-weight:600;">RUC</td><td>${taxId}</td></tr>` : ''}
       </table>
     `;
 
     const consideracionesBlock = quote.considerations
-      ? `<h3 style="color:${primary}; font-size:13px; margin-top:16px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Consideraciones</h3>
-         <p style="font-size:11px; white-space:pre-wrap; color:#444; line-height:1.6;">${quote.considerations}</p>`
+      ? `<h3 style="color:${primary}; font-size:12px; margin-top:12px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Consideraciones</h3>
+         <p style="font-size:10.5px; white-space:pre-wrap; color:#444; line-height:1.5;">${quote.considerations}</p>`
       : '';
 
     const additionalsBlock = additionalItems.length > 0
       ? buildFullTable(additionalItems, 'Características Adicionales')
       : '';
 
-    // ── Armar páginas ─────────────────────────────────────────────────────────
-    const pagina1 = pagina(
-      headerBlock +
-      clientBlock +
-      projectBlock +
-      buildFullTable(paginasItems[0], 'Paquete Base', 0)
-    );
+    // ── Paginación Optimizada y Compacta ─────────────────────────────────────────
+    // Si los ítems caben holgadamente en la pág 1 (<=4 ítems y sin adicionales), metemos Totales + Pago en Pág 1.
+    const canFitEverythingOnPage1 = items.length <= 4 && additionalItems.length === 0;
 
-    const paginasContinuacion = paginasItems.slice(1).map((grupo, idx) =>
-      pagina(
-        tableHeader(`Paquete Base (continuación)`) +
-        buildItemsTableBody(grupo, (idx + 1) * ITEMS_POR_PAGINA) +
-        tableFooter
-      )
-    ).join('');
+    let paginasContenidoHtml = '';
 
-    const paginaTotales = pagina(
-      additionalsBlock +
-      totalesBlock +
-      pagoBlock +
-      consideracionesBlock
-    );
+    if (canFitEverythingOnPage1) {
+      paginasContenidoHtml += pagina(
+        headerBlock +
+        clientBlock +
+        projectBlock +
+        buildFullTable(items, 'Paquete Base', 0) +
+        totalesBlock +
+        pagoBlock +
+        consideracionesBlock
+      );
+    } else {
+      // Página 1: Encabezado + Cliente + Proyecto + Paquete Base (hasta 7 ítems)
+      const ITEMS_PAGINA_1 = 7;
+      const primerGrupo = items.slice(0, ITEMS_PAGINA_1);
+      const restoItems = items.slice(ITEMS_PAGINA_1);
 
-    const paginasLegales = gruposSecciones.map(grupo => {
-      const html = grupo.map(s => `
-        <h3 style="color:${primary}; font-size:14px; margin-top:20px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">${enabledSections.indexOf(s) + 1}. ${s.title}</h3>
-        <p style="font-size:11px; white-space:pre-wrap; color:#444; line-height:1.6;">${s.content}</p>
+      paginasContenidoHtml += pagina(
+        headerBlock +
+        clientBlock +
+        projectBlock +
+        buildFullTable(primerGrupo, 'Paquete Base', 0)
+      );
+
+      // Si quedan más ítems del paquete base, paginar en grupos de 8
+      if (restoItems.length > 0) {
+        const ITEMS_POR_PAGINA = 8;
+        for (let i = 0; i < restoItems.length; i += ITEMS_POR_PAGINA) {
+          const grupo = restoItems.slice(i, i + ITEMS_POR_PAGINA);
+          paginasContenidoHtml += pagina(
+            tableHeader(`Paquete Base (continuación)`) +
+            buildItemsTableBody(grupo, ITEMS_PAGINA_1 + i) +
+            tableFooter
+          );
+        }
+      }
+
+      // Página de Totales y Consideraciones
+      paginasContenidoHtml += pagina(
+        additionalsBlock +
+        totalesBlock +
+        pagoBlock +
+        consideracionesBlock
+      );
+    }
+
+    // ── Secciones legales: agrupadas eficientemente (5 a 6 por página) ──────────
+    const enabledSections = sections.filter(s => s.enabled);
+    const SECCIONES_POR_PAGINA = 5;
+    for (let i = 0; i < enabledSections.length; i += SECCIONES_POR_PAGINA) {
+      const grupo = enabledSections.slice(i, i + SECCIONES_POR_PAGINA);
+      const htmlGrupo = grupo.map(s => `
+        <div style="margin-bottom:12px; page-break-inside:avoid;">
+          <h3 style="color:${primary}; font-size:12px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">${enabledSections.indexOf(s) + 1}. ${s.title}</h3>
+          <p style="font-size:10.5px; white-space:pre-wrap; color:#444; line-height:1.5; margin:0;">${s.content}</p>
+        </div>
       `).join('');
-      return pagina(html);
-    }).join('');
+      paginasContenidoHtml += pagina(htmlGrupo);
+    }
 
     // ── HTML final ────────────────────────────────────────────────────────────
     return `<!DOCTYPE html>
@@ -239,7 +261,7 @@ export class PdfService {
 <style>
   @page { margin: 0; size: A4; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #333; }
   .page { width: 210mm; height: 297mm; position: relative; page-break-after: always; overflow: hidden; }
   .page:last-child { page-break-after: auto; }
   .portada img, .contraportada img { display: block; width: 210mm; height: 297mm; object-fit: cover; }
@@ -251,7 +273,7 @@ export class PdfService {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    padding: 160px 70px 140px 70px;
+    padding: 130px 65px 110px 65px;
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -273,10 +295,7 @@ export class PdfService {
 </div>
 
 <!-- ===== PÁGINAS CONTENIDO ===== -->
-${pagina1}
-${paginasContinuacion}
-${paginaTotales}
-${paginasLegales}
+${paginasContenidoHtml}
 
 <!-- ===== CONTRAPORTADA ===== -->
 <div class="page contraportada">
@@ -290,22 +309,57 @@ ${paginasLegales}
   async generatePdf(quote: any): Promise<Buffer> {
     const html = this.buildHtml(quote);
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const puppeteerArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--disable-gpu',
+    ];
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'load' });
+    const executablePath =
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      (fs.existsSync('/usr/bin/chromium')
+        ? '/usr/bin/chromium'
+        : fs.existsSync('/usr/bin/chromium-browser')
+        ? '/usr/bin/chromium-browser'
+        : fs.existsSync('/usr/bin/google-chrome-stable')
+        ? '/usr/bin/google-chrome-stable'
+        : undefined);
 
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
-      displayHeaderFooter: false,
-    });
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: puppeteerArgs,
+        ...(executablePath ? { executablePath } : {}),
+      });
+    } catch (err: any) {
+      console.warn('Puppeteer default launch failed, retrying minimal launch args...', err.message);
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+    }
 
-    await browser.close();
-    return Buffer.from(pdfBuffer);
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'load', timeout: 45000 });
+
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '0mm', right: '0mm', bottom: '0mm', left: '0mm' },
+        displayHeaderFooter: false,
+      });
+
+      return Buffer.from(pdfBuffer);
+    } finally {
+      if (browser) {
+        await browser.close().catch(() => {});
+      }
+    }
   }
 }

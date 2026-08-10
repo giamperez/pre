@@ -13,15 +13,29 @@ export class CreateTemplateDto {
   @IsString()
   category: string;
 
-  @IsObject()
-  projectData: object;
+  @IsOptional()
+  @IsString()
+  type?: string;
 
+  @IsOptional()
+  @IsObject()
+  projectData?: object;
+
+  @IsOptional()
   @IsArray()
-  items: object[];
+  items?: object[];
 
   @IsOptional()
   @IsArray()
   sections?: object[];
+
+  @IsOptional()
+  @IsObject()
+  cardsConfig?: object;
+
+  @IsOptional()
+  @IsArray()
+  customFields?: object[];
 
   @IsOptional()
   @IsBoolean()
