@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Quote, Company } from '../types';
-import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, Pencil } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Plus, Search, X, Filter, ChevronDown, Upload, Loader2, Pencil, Shield, ScrollText } from 'lucide-react';
 import { fetchWithAuth, getUser, getToken } from '../auth';
 import { getTiposServicio } from '../constants/projectTypes';
+import { QuoteAuditModal } from '../components/QuoteAuditModal';
+import { GenerateContractModal } from '../components/contracts/GenerateContractModal';
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -94,6 +96,84 @@ function EstadoDropdown({ quoteId, currentEstado, onUpdate }: { quoteId: string;
   );
 }
 
+function QuoteActionsModal({
+  isOpen,
+  onClose,
+  quote,
+  onGenerateContract,
+  onOpenAudit,
+  onOpenPdf,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  quote?: Quote | null;
+  onGenerateContract: () => void;
+  onOpenAudit: () => void;
+  onOpenPdf: () => void;
+}) {
+  if (!isOpen || !quote) return null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-6 space-y-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-100 text-indigo-700">
+              {quote.number}
+            </span>
+            <h3 className="font-bold text-slate-800 text-base mt-1">Opciones de Cotización</h3>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-full text-slate-400 hover:bg-slate-100">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <button
+            onClick={() => { onClose(); onGenerateContract(); }}
+            className="w-full flex items-center gap-3 p-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-2xl font-bold text-sm transition-colors border border-emerald-200"
+          >
+            <ScrollText className="w-5 h-5 text-emerald-600" />
+            <span>Generar Contrato / Acta</span>
+          </button>
+
+          <button
+            onClick={() => { onClose(); onOpenAudit(); }}
+            className="w-full flex items-center gap-3 p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-2xl font-bold text-sm transition-colors border border-indigo-200"
+          >
+            <Shield className="w-5 h-5 text-indigo-600" />
+            <span>Historial de Auditoría</span>
+          </button>
+
+          <Link
+            to={`/editar/${quote.id}`}
+            onClick={onClose}
+            className="w-full flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-2xl font-bold text-sm transition-colors border border-amber-200"
+          >
+            <Pencil className="w-5 h-5 text-amber-600" />
+            <span>Editar Cotización</span>
+          </Link>
+
+          <button
+            onClick={() => { onClose(); onOpenPdf(); }}
+            className="w-full flex items-center gap-3 p-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl font-bold text-sm transition-colors border border-slate-200"
+          >
+            <ExternalLink className="w-5 h-5 text-slate-600" />
+            <span>Ver / Descargar PDF</span>
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-2xl text-xs font-bold hover:bg-slate-200 transition-colors"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function QuoteListPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +190,13 @@ export function QuoteListPage() {
 
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{importadas: number, errores: number, detalles: string[]} | null>(null);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedAuditQuote, setSelectedAuditQuote] = useState<{ id?: string; number?: string }>({});
+  const [contractModalOpen, setContractModalOpen] = useState(false);
+  const [selectedQuoteForContract, setSelectedQuoteForContract] = useState<Quote | null>(null);
+  const [actionsModalOpen, setActionsModalOpen] = useState(false);
+  const [selectedActionsQuote, setSelectedActionsQuote] = useState<Quote | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getUser();
   const isAdmin = user?.role === 'admin';
@@ -225,37 +312,56 @@ export function QuoteListPage() {
   const inputCls = "border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition-all bg-white";
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto space-y-4">
+      {/* Header with compact top buttons */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Cotizaciones</h1>
-            <p className="text-sm text-slate-400">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Cotizaciones</h1>
+            <p className="text-xs text-slate-400">
               {loading ? '…' : `${quotes.length} cotización${quotes.length !== 1 ? 'es' : ''} encontrada${quotes.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+
+        {/* Compact Top Action Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => { setSelectedAuditQuote({}); setAuditModalOpen(true); }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-xs"
+            title="Ver historial de auditoría global"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Auditoría</span>
+          </button>
           {isAdmin && (
             <>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".xlsx, .xls" className="hidden" />
-              <button onClick={handleImportClick} disabled={importing} className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50">
-                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                Importar Excel
+              <button
+                onClick={handleImportClick}
+                disabled={importing}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                <span>Importar</span>
               </button>
             </>
           )}
-          <Link to="/" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors">
-            <Plus className="w-4 h-4" /> Nueva cotización
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ Nueva</span>
           </Link>
         </div>
       </div>
 
       {importResult && (
-        <div className={`mb-6 p-4 rounded-xl border ${importResult.errores > 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+        <div className={`p-4 rounded-xl border ${importResult.errores > 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
           <div className="flex items-center justify-between mb-2">
             <h3 className={`font-semibold ${importResult.errores > 0 ? 'text-orange-800' : 'text-green-800'}`}>Importación completada</h3>
             <button onClick={() => setImportResult(null)} className="text-slate-400 hover:text-slate-600">×</button>
@@ -264,7 +370,8 @@ export function QuoteListPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-5">
+      {/* Filter Bar */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-4 h-4 text-slate-400" />
           <span className="text-sm font-semibold text-slate-600">Filtros</span>
@@ -275,9 +382,9 @@ export function QuoteListPage() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
           {/* Search */}
-          <form onSubmit={handleSearch} className="col-span-2 flex gap-2">
+          <form onSubmit={handleSearch} className="sm:col-span-2 flex gap-2">
             <input
               type="text"
               placeholder="Buscar número, cliente, proyecto..."
@@ -305,7 +412,7 @@ export function QuoteListPage() {
             ))}
           </select>
 
-          {/* Tipo de servicio (depende de la empresa seleccionada) */}
+          {/* Tipo de servicio */}
           <select className={inputCls} value={tipoServicio} onChange={e => setTipoServicio(e.target.value)}>
             <option value="">Todos los servicios</option>
             {tiposServicio.map(({ value, label }) => (
@@ -343,8 +450,8 @@ export function QuoteListPage() {
       )}
 
       {!loading && !error && quotes.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+          <table className="w-full min-w-[750px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left text-xs font-semibold text-slate-500 px-4 py-3">N° Cotización</th>
@@ -389,22 +496,50 @@ export function QuoteListPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">{formatDate(q.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      {/* Desktop Buttons */}
+                      <div className="hidden lg:flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => { setSelectedQuoteForContract(q); setContractModalOpen(true); }}
+                          title="Generar Contrato o Acta"
+                          className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 font-semibold border border-emerald-200 px-2 py-1 rounded-lg transition-all"
+                        >
+                          <ScrollText className="w-3.5 h-3.5 text-emerald-600" />
+                          Contrato
+                        </button>
+
+                        <button
+                          onClick={() => { setSelectedAuditQuote({ id: q.id, number: q.number }); setAuditModalOpen(true); }}
+                          title="Historial de Auditoría"
+                          className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 font-semibold border border-indigo-200 px-2 py-1 rounded-lg transition-all"
+                        >
+                          <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                          Auditoría
+                        </button>
+
                         <Link
                           to={`/editar/${q.id}`}
-                          className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 font-medium border border-amber-200 px-2.5 py-1.5 rounded-lg transition-all"
+                          className="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 font-semibold border border-amber-200 px-2 py-1 rounded-lg transition-all"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Pencil className="w-3.5 h-3.5 text-amber-600" />
                           Editar
                         </Link>
+
                         <button
                           onClick={() => openPdf(q.id)}
-                          className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2.5 py-1.5 rounded-lg transition-all"
+                          className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-slate-900 font-semibold border border-slate-200 hover:bg-slate-100 px-2 py-1 rounded-lg transition-all"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           PDF
                         </button>
                       </div>
+
+                      {/* Mobile Trigger Button */}
+                      <button
+                        onClick={() => { setSelectedActionsQuote(q); setActionsModalOpen(true); }}
+                        className="lg:hidden inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-800 transition-colors"
+                      >
+                        <span>Acciones ▾</span>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -413,6 +548,29 @@ export function QuoteListPage() {
           </table>
         </div>
       )}
+
+      {/* Mobile Actions Drawer Modal */}
+      <QuoteActionsModal
+        isOpen={actionsModalOpen}
+        onClose={() => setActionsModalOpen(false)}
+        quote={selectedActionsQuote}
+        onGenerateContract={() => { setSelectedQuoteForContract(selectedActionsQuote); setContractModalOpen(true); }}
+        onOpenAudit={() => { setSelectedAuditQuote({ id: selectedActionsQuote?.id, number: selectedActionsQuote?.number }); setAuditModalOpen(true); }}
+        onOpenPdf={() => selectedActionsQuote && openPdf(selectedActionsQuote.id)}
+      />
+
+      <QuoteAuditModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        quoteId={selectedAuditQuote.id}
+        quoteNumber={selectedAuditQuote.number}
+      />
+
+      <GenerateContractModal
+        isOpen={contractModalOpen}
+        onClose={() => setContractModalOpen(false)}
+        quote={selectedQuoteForContract}
+      />
     </div>
   );
 }

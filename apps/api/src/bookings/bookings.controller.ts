@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -30,7 +30,7 @@ export class BookingsController {
   // Protected Endpoints
   @UseGuards(JwtAuthGuard)
   @Get('bookings')
-  async getBookings(@Query('companyId') companyId: string) {
+  async getBookings(@Query('companyId') companyId?: string) {
     return this.bookingsService.getBookings(companyId);
   }
 
@@ -38,6 +38,12 @@ export class BookingsController {
   @Patch('bookings/:id')
   async updateBookingStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.bookingsService.updateBookingStatus(id, status);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('bookings/:id')
+  async deleteBooking(@Param('id') id: string) {
+    return this.bookingsService.deleteBooking(id);
   }
 
   @UseGuards(JwtAuthGuard)

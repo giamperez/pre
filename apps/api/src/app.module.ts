@@ -17,6 +17,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { MailModule } from './mail/mail.module';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { PrecotizadorChatModule } from './precotizador-chat/precotizador-chat.module';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PrecotizadorChatModule } from './precotizador-chat/precotizador-chat.mo
     AnalyticsModule,
     UsersModule,
     BookingsModule,
+    ContractsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -49,15 +49,12 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
   const isNearBottomRef = useRef(true);
   const prevMessageCountRef = useRef(0);
 
-  // Markdown Formatter helper for rendering **bold**, bullet points, and prices cleanly
+  // Formatter for bold text
   const renderFormattedContent = (text: string) => {
     if (!text) return null;
-
-    // Split lines
     const lines = text.split('\n');
 
     return lines.map((line, lineIdx) => {
-      // Parse **bold** parts
       const parts = line.split(/(\*\*[^*]+\*\*)/g);
 
       const formattedLine = parts.map((part, partIdx) => {
@@ -118,10 +115,10 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
     );
   };
 
-  // Initial greeting if no messages (NO early human advisor prompt)
+  // Initial greeting
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeText = `¡Hola! 👋 Te doy la bienvenida a **${company.name}**.\n\n¿En qué tipo de proyecto o servicio te gustaría cotizar hoy?`;
+      const welcomeText = `¡Hola! 👋 Te doy la bienvenida a **${company.name}**.\n\n¿En qué tipo de proyecto te gustaría cotizar hoy?`;
       setMessages([
         {
           id: 'welcome-1',
@@ -137,24 +134,18 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
     }
   }, [company.id]);
 
-  // Tracks whether the user is currently near the bottom, updated live on scroll
-  // (not recomputed from a possibly-stale snapshot at render time).
   const handleChatScroll = () => {
     if (!scrollContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
     isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
   };
 
-  // Non-intrusive auto scroll: only scroll when near bottom or when forced (send/open)
   const scrollToBottomIfNear = (force = false) => {
     if (force || isNearBottomRef.current) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // Only auto-scroll when a NEW message actually arrives — not on every poll tick,
-  // which previously re-created the messages array (same content) every ~4s and
-  // yanked the view back to the bottom while the customer reviewed older messages.
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
       scrollToBottomIfNear(false);
@@ -162,7 +153,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
     prevMessageCountRef.current = messages.length;
   }, [messages.length]);
 
-  // Polling for new messages in case a sales rep replies
+  // Polling for replies
   useEffect(() => {
     if (!sessionId) return;
     const interval = setInterval(async () => {
@@ -204,7 +195,6 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
     setInputMessage('');
     setShowPreviewBubble(false);
 
-    // Append local user message
     const userMsgId = `usr-${Date.now()}`;
     const newMsg: Message = {
       id: userMsgId,
@@ -288,15 +278,14 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
-      {/* Closed State Launcher & Preview Bubble */}
+      {/* Closed State Bubble */}
       {!isOpen && (
-        <div className="flex flex-col items-end gap-3 animate-fadeIn">
-          {/* Popover Preview Bubble (NO early advisor prompt) */}
+        <div className="relative flex flex-col items-end">
           {showPreviewBubble && (
-            <div className="bg-white rounded-2xl p-4 shadow-2xl border border-slate-200/80 max-w-xs sm:max-w-sm mb-1 relative transition-all duration-300 transform hover:scale-[1.02]">
+            <div className="mb-3 max-w-xs bg-white rounded-2xl p-4 shadow-xl border border-slate-200 text-left animate-bounceIn relative">
               <button
                 onClick={() => setShowPreviewBubble(false)}
-                className="absolute top-2.5 right-2.5 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 p-1"
                 title="Cerrar vista previa"
               >
                 <X className="w-4 h-4" />
@@ -355,10 +344,10 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
         </div>
       )}
 
-      {/* Expanded Chat Window (Tidio-like UI) */}
+      {/* Expanded Chat Window */}
       {isOpen && (
         <div className="w-[90vw] sm:w-[380px] h-[550px] max-h-[82vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-slideUp">
-          {/* Curved Header */}
+          {/* Header */}
           <div
             style={{
               background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
@@ -398,19 +387,10 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
             <div className="mt-2 pt-2 border-t border-white/10 text-[11px] text-white/90 font-medium flex items-center justify-between">
               <span>¡Asistencia inteligente para tu cotización!</span>
             </div>
-
-            <svg
-              className="absolute bottom-0 left-0 right-0 w-full text-white fill-current transform translate-y-[99%]"
-              viewBox="0 0 1440 120"
-              preserveAspectRatio="none"
-              height="16"
-            >
-              <path d="M0,32L60,42.7C120,53,240,75,360,80C480,85,600,75,720,58.7C840,43,960,21,1080,16C1200,11,1320,21,1380,26.7L1440,32L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z" />
-            </svg>
           </div>
 
           {/* Messages Container */}
-          <div ref={scrollContainerRef} onScroll={handleChatScroll} className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 pt-6">
+          <div ref={scrollContainerRef} onScroll={handleChatScroll} className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 pt-4">
             {messages.map(msg => {
               const isUser = msg.sender === 'user';
               const isAgent = msg.sender === 'agent';
@@ -426,7 +406,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
                     )}
 
                     <div>
-                      {/* Message Bubble with Markdown bold formatting */}
+                      {/* Message Bubble */}
                       <div
                         className={`rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
                           isUser
@@ -467,8 +447,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
                         </div>
                       )}
 
-                      {/* Human Advisor Offer — only shown once the bot itself decides
-                          it's needed (after a few unresolved exchanges), never upfront */}
+                      {/* Human Advisor Offer */}
                       {msg.metadata && msg.metadata.offerAdvisor && !dismissedAdvisorOffers.has(msg.id) && (
                         <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
                           <div className="flex items-center gap-1.5 text-amber-700 font-bold text-xs mb-2">
@@ -540,7 +519,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
                 style={{
                   background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
                 }}
-                className="w-10 h-10 rounded-full text-white flex items-center justify-center shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all transform active:scale-95"
+                className="w-10 h-10 rounded-full text-white flex items-center justify-center shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all transform active:scale-95 shrink-0"
                 title="Enviar mensaje"
               >
                 <Send className="w-4 h-4" />
@@ -548,7 +527,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
             </div>
 
             {/* Footer Branding */}
-            <div className="flex items-center justify-end text-[10px] text-slate-400 px-1 pt-1">
+            <div className="flex items-center justify-end text-[10px] text-slate-400 px-1 pt-0.5">
               <div className="flex items-center gap-1 font-semibold text-slate-400">
                 <span>POWERED BY</span>
                 <span className="text-blue-600 font-bold">VERTEX</span>

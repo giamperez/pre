@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 import type { Company, QuoteItem } from '../types';
-import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star, Pencil } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowLeft, Save, X, ImagePlus, ChevronDown, ChevronRight, ChevronUp, FileText, LayoutTemplate, Star, Pencil, Shield, ScrollText } from 'lucide-react';
 import { fetchWithAuth, getToken } from '../auth';
 import { getTiposProyecto, getTiposServicio } from '../constants/projectTypes';
 import { getDefaultSections } from '../constants/legalSections';
+import { QuoteAuditModal } from '../components/QuoteAuditModal';
+import { GenerateContractModal } from '../components/contracts/GenerateContractModal';
 
 // ---------- helpers ----------
 const emptyItem = (): QuoteItem & { _key: string } => ({
@@ -152,9 +154,12 @@ export function QuoteBuilderPage() {
   const [showAddons, setShowAddons] = useState(leadState?.additionalItems?.length > 0);
   const [quoteNumber, setQuoteNumber] = useState<string | null>(null);
 
-  const [templates, setTemplates] = useState<any[]>([]);
   const [showStartModal, setShowStartModal] = useState(!leadState && !quoteId);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [contractModalOpen, setContractModalOpen] = useState(false);
+  const [currentQuoteObj, setCurrentQuoteObj] = useState<any>(null);
+  const [templates, setTemplates] = useState<any[]>([]);
   const [templateCode, setTemplateCode] = useState('');
   const [templateName, setTemplateName] = useState('');
 
@@ -211,6 +216,7 @@ export function QuoteBuilderPage() {
           
           setCompany(quote.company);
           setQuoteNumber(quote.number);
+          setCurrentQuoteObj(quote);
           setShowStartModal(false);
 
           const cData = quote.clientData || {};
@@ -717,6 +723,26 @@ export function QuoteBuilderPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {quoteId && (
+            <>
+              <button
+                onClick={() => setContractModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-semibold transition-colors"
+                title="Generar Contrato o Acta de Conformidad"
+              >
+                <ScrollText className="w-4 h-4 text-emerald-600" />
+                Generar Contrato
+              </button>
+              <button
+                onClick={() => setAuditModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-semibold transition-colors"
+                title="Ver historial de auditoría de esta cotización"
+              >
+                <Shield className="w-4 h-4 text-indigo-600" />
+                Auditoría
+              </button>
+            </>
+          )}
           {hasItems && (
             <button
               onClick={() => setShowSaveTemplateModal(true)}
@@ -1093,6 +1119,20 @@ export function QuoteBuilderPage() {
         </section>
 
       </div>
+      {/* Quote Audit Log Modal */}
+      <QuoteAuditModal
+        isOpen={auditModalOpen}
+        onClose={() => setAuditModalOpen(false)}
+        quoteId={quoteId}
+        quoteNumber={quoteNumber || undefined}
+      />
+
+      {/* Generate Contract Modal */}
+      <GenerateContractModal
+        isOpen={contractModalOpen}
+        onClose={() => setContractModalOpen(false)}
+        quote={currentQuoteObj}
+      />
     </div>
   );
 }

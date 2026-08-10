@@ -139,43 +139,119 @@ export class BookingsService {
     return summary;
   }
 
-  async createBooking(data: { companySlug: string; clientName: string; clientEmail: string; clientPhone?: string; date: string; time: string; notes?: string }) {
-    const company = await this.prisma.company.findUnique({
-      where: { slug: data.companySlug },
-    });
+  async createBooking(data: {
+    companySlug?: string;
+    companyId?: string;
+    leadId?: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone?: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+  }) {
+    let company: any = null;
 
-    if (!company) {
-      throw new NotFoundException('Company not found');
+    if (data.companyId) {
+      company = await this.prisma.company.findUnique({ where: { id: data.companyId } });
+    } else if (data.companySlug) {
+      company = await this.prisma.company.findUnique({ where: { slug: data.companySlug } });
     }
 
-    // Check availability
-    const slots = await this.getDailyAvailability(data.companySlug, data.date);
-    const slot = slots.find(s => s.time === data.time);
-    
-    if (!slot || slot.status === 'ocupado') {
-      throw new BadRequestException('El horario seleccionado no está disponible.');
+    if (!company) {
+      company = await this.prisma.company.findFirst({ where: { isActive: true } });
+    }
+
+    if (!company) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+
+    // Default Date fallback to tomorrow if missing
+    let targetDate = data.date;
+    if (!targetDate || targetDate.trim() === '') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Skip Sunday
+      if (tomorrow.getDay() === 0) tomorrow.setDate(tomorrow.getDate() + 1);
+      const year = tomorrow.getFullYear();
+      const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+      const day = String(tomorrow.getDate()).padStart(2, '0');
+      targetDate = `${year}-${month}-${day}`;
+    }
+
+    // Default Time fallback to 10:00 if missing
+    let targetTime = data.time && data.time.trim() !== '' ? data.time : '10:00';
+
+    // Verify slot conflicts and find next available time if taken
+    const existing = await this.prisma.booking.findFirst({
+      where: {
+        companyId: company.id,
+        date: targetDate,
+        time: targetTime,
+        status: { not: 'cancelada' },
+      },
+    });
+
+    if (existing) {
+      const defaultTimes = ['10:00', '10:30', '11:00', '11:30', '14:00', '15:00', '16:00', '17:00'];
+      for (const t of defaultTimes) {
+        const check = await this.prisma.booking.findFirst({
+          where: { companyId: company.id, date: targetDate, time: t, status: { not: 'cancelada' } },
+        });
+        if (!check) {
+          targetTime = t;
+          break;
+        }
+      }
     }
 
     return this.prisma.booking.create({
       data: {
         companyId: company.id,
-        clientName: data.clientName,
-        clientEmail: data.clientEmail,
-        clientPhone: data.clientPhone,
-        date: data.date,
-        time: data.time,
-        notes: data.notes,
+        leadId: data.leadId || undefined,
+        clientName: data.clientName || 'Cliente Precotizador',
+        clientEmail: data.clientEmail || 'cliente@ejemplo.com',
+        clientPhone: data.clientPhone || undefined,
+        date: targetDate,
+        time: targetTime,
+        status: 'pendiente',
+        notes: data.notes || 'Reunión agendada desde precotización',
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            colorPrimary: true,
+          },
+        },
       },
     });
   }
 
-  async getBookings(companyId: string) {
+  async getBookings(companyId?: string) {
+    const whereClause: any = {};
+    if (companyId && companyId !== 'all' && companyId.trim() !== '') {
+      whereClause.companyId = companyId;
+    }
+
     return this.prisma.booking.findMany({
-      where: { companyId },
+      where: whereClause,
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            colorPrimary: true,
+          },
+        },
+      },
       orderBy: [
         { date: 'asc' },
-        { time: 'asc' }
-      ]
+        { time: 'asc' },
+      ],
     });
   }
 
@@ -183,6 +259,22 @@ export class BookingsService {
     return this.prisma.booking.update({
       where: { id },
       data: { status },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            colorPrimary: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteBooking(id: string) {
+    return this.prisma.booking.delete({
+      where: { id },
     });
   }
 

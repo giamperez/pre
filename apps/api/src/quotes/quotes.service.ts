@@ -34,7 +34,27 @@ export class QuotesService {
     return `${prefix}${nextSequence}`;
   }
 
-  async create(createQuoteDto: CreateQuoteDto) {
+  async recordAuditLog(data: {
+    quoteId: string;
+    user?: { userId?: string; name?: string; email?: string };
+    action: string;
+    description: string;
+    metadata?: any;
+  }) {
+    return this.prisma.quoteAuditLog.create({
+      data: {
+        quoteId: data.quoteId,
+        userId: data.user?.userId || null,
+        userName: data.user?.name || null,
+        userEmail: data.user?.email || null,
+        action: data.action,
+        description: data.description,
+        metadata: data.metadata || undefined,
+      },
+    });
+  }
+
+  async create(createQuoteDto: CreateQuoteDto, user?: any) {
     const {
       companyId, clientData, projectData, items, additionalItems, considerations, sections, images,
       ubicacionProyecto, sectorProyecto, tipoProyecto, tipoServicio, tipoCliente, clienteNuevoRecurrente, fuenteCliente, estado, metadata
@@ -49,7 +69,7 @@ export class QuotesService {
 
     const number = await this.generateQuoteNumber();
 
-    return this.prisma.quote.create({
+    const createdQuote = await this.prisma.quote.create({
       data: {
         companyId,
         number,
@@ -77,6 +97,21 @@ export class QuotesService {
         company: true,
       },
     });
+
+    const clientEmpresa = (clientData as any)?.empresa || '';
+    await this.recordAuditLog({
+      quoteId: createdQuote.id,
+      user,
+      action: 'CREACION',
+      description: `Cotización ${createdQuote.number} creada${clientEmpresa ? ` para ${clientEmpresa}` : ''} por un total de S/ ${total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}.`,
+      metadata: {
+        total,
+        estado: createdQuote.estado,
+        clientEmpresa,
+      },
+    });
+
+    return createdQuote;
   }
 
   async findAll(filters: any = {}) {
@@ -142,7 +177,8 @@ export class QuotesService {
     });
   }
 
-  async update(id: string, updateData: any) {
+  async update(id: string, updateData: any, user?: any) {
+    const previous = await this.findOne(id);
     const dataToUpdate = { ...updateData };
 
     if (dataToUpdate.items !== undefined || dataToUpdate.additionalItems !== undefined) {
@@ -155,12 +191,109 @@ export class QuotesService {
       dataToUpdate.total = dataToUpdate.subtotal + dataToUpdate.igv;
     }
 
-    return this.prisma.quote.update({
+    const updated = await this.prisma.quote.update({
       where: { id },
       data: dataToUpdate,
       include: {
         company: true,
       },
     });
+
+    if (previous) {
+      const isStatusOnlyChange = Object.keys(dataToUpdate).length === 1 && dataToUpdate.estado;
+      if (previous.estado !== updated.estado) {
+        await this.recordAuditLog({
+          quoteId: id,
+          user,
+          action: 'CAMBIO_ESTADO',
+          description: `Estado actualizado de "${previous.estado}" a "${updated.estado}".`,
+          metadata: {
+            estadoAnterior: previous.estado,
+            estadoNuevo: updated.estado,
+          },
+        });
+      }
+
+      if (!isStatusOnlyChange) {
+        const totalChanged = Math.abs(previous.total - updated.total) > 0.01;
+        let desc = `Cotización ${updated.number} modificada.`;
+        if (totalChanged) {
+          desc += ` Total cambió de S/ ${previous.total.toLocaleString('es-PE', { minimumFractionDigits: 2 })} a S/ ${updated.total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}.`;
+        }
+
+        await this.recordAuditLog({
+          quoteId: id,
+          user,
+          action: 'EDICION',
+          description: desc,
+          metadata: {
+            totalAnterior: previous.total,
+            totalNuevo: updated.total,
+            camposActualizados: Object.keys(dataToUpdate),
+          },
+        });
+      }
+    }
+
+    return updated;
+  }
+
+  async getAuditLogsForQuote(quoteId: string) {
+    return this.prisma.quoteAuditLog.findMany({
+      where: { quoteId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getGlobalAuditLogs(filters: any = {}) {
+    const { quoteId, action, search, from, to } = filters;
+    const whereClause: any = {};
+    if (quoteId) whereClause.quoteId = quoteId;
+    if (action) whereClause.action = action;
+    if (from || to) {
+      whereClause.createdAt = {};
+      if (from) whereClause.createdAt.gte = new Date(from);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        whereClause.createdAt.lte = toDate;
+      }
+    }
+
+    const logs = await this.prisma.quoteAuditLog.findMany({
+      where: whereClause,
+      include: {
+        quote: {
+          select: {
+            id: true,
+            number: true,
+            total: true,
+            company: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 200,
+    });
+
+    if (search) {
+      const s = search.toLowerCase();
+      return logs.filter((log) => {
+        return (
+          log.description.toLowerCase().includes(s) ||
+          (log.userName && log.userName.toLowerCase().includes(s)) ||
+          (log.userEmail && log.userEmail.toLowerCase().includes(s)) ||
+          (log.quote?.number && log.quote.number.toLowerCase().includes(s))
+        );
+      });
+    }
+
+    return logs;
   }
 }
