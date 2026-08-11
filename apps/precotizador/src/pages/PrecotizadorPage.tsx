@@ -100,12 +100,16 @@ export function PrecotizadorPage() {
     summary?: string;
     explanation?: string;
     mainServiceName?: string;
+    booking?: { date: string; time: string };
   }) => {
     if (rec.mainServiceId) {
       setSelectedMainService(rec.mainServiceId);
     }
     if (rec.addonIds) {
       setSelectedAddons(new Set(rec.addonIds));
+    }
+    if (rec.booking) {
+      setBooking({ date: rec.booking.date, time: rec.booking.time });
     }
 
     const matchedAddonNames = (rec.addonIds || [])

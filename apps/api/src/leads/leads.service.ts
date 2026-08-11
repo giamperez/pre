@@ -24,6 +24,45 @@ export class LeadsService {
       include: { company: true },
     });
 
+    // Auto-Schedule Booking in Calendar for every Precotización Lead
+    try {
+      const answers: any = lead.answers || {};
+      const bookingData = answers.booking || {};
+
+      let targetDate = bookingData.date;
+      let targetTime = bookingData.time;
+
+      if (!targetDate) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (tomorrow.getDay() === 0) tomorrow.setDate(tomorrow.getDate() + 1);
+        const year = tomorrow.getFullYear();
+        const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const day = String(tomorrow.getDate()).padStart(2, '0');
+        targetDate = `${year}-${month}-${day}`;
+      }
+
+      if (!targetTime) {
+        targetTime = '10:00';
+      }
+
+      await this.prisma.booking.create({
+        data: {
+          companyId: lead.companyId,
+          leadId: lead.id,
+          clientName: lead.name || 'Cliente Precotizador',
+          clientEmail: lead.email || 'sin-correo@cotizacion.com',
+          clientPhone: lead.phone || undefined,
+          date: targetDate,
+          time: targetTime,
+          status: 'pendiente',
+          notes: `Reunión agendada automáticamente desde Precotización (${lead.name})`,
+        },
+      });
+    } catch (e) {
+      this.logger.error(`No se pudo auto-agendar la reunión para el lead ${lead.id}: ${e}`);
+    }
+
     this.notifyLeadSummary(lead).catch((err) =>
       this.logger.error(`No se pudo enviar el resumen de cotización al lead ${lead.id}: ${err}`),
     );

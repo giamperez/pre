@@ -319,56 +319,89 @@ REGLAS OBLIGATORIAS:
       };
     }
 
-    // Combine history text to retain multi-turn context across chat turns
-    const fullHistoryText = (history.map((m: any) => m.content || '').join(' ') + ' ' + text).toLowerCase();
+    // Check if the user is asking for more/other additional services
+    const isAskingForMoreAddons = [
+      'mas me recomiendas', 'aparte de', 'que mas', 'otros servicios',
+      'otras opciones', 'que otros', 'adicionales mas', 'mas opciones', 'otros complementos'
+    ].some(phrase => lower.includes(phrase));
 
-    // Try matching main services from current text or full history
-    let matchedMain = mainServices.find(s => lower.includes(s.name.toLowerCase())) ||
-                      mainServices.find(s => fullHistoryText.includes(s.name.toLowerCase()));
+    if (isAskingForMoreAddons && addons.length > 0) {
+      const extraAddonList = addons.map((a: any) => `• **${a.name}**: ${a.description || 'Complemento disponible.'}`).join('\n');
+      return {
+        replyText: `¡Con gusto! Aparte de los principales, en **${company.name}** te ofrecemos estas opciones adicionales para complementar tu proyecto:\n\n${extraAddonList}\n\n¿Te gustaría incluir alguno de estos complementos en tu cotización?`,
+        metadata: {
+          suggestionChips: addons.slice(0, 3).map(a => a.name),
+        },
+      };
+    }
 
-    if (!matchedMain) {
-      if (fullHistoryText.includes('tienda') || fullHistoryText.includes('ecommerce') || fullHistoryText.includes('pago')) {
-        matchedMain = mainServices.find(s => s.name.toLowerCase().includes('tienda') || s.name.toLowerCase().includes('e-commerce')) || mainServices[0];
-      } else if (fullHistoryText.includes('web') || fullHistoryText.includes('pagina') || fullHistoryText.includes('landing')) {
-        matchedMain = mainServices.find(s => s.name.toLowerCase().includes('landing') || s.name.toLowerCase().includes('web')) || mainServices[0];
-      } else if (fullHistoryText.includes('app') || fullHistoryText.includes('movil') || fullHistoryText.includes('celular')) {
-        matchedMain = mainServices.find(s => s.name.toLowerCase().includes('app') || s.name.toLowerCase().includes('software')) || mainServices[0];
-      } else if (fullHistoryText.includes('estructural') || fullHistoryText.includes('plano') || fullHistoryText.includes('edificio') || fullHistoryText.includes('casa')) {
-        matchedMain = mainServices.find(s => s.name.toLowerCase().includes('expediente') || s.name.toLowerCase().includes('estructuras')) || mainServices[0];
-      } else if (fullHistoryText.includes('inspeccion') || fullHistoryText.includes('suelo') || fullHistoryText.includes('revis')) {
-        matchedMain = mainServices.find(s => s.name.toLowerCase().includes('inspección') || s.name.toLowerCase().includes('revisión')) || mainServices[0];
+    // Intelligent Service Matching with Weighted Token Scoring (Matches CURRENT message first!)
+    const scoreServiceMatch = (service: any, inputText: string) => {
+      const inputLower = inputText.toLowerCase();
+      const nameLower = service.name.toLowerCase();
+      const descLower = (service.description || '').toLowerCase();
+      let score = 0;
+
+      // Exact substring match
+      if (nameLower.includes(inputLower) || inputLower.includes(nameLower)) score += 50;
+
+      // Specific domain keywords boost
+      if ((inputLower.includes('metal') || inputLower.includes('nave')) && (nameLower.includes('metálic') || nameLower.includes('metalica') || nameLower.includes('nave'))) score += 60;
+      if ((inputLower.includes('inspeccion') || inputLower.includes('evaluacion') || inputLower.includes('reforza')) && (nameLower.includes('inspección') || nameLower.includes('evaluación') || nameLower.includes('reforzamiento'))) score += 60;
+      if ((inputLower.includes('piso') || inputLower.includes('edificio') || inputLower.includes('casa')) && (nameLower.includes('3 pisos') || nameLower.includes('edificio'))) score += 30;
+      if ((inputLower.includes('ecommerce') || inputLower.includes('tienda') || inputLower.includes('online')) && (nameLower.includes('e-commerce') || nameLower.includes('tienda'))) score += 60;
+      if ((inputLower.includes('landing') || inputLower.includes('pagina web')) && (nameLower.includes('landing') || nameLower.includes('corporativo'))) score += 60;
+      if ((inputLower.includes('app') || inputLower.includes('movil') || inputLower.includes('celular')) && (nameLower.includes('app') || nameLower.includes('móvil'))) score += 60;
+
+      // Overlapping word tokens
+      const words = inputLower.split(/\s+/).filter(w => w.length > 3 && !['quiero', 'necesito', 'para', 'como', 'donde', 'hacer', 'esta', 'este', 'servicio'].includes(w));
+      for (const kw of words) {
+        if (nameLower.includes(kw)) score += 15;
+        if (descLower.includes(kw)) score += 5;
+      }
+
+      return score;
+    };
+
+    // Calculate score for each service against current text
+    const scoredServices = mainServices.map(s => ({
+      service: s,
+      score: scoreServiceMatch(s, text),
+    })).sort((a, b) => b.score - a.score);
+
+    let matchedMain = scoredServices.length > 0 && scoredServices[0].score > 10 ? scoredServices[0].service : null;
+
+    // If no strong match in current text, search previous user messages in history
+    if (!matchedMain && history.length > 0) {
+      const userHistory = history.filter(m => m.sender === 'user').map(m => m.content).join(' ');
+      const historyScored = mainServices.map(s => ({
+        service: s,
+        score: scoreServiceMatch(s, userHistory),
+      })).sort((a, b) => b.score - a.score);
+
+      if (historyScored.length > 0 && historyScored[0].score > 10) {
+        matchedMain = historyScored[0].service;
       }
     }
 
     if (!matchedMain) {
       return {
-        replyText: `Con mucho gusto puedo orientarte sobre las opciones de cotización en **${company.name}**. ¿Tienes alguna preferencia de proyecto o características que buscas?`,
+        replyText: `Con mucho gusto puedo orientarte sobre las opciones de cotización en **${company.name}**. ¿Tienes alguna preferencia de proyecto o servicio que buscas?`,
         metadata: {
           suggestionChips: mainServices.slice(0, 3).map(s => s.name),
         },
       };
     }
 
-    // Match addons from text or proactively recommend 2-3 top addons
+    // Match addons from text or proactively recommend 2 relevant addons
     const matchedAddons: string[] = [];
-    if (lower.includes('pago') || lower.includes('yape') || lower.includes('tarjeta')) {
-      const a = addons.find((x: any) => x.name.toLowerCase().includes('pago'));
-      if (a) matchedAddons.push(a.id);
-    }
-    if (lower.includes('factura') || lower.includes('boleta') || lower.includes('sunat')) {
-      const a = addons.find((x: any) => x.name.toLowerCase().includes('facturación'));
-      if (a) matchedAddons.push(a.id);
-    }
-    if (lower.includes('whatsapp') || lower.includes('bot')) {
-      const a = addons.find((x: any) => x.name.toLowerCase().includes('whatsapp') || x.name.toLowerCase().includes('bot'));
-      if (a) matchedAddons.push(a.id);
-    }
-    if (lower.includes('suelo') || lower.includes('calicata')) {
-      const a = addons.find((x: any) => x.name.toLowerCase().includes('suelos'));
-      if (a) matchedAddons.push(a.id);
-    }
+    addons.forEach((a: any) => {
+      const aLower = a.name.toLowerCase();
+      if (lower.includes(aLower) || lower.split(/\s+/).some(w => w.length > 4 && aLower.includes(w))) {
+        matchedAddons.push(a.id);
+      }
+    });
 
-    // Proactively add 2 relevant additional services if user didn't request specific ones
     if (matchedAddons.length === 0 && addons.length > 0) {
       addons.slice(0, 2).forEach((a: any) => matchedAddons.push(a.id));
     }
@@ -382,10 +415,10 @@ REGLAS OBLIGATORIAS:
       (matchedAddonObjs.length > 0 ? `• **Servicios Adicionales incluidos**: ${addonNames} para dejar tu proyecto 100% operativo y listo para usar.\n\n` : '') +
       `• **Beneficio directo**: Tendrás la garantía y respaldo técnico completo de ${company.name} sin complicaciones.`;
 
-    const replyText = `¡Excelente! He analizado lo que necesitas para tu proyecto.\n\n` +
+    const replyText = `¡Excelente! He identificado tu requerimiento para **${matchedMain.name}**.\n\n` +
       `📌 **Servicio Principal**: **${matchedMain.name}**\n\n` +
-      (matchedAddonObjs.length > 0 ? `💡 **Servicios Adicionales recomendados para complementar tu proyecto:**\n${addonListFormatted}\n\n` : '') +
-      `¿Es esta la configuración que deseas cotizar para tu proyecto?`;
+      (matchedAddonObjs.length > 0 ? `💡 **Servicios Adicionales recomendados para tu proyecto:**\n${addonListFormatted}\n\n` : '') +
+      `¿Deseas autocompletar esta propuesta en tu precotización?`;
 
     return {
       replyText,

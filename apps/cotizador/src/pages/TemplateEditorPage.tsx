@@ -7,8 +7,8 @@ import { getDefaultSections, type LegalSection } from '../constants/legalSection
 import { CompanyCustomFieldsEditor, type CustomFieldDefinition } from '../components/company/CompanyCustomFieldsEditor';
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, LayoutTemplate,
-  FileText, Bot, Search, PlusCircle, Layers, MoveUp, MoveDown, Power, Sparkles, Calendar,
-  ShieldAlert, ImagePlus, Sliders, Pencil, Film
+  Bot, Search, PlusCircle, Layers, Power, Sparkles,
+  ShieldAlert, ImagePlus, Sliders, Film
 } from 'lucide-react';
 
 const REFERENCE_COMPANY_SLUG = 'vertex-developers';
@@ -321,7 +321,6 @@ export function TemplateEditorPage() {
 
   // Reusable Items Drawer State
   const [reusableItems, setReusableItems] = useState<ReusableItem[]>([]);
-  const [reusableCards, setReusableCards] = useState<ReusableCard[]>([]);
   const [reuseSearch, setReuseSearch] = useState('');
   const [showReuseDrawer, setShowReuseDrawer] = useState(false);
 
@@ -398,7 +397,6 @@ export function TemplateEditorPage() {
       });
 
       setReusableItems(Array.from(itemsByKey.values()));
-      setReusableCards(Array.from(cardsByKey.values()));
     });
   }, [company?.slug, templateId]);
 
@@ -606,15 +604,6 @@ export function TemplateEditorPage() {
 
   // Handlers for Prequote Cards
   const addPrequoteCard = () => setPrequoteCards(prev => [...prev, emptyPrequoteCard()]);
-  const addPrequoteCardFromSource = (source: ReusableCard) => {
-    setPrequoteCards(prev => [...prev, {
-      _key: Math.random().toString(36).slice(2),
-      serviceName: source.serviceName,
-      subtitle: source.subtitle,
-      whyIdeal: source.whyIdeal,
-      includedAddons: [],
-    }]);
-  };
   const removePrequoteCard = (key: string) => setPrequoteCards(prev => prev.filter(c => c._key !== key));
   const updatePrequoteCard = (key: string, field: keyof PrequoteCard, value: any) => {
     setPrequoteCards(prev => prev.map(c => c._key === key ? { ...c, [field]: value } : c));
@@ -724,9 +713,6 @@ export function TemplateEditorPage() {
 
   const filteredReusableItems = reusableItems.filter(it =>
     it.titulo.toLowerCase().includes(reuseSearch.toLowerCase())
-  );
-  const filteredReusableCards = reusableCards.filter(c =>
-    c.serviceName.toLowerCase().includes(reuseSearch.toLowerCase())
   );
 
   const headerBgColor = company?.colorPrimary || 'rgb(26, 107, 138)';
@@ -1394,7 +1380,7 @@ export function TemplateEditorPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {additionalItems.map((item, idx) => (
+                        {additionalItems.map((item) => (
                           <tr key={item._key} className="border-b border-slate-100 last:border-0 group align-top">
                             <td className="py-2 pr-3">
                               <div className="space-y-2">

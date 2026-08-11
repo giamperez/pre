@@ -54,6 +54,8 @@ model Company {
   whatsappChats   WhatsAppChat[]
   precotizadorChats PrecotizadorChatSession[]
 
+  contracts    ContractDocument[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -127,9 +129,26 @@ model Quote {
   metadata               Json?
 
   company Company @relation(fields: [companyId], references: [id])
+  auditLogs QuoteAuditLog[]
+  contracts ContractDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model QuoteAuditLog {
+  id          String   @id @default(uuid())
+  quoteId     String
+  userId      String?
+  userName    String?
+  userEmail   String?
+  action      String   // "CREACION", "EDICION", "CAMBIO_ESTADO", "IMPORTACION", "DESCARGA_PDF"
+  description String   @db.Text
+  metadata    Json?
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model QuoteTemplate {
@@ -274,5 +293,51 @@ model PrecotizadorChatMessage {
   session     PrecotizadorChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime @default(now())
+}
+
+model ContractDocument {
+  id                String   @id @default(uuid())
+  companyId         String
+  quoteId           String?
+  type              String   // "contrato" | "conformidad"
+  number            String   // Ej: CON-202608-01 o ACT-202608-01
+  title             String
+  version           String   @default("1.0") // "1.0", "2.0", "3.0"
+  clientData        Json
+  employerData      Json
+  servicesData      Json
+  contentHtml       String   @db.Text
+  status            String   @default("borrador") // "borrador", "emitido", "firmado"
+  isLocked          Boolean  @default(false)
+  pdfPath           String?
+  providerSignature String?  @db.Text
+  clientSignature   String?  @db.Text
+  startDate         DateTime?
+  endDate           DateTime?
+  totalAmount       Float    @default(0)
+  metadata          Json?
+
+  company Company @relation(fields: [companyId], references: [id])
+  quote   Quote?  @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  auditLogs ContractAuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContractAuditLog {
+  id          String   @id @default(uuid())
+  contractId  String
+  userId      String?
+  userName    String?
+  userEmail   String?
+  action      String   // "CREACION", "EDICION_TEXTO", "FIRMA_PROVEEDOR", "FIRMA_CLIENTE", "BLOQUEO_EMISION", "DESCARGA_PDF", "NUEVA_VERSION"
+  description String   @db.Text
+  version     String   @default("1.0")
+  metadata    Json?
+
+  contract ContractDocument @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 

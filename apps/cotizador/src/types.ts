@@ -71,6 +71,54 @@ export interface Quote {
   updatedAt: string;
 }
 
+export interface QuoteAuditLog {
+  id: string;
+  quoteId: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  action: 'CREACION' | 'EDICION' | 'CAMBIO_ESTADO' | 'IMPORTACION' | 'DESCARGA_PDF' | string;
+  description: string;
+  metadata?: any;
+  createdAt: string;
+  quote?: {
+    id: string;
+    number: string;
+    total: number;
+    company?: {
+      name: string;
+    };
+  };
+}
+
+export interface ContractDocument {
+  id: string;
+  companyId: string;
+  quoteId?: string;
+  type: 'contrato' | 'conformidad' | string;
+  number: string;
+  title: string;
+  version?: string;
+  clientData: any;
+  employerData: any;
+  servicesData: any;
+  contentHtml: string;
+  status: 'borrador' | 'emitido' | 'firmado' | string;
+  isLocked: boolean;
+  pdfPath?: string;
+  providerSignature?: string;
+  clientSignature?: string;
+  startDate?: string;
+  endDate?: string;
+  totalAmount: number;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+  company?: Company;
+  quote?: Quote;
+  auditLogs?: ContractAuditLog[];
+}
+
 export type LeadClassification = 'calificado' | 'no_calificado' | 'pendiente';
 
 export interface Lead {
@@ -120,5 +168,18 @@ export interface WhatsAppMessage {
   direction: 'in' | 'out';
   body: string;
   status: string;
+  createdAt: string;
+}
+
+export interface ContractAuditLog {
+  id: string;
+  contractId: string;
+  userId?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  action: string;
+  description: string;
+  version: string;
+  metadata?: any;
   createdAt: string;
 }

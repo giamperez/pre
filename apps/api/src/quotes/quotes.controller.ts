@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Param, Body, Res, Query, Patch, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Res, Query, Patch, UseGuards, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { QuotesService } from './quotes.service';
 import { PdfService } from './pdf.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
@@ -19,14 +19,19 @@ export class QuotesController {
   ) {}
 
   @Post()
-  create(@Body() createQuoteDto: CreateQuoteDto) {
-    return this.quotesService.create(createQuoteDto);
+  create(@Body() createQuoteDto: CreateQuoteDto, @Req() req: Request) {
+    return this.quotesService.create(createQuoteDto, (req as any).user);
+  }
+
+  @Get('audit-logs')
+  getGlobalAuditLogs(@Query() query: any) {
+    return this.quotesService.getGlobalAuditLogs(query);
   }
 
   @UseGuards(RolesGuard)
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async importQuotes(@UploadedFile() file: Express.Multer.File) {
+  async importQuotes(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
     if (!file) {
       return { importadas: 0, errores: 1, detalles: ['No se envió ningún archivo'] };
     }
@@ -48,6 +53,7 @@ export class QuotesController {
     let importadas = 0;
     let errores = 0;
     const detallesErrores: string[] = [];
+    const currentUser = (req as any).user;
 
     for (const row of rows) {
       procesadas++;
@@ -128,16 +134,25 @@ export class QuotesController {
           createdAt,
         };
 
+        let savedQuote: any;
         if (existing) {
-          await this.prisma.quote.update({
+          savedQuote = await this.prisma.quote.update({
             where: { id: existing.id },
             data
           });
         } else {
-          await this.prisma.quote.create({
+          savedQuote = await this.prisma.quote.create({
             data
           });
         }
+
+        await this.quotesService.recordAuditLog({
+          quoteId: savedQuote.id,
+          user: currentUser,
+          action: 'IMPORTACION',
+          description: `Cotización ${savedQuote.number} ${existing ? 'actualizada' : 'creada'} vía importación masiva en Excel.`,
+          metadata: { total, clientEmpresa: clientData.empresa },
+        });
 
         importadas++;
       } catch (error: any) {
@@ -162,13 +177,22 @@ export class QuotesController {
   }
 
   @Get(':id/pdf')
-  async getPdf(@Param('id') id: string, @Res() res: Response) {
+  async getPdf(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const quote = await this.quotesService.findOne(id);
     if (!quote) {
       res.status(404).send({ message: 'Quote not found' });
       return;
     }
     const pdfBuffer = await this.pdfService.generatePdf(quote);
+
+    // Track audit log for PDF download/viewing
+    await this.quotesService.recordAuditLog({
+      quoteId: quote.id,
+      user: (req as any).user,
+      action: 'DESCARGA_PDF',
+      description: `Documento PDF de la cotización ${quote.number} visualizado / generado.`,
+    }).catch(() => {});
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="COTIZACION_${quote.number}.pdf"`,
@@ -177,13 +201,18 @@ export class QuotesController {
     res.send(pdfBuffer);
   }
 
+  @Get(':id/audit-logs')
+  getAuditLogsForQuote(@Param('id') id: string) {
+    return this.quotesService.getAuditLogsForQuote(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.quotesService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: any) {
-    return this.quotesService.update(id, body);
+  update(@Param('id') id: string, @Body() body: any, @Req() req: Request) {
+    return this.quotesService.update(id, body, (req as any).user);
   }
 }

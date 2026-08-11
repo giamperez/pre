@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bot, User, Send, Pause, Play, RefreshCw, Phone, Sparkles, CheckCircle2, UserCheck, Share2, Unlock, XCircle, FileText, CheckSquare, Lock } from 'lucide-react';
+import { Bot, User, Send, Pause, Play, RefreshCw, CheckCircle2, UserCheck, Share2, Unlock, XCircle, FileText, CheckSquare, Lock, Calendar, ArrowLeft } from 'lucide-react';
 import { API_URL } from '../config';
 import { getUser } from '../auth';
+import { CalendarPicker } from '../components/CalendarPicker';
 
 interface CatalogItem {
   id: string;
@@ -35,6 +36,21 @@ interface ChatSession {
   messages?: any[];
 }
 
+function formatChatMessageText(text: string, isSales: boolean) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong key={index} className={`font-black ${isSales ? 'text-white' : 'text-slate-900'}`}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 export function PrecotizadorChatPage() {
   const currentUser = getUser();
   const isAdmin = currentUser?.role === 'admin';
@@ -50,10 +66,15 @@ export function PrecotizadorChatPage() {
   const [selectedTransferAgentId, setSelectedTransferAgentId] = useState<string>('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [mobileViewTab, setMobileViewTab] = useState<'chat' | 'formulario'>('chat');
 
   const [selectedMainService, setSelectedMainService] = useState<string | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({ name: '', businessName: '', phone: '', email: '', notes: '', budget: '' });
+
+  // Booking / Calendar state for sales rep
+  const [booking, setBooking] = useState<{ date: string; time: string } | null>(null);
+  const [showCalendarInPanel, setShowCalendarInPanel] = useState(false);
 
   const isUnassigned = activeSession ? (!activeSession.assignedUserId && !activeSession.assignedUserName) : true;
   const isAssignedToMe = activeSession ? (
@@ -350,9 +371,29 @@ export function PrecotizadorChatPage() {
       });
 
       if (res.ok) {
+        if (booking) {
+          try {
+            await fetch(`${API_URL}/bookings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                companySlug: activeSession.company.slug,
+                clientName: formData.name || activeSession.customerName || 'Cliente',
+                clientEmail: formData.email || activeSession.customerEmail || 'cliente@ejemplo.com',
+                clientPhone: formData.phone || activeSession.customerPhone,
+                date: booking.date,
+                time: booking.time,
+                notes: formData.notes || 'Agendado por Asesor comercial'
+              })
+            });
+          } catch (e) {
+            console.error('Error al guardar booking:', e);
+          }
+        }
+
         setFormSubmitted(true);
-        // Send automatic chat notification to customer
-        await handleSendReply(`✅ ¡Hemos generado tu precotización formal en el sistema! Total estimado: PEN ${total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}.`);
+        const bookingMsg = booking ? ` 📅 Cita confirmada para el ${booking.date} a las ${booking.time}.` : '';
+        await handleSendReply(`✅ ¡Hemos generado tu precotización formal en el sistema!${bookingMsg} Total estimado: PEN ${total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}.`);
       }
     } catch (err) {
       console.error('Error enviando formulario lateral:', err);
@@ -415,10 +456,8 @@ export function PrecotizadorChatPage() {
         </div>
       </div>
 
-      {/* Main Container: Session List (Left) + Chat View (Center) + Precotizador Form (Right) */}
       <div className="grid lg:grid-cols-12 gap-6 h-[720px]">
-        {/* Left: Chat Session List (3 cols) */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
+        <div className={`lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-xs flex-col overflow-hidden ${selectedSessionId ? 'hidden lg:flex' : 'flex'}`}>
           <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <h2 className="font-bold text-slate-800 text-sm">Chats ({filteredSessions.length})</h2>
             <span className="text-[11px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-md">
@@ -428,21 +467,17 @@ export function PrecotizadorChatPage() {
 
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
             {filteredSessions.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-sm">
-                No hay conversaciones registradas.
-              </div>
+              <div className="p-8 text-center text-slate-400 text-sm">No hay conversaciones.</div>
             ) : (
               filteredSessions.map(session => {
                 const isSelected = session.id === selectedSessionId;
-                const isHuman = session.status === 'HUMAN_TAKEOVER';
-                const isClosed = session.status === 'CLOSED';
                 const hasUnread = session.unreadCountSales > 0;
-
                 return (
                   <button
                     key={session.id}
                     onClick={() => {
                       setSelectedSessionId(session.id);
+                      setMobileViewTab('chat');
                       setFormSubmitted(false);
                     }}
                     className={`w-full text-left p-4 transition-colors flex flex-col gap-1.5 relative ${
@@ -450,41 +485,11 @@ export function PrecotizadorChatPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-800 text-sm truncate max-w-[140px]">
-                        {session.customerName || 'Cliente Anónimo'}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(session.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <span className="font-bold text-slate-800 text-sm truncate">{session.customerName || 'Cliente Anónimo'}</span>
+                      <span className="text-[10px] text-slate-400">{new Date(session.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-
-                    <div className="flex items-center justify-between gap-1 text-xs">
-                      <span className="text-slate-500 truncate max-w-[110px]">{session.company.name}</span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isClosed
-                            ? 'bg-slate-200 text-slate-700 border border-slate-300'
-                            : isHuman
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        }`}
-                      >
-                        {isClosed ? '🔴 Cerrado' : isHuman ? '👤 Humano' : '🤖 Bot IA'}
-                      </span>
-                    </div>
-
-                    {session.assignedUserName && (
-                      <span className="text-[10px] text-indigo-600 font-medium">
-                        Atendido por: {session.assignedUserName}
-                      </span>
-                    )}
-
-                    {/* Unread Sales Badge */}
-                    {hasUnread && (
-                      <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm animate-bounce">
-                        {session.unreadCountSales}
-                      </span>
-                    )}
+                    <div className="text-xs text-slate-500 truncate">{session.company.name}</div>
+                    {hasUnread && <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-bounce">{session.unreadCountSales}</span>}
                   </button>
                 );
               })
@@ -492,11 +497,39 @@ export function PrecotizadorChatPage() {
           </div>
         </div>
 
-        {/* Center: Active Conversation & Actions (6 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
+        <div className={`lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs flex-col overflow-hidden ${
+          selectedSessionId && mobileViewTab === 'chat' ? 'flex' : selectedSessionId ? 'hidden lg:flex' : 'hidden lg:flex'
+        }`}>
           {activeSession ? (
             <>
-              {/* Header with Ownership & Actions */}
+              <div className="lg:hidden flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-slate-100/70">
+                <button
+                  onClick={() => setSelectedSessionId(null)}
+                  className="text-slate-600 font-bold text-xs flex items-center gap-1 hover:text-slate-900"
+                >
+                  <ArrowLeft className="w-4 h-4 text-indigo-600" />
+                  <span>Chats</span>
+                </button>
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
+                  <button
+                    onClick={() => setMobileViewTab('chat')}
+                    className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${
+                      mobileViewTab === 'chat' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600'
+                    }`}
+                  >
+                    💬 Chat
+                  </button>
+                  <button
+                    onClick={() => setMobileViewTab('formulario')}
+                    className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${
+                      mobileViewTab === 'formulario' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600'
+                    }`}
+                  >
+                    📋 Precotizar
+                  </button>
+                </div>
+              </div>
+
               <div className="p-3.5 border-b border-slate-200 bg-slate-50/80 flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
@@ -504,147 +537,76 @@ export function PrecotizadorChatPage() {
                       <User className="w-4 h-4 text-slate-500" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-sm truncate max-w-[160px]">{activeSession.customerName}</h3>
+                      <h3 className="font-bold text-slate-800 text-sm truncate">{activeSession.customerName}</h3>
                       <p className="text-[11px] text-slate-500">{activeSession.company.name}</p>
                     </div>
                   </div>
-
-                  {/* Actions Bar */}
                   <div className="flex items-center gap-1.5">
                     {isUnassigned && (
-                      <button
-                        onClick={handleClaimChat}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all"
-                        title="Asignarme este chat"
-                      >
+                      <button onClick={handleClaimChat} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-sm flex items-center gap-1">
                         <UserCheck className="w-3.5 h-3.5" />
                         <span>Tomar Chat</span>
                       </button>
                     )}
-
                     {canInteract && (
                       <>
                         <button
                           onClick={handleToggleBot}
-                          className={`px-2.5 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all ${
-                            activeSession.status === 'HUMAN_TAKEOVER'
-                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                              : 'bg-amber-500 hover:bg-amber-600 text-white'
+                          className={`px-2 py-1 rounded-lg font-bold text-[10px] flex items-center gap-1 text-white ${
+                            activeSession.status === 'HUMAN_TAKEOVER' ? 'bg-emerald-600' : 'bg-amber-500'
                           }`}
-                          title="Alternar estado del bot"
                         >
-                          {activeSession.status === 'HUMAN_TAKEOVER' ? (
-                            <>
-                              <Play className="w-3.5 h-3.5" />
-                              <span>Bot IA</span>
-                            </>
-                          ) : (
-                            <>
-                              <Pause className="w-3.5 h-3.5" />
-                              <span>Pausar Bot</span>
-                            </>
-                          )}
+                          {activeSession.status === 'HUMAN_TAKEOVER' ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                          <span>{activeSession.status === 'HUMAN_TAKEOVER' ? 'Bot' : 'Pausar'}</span>
                         </button>
-
-                        <button
-                          onClick={openTransferModal}
-                          className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors flex items-center gap-1 text-[11px] font-semibold"
-                          title="Transferir chat a otro asesor"
-                        >
-                          <Share2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Transferir</span>
-                        </button>
-
-                        <button
-                          onClick={handleRelease}
-                          className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors flex items-center gap-1 text-[11px] font-semibold"
-                          title="Dejar libre (desasignar)"
-                        >
-                          <Unlock className="w-4 h-4" />
-                          <span className="hidden sm:inline">Dejar libre</span>
-                        </button>
-
-                        <button
-                          onClick={handleCloseSession}
-                          className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors"
-                          title="Finalizar / Cerrar Chat"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
+                        <button onClick={openTransferModal} className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100" title="Transferir"><Share2 className="w-4 h-4 text-slate-600" /></button>
+                        <button onClick={handleRelease} className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-100" title="Liberar"><Unlock className="w-4 h-4 text-slate-600" /></button>
+                        <button onClick={handleCloseSession} className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600" title="Cerrar"><XCircle className="w-4 h-4" /></button>
                       </>
                     )}
                   </div>
                 </div>
-
-                {/* Assignment Banner */}
-                <div className={`flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg border ${
-                  !canInteract ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-white border-slate-200 text-slate-500'
-                }`}>
-                  <div className="flex items-center gap-1 font-medium">
-                    <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>
-                      {activeSession.assignedUserName ? (
-                        <>Atendido por: <strong>{activeSession.assignedUserName}</strong> {isAssignedToMe ? ' (Tú)' : ''}</>
-                      ) : (
-                        <span className="text-amber-600 font-semibold">Desasignado / Libre</span>
-                      )}
-                    </span>
-                  </div>
-
-                  {!canInteract && (
-                    <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      🔒 Solo Lectura
-                    </span>
-                  )}
-
-                  {activeSession.customerPhone && canInteract && (
-                    <span className="flex items-center gap-1 text-slate-600">
-                      <Phone className="w-3 h-3 text-slate-400" /> {activeSession.customerPhone}
-                    </span>
-                  )}
-                </div>
+                {!canInteract && (
+                  <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md flex items-center gap-1 self-start">
+                    <Lock className="w-3 h-3" /> Solo Lectura
+                  </span>
+                )}
               </div>
 
-              {/* AI Context / Briefing Banner (Point 4) */}
-              {(activeSession.summary || activeSession.analysisResult) && (
-                <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-3 text-xs flex items-start gap-2.5 shadow-inner">
-                  <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5 animate-pulse" />
-                  <div className="flex-1">
-                    <h4 className="font-bold text-cyan-300 text-[11px] uppercase tracking-wider mb-0.5">📌 Resumen / Contexto IA del Cliente</h4>
-                    <p className="text-slate-200 text-xs leading-relaxed">
-                      {activeSession.summary || activeSession.analysisResult?.explanation || 'Cliente consultando opciones de precotización.'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Chat Message Stream */}
-              <div ref={scrollContainerRef} onScroll={handleChatScroll} className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/40">
+              <div ref={scrollContainerRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
                 {activeSession.messages?.map((msg: any) => {
-                  const isUser = msg.sender === 'user';
-                  const isAgent = msg.sender === 'agent';
+                  const isCustomer = msg.sender === 'user' || msg.sender === 'customer';
+                  const isSales = msg.sender === 'agent' || msg.sender === 'sales';
+                  const isBot = msg.sender === 'bot';
+                  const messageText = msg.content || msg.text || '';
 
                   return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col ${isUser ? 'items-start' : 'items-end'} space-y-1`}
-                    >
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400 px-1">
-                        <span>{msg.senderName || (isUser ? 'Cliente' : isAgent ? 'Asesor' : 'Bot IA')}</span>
-                        <span>•</span>
-                        <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div key={msg.id} className={`flex gap-2.5 max-w-[85%] ${isSales ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white ${
+                        isCustomer ? 'bg-slate-700' : isBot ? 'bg-indigo-600' : 'bg-purple-600'
+                      }`}>
+                        {isCustomer ? <User className="w-4 h-4" /> : isBot ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                       </div>
-
-                      <div
-                        className={`rounded-2xl p-3 text-xs sm:text-sm max-w-[85%] leading-relaxed shadow-2xs ${
-                          isUser
-                            ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
-                            : isAgent
-                            ? 'bg-indigo-600 text-white rounded-tr-none font-medium'
-                            : 'bg-slate-800 text-slate-100 rounded-tr-none'
-                        }`}
-                      >
-                        <p className="whitespace-pre-line">{msg.content}</p>
+                      <div className="flex flex-col gap-1">
+                        <div className={`flex items-center gap-2 ${isSales ? 'justify-end' : ''}`}>
+                          <span className="text-[10px] font-bold text-slate-500">
+                            {isCustomer ? activeSession.customerName : isBot ? 'Asistente IA' : msg.senderName || 'Asesor'}
+                          </span>
+                          {msg.createdAt && (
+                            <span className="text-[9px] text-slate-400">
+                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                        <div className={`p-3 rounded-2xl text-xs sm:text-sm whitespace-pre-wrap leading-relaxed shadow-2xs ${
+                          isSales 
+                            ? 'bg-purple-600 text-white' 
+                            : isBot 
+                            ? 'bg-indigo-50 text-indigo-950 border border-indigo-100'
+                            : 'bg-white border border-slate-200 text-slate-800'
+                        }`}>
+                          {formatChatMessageText(messageText, isSales)}
+                        </div>
                       </div>
                     </div>
                   );
@@ -652,63 +614,56 @@ export function PrecotizadorChatPage() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Quick Reply & Input Box / Locked State */}
-              {canInteract ? (
-                <>
-                  {/* Quick Reply Template Chips (Point 5) */}
-                  <div className="px-3 pt-2 bg-white border-t border-slate-100 flex flex-wrap gap-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider self-center mr-1">Atajos:</span>
-                    {quickReplies.map((qr, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setReplyText(qr)}
-                        className="text-[11px] text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md transition-colors truncate max-w-[200px]"
-                        title={qr}
-                      >
-                        {qr}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Agent Reply Input Box */}
-                  <div className="p-3 bg-white flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={replyText}
-                      onChange={e => setReplyText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSendReply()}
-                      placeholder="Escribe tu mensaje como asesor..."
-                      className="flex-1 bg-slate-100 text-slate-800 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
-                    />
-
+              {/* Quick replies strip */}
+              {canInteract && activeSession.status === 'HUMAN_TAKEOVER' && (
+                <div className="p-2 border-t border-slate-100 bg-white flex gap-1.5 overflow-x-auto no-scrollbar">
+                  {quickReplies.map((reply, i) => (
                     <button
-                      onClick={() => handleSendReply()}
-                      disabled={!replyText.trim() || loading}
-                      className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-md shadow-indigo-100"
+                      key={i}
+                      onClick={() => handleSendReply(reply)}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 text-[11px] font-medium rounded-full shrink-0 transition-colors border border-slate-200"
                     >
-                      <span>Enviar</span>
-                      <Send className="w-4 h-4" />
+                      {reply.slice(0, 25)}...
                     </button>
-                  </div>
-                </>
-              ) : (
-                <div className="p-3.5 bg-amber-50 border-t border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>🔒 Chat atendido por <strong>{activeSession.assignedUserName}</strong>. Solo él/ella o un Administrador pueden responder.</span>
-                  </div>
+                  ))}
                 </div>
               )}
+
+              {canInteract ? (
+                <div className="p-3 bg-white border-t border-slate-200 flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSendReply()}
+                    placeholder="Escribe tu mensaje..."
+                    className="flex-1 bg-slate-100 text-slate-800 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button onClick={() => handleSendReply()} disabled={!replyText.trim() || loading} className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center gap-1">
+                    <span>Enviar</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : null}
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8 text-center text-slate-400 text-sm">
-              Selecciona una conversación a la izquierda.
-            </div>
+            <div className="flex-1 flex items-center justify-center p-8 text-slate-400 text-sm">Selecciona una conversación.</div>
           )}
         </div>
 
-        {/* Right: Embedded Precotizador Form Sidebar for Sales Rep (4 cols) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col overflow-hidden">
+        <div className={`lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex-col overflow-hidden ${
+          selectedSessionId && mobileViewTab === 'formulario' ? 'flex' : 'hidden lg:flex'
+        }`}>
+          <div className="lg:hidden flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-slate-100/70">
+            <button onClick={() => setSelectedSessionId(null)} className="text-slate-600 font-bold text-xs flex items-center gap-1 hover:text-slate-900">
+              <ArrowLeft className="w-4 h-4 text-indigo-600" />
+              <span>Chats</span>
+            </button>
+            <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
+              <button onClick={() => setMobileViewTab('chat')} className={`px-3 py-1 rounded-md text-[11px] font-bold ${mobileViewTab === 'chat' ? 'bg-indigo-600 text-white' : 'text-slate-600'}`}>💬 Chat</button>
+              <button onClick={() => setMobileViewTab('formulario')} className={`px-3 py-1 rounded-md text-[11px] font-bold ${mobileViewTab === 'formulario' ? 'bg-indigo-600 text-white' : 'text-slate-600'}`}>📋 Precotizar</button>
+            </div>
+          </div>
           <div className="p-3.5 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <div className="flex items-center gap-1.5 font-bold text-slate-800 text-sm">
               <FileText className="w-4 h-4 text-indigo-600" />
@@ -842,6 +797,50 @@ export function PrecotizadorChatPage() {
                       onChange={e => setFormData({ ...formData, notes: e.target.value })}
                       className="w-full p-2 rounded-lg border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-indigo-500 resize-y disabled:opacity-50"
                     />
+                  </div>
+
+                  {/* Agendamiento de Citas con Calendario para Asesor */}
+                  <div className="space-y-2 pt-2 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-700 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>4. Agendar Cita / Reunión</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowCalendarInPanel(!showCalendarInPanel)}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md transition-colors"
+                      >
+                        {showCalendarInPanel ? 'Ocultar' : '📅 Abrir Calendario'}
+                      </button>
+                    </div>
+
+                    {booking && (
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 font-semibold">
+                        <span>📅 Cita: {booking.date} a las {booking.time}</span>
+                        <button
+                          type="button"
+                          onClick={() => setBooking(null)}
+                          className="text-[10px] text-red-600 underline font-bold"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    )}
+
+                    {showCalendarInPanel && (
+                      <div className="mt-2 border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                        <CalendarPicker
+                          companySlug={activeSession.company.slug}
+                          colorPrimary="#4f46e5"
+                          onSelectBooking={(d, t) => {
+                            setBooking({ date: d, time: t });
+                            setShowCalendarInPanel(false);
+                          }}
+                          onClearBooking={() => setBooking(null)}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Submit Button */}
