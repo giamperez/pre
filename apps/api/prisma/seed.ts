@@ -407,6 +407,22 @@ async function main() {
   // ---------------------------------------------------------
   // PLANTILLAS: VERTEX DEVELOPERS
   // ---------------------------------------------------------
+  // Eliminar cualquier plantilla ajena o heredada incorrectamente
+  const validVertexCodes = [
+    "VX-TIP-LANDING",
+    "VX-TIP-ECOMMERCE",
+    "VX-TIP-SAAS",
+    "VX-TIP-MOBILE",
+    "VX-TIP-CATALOGO",
+    "PRECOT-VERTEX-MASTER"
+  ];
+  await prisma.quoteTemplate.deleteMany({
+    where: {
+      companyId: vertex.id,
+      code: { notIn: validVertexCodes }
+    }
+  });
+
   const seccionesVertex = [
     { title: "Alcance del Servicio", content: "El presente servicio comprende el desarrollo e implementación de las funcionalidades descritas en esta cotización, conforme a los requerimientos previamente definidos y aprobados por el cliente.\n\nCualquier modificación al alcance o incorporación de nuevas funcionalidades será evaluada y cotizada por separado.\n\nLa presente cotización comprende únicamente los entregables descritos en este documento.", enabled: true },
     { title: "Condiciones para la realización del Servicio", content: "El cliente deberá proporcionar oportunamente toda la información necesaria para el desarrollo del proyecto, incluyendo textos, imágenes, logotipos, manual de identidad visual, catálogos de productos y demás recursos requeridos.\n\nEn caso de requerirse acceso a servicios de terceros (hosting, dominio, pasarelas de pago, correos corporativos, APIs, entre otros), el cliente deberá proporcionar las credenciales correspondientes.\n\nLos retrasos ocasionados por la entrega tardía de información, aprobaciones o accesos podrán modificar el cronograma de ejecución sin generar responsabilidad para Vertex Developers.", enabled: true },

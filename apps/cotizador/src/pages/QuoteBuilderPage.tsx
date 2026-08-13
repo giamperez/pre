@@ -279,6 +279,12 @@ export function QuoteBuilderPage() {
         const { catalogItems: _, ...co } = data;
         setCompany(co);
         setTemplates(tpls);
+        setSections(getDefaultSections(co.slug));
+        if (co.slug === 'pyramid-structures') {
+          setPaymentTerms('50% adelanto, 30% aprobación de planos, 20% entregable final');
+        } else {
+          setPaymentTerms('40% adelanto, 30% al aprobar maqueta, 30% al finalizar');
+        }
         setLoadingCompany(false);
       })
       .catch(() => setLoadingCompany(false));
