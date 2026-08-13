@@ -51,6 +51,13 @@ interface PrequoteCard {
   videoUrl?: string;
 }
 
+interface PrequoteAddon {
+  _key: string;
+  name: string;
+  description: string;
+  basePrice: number;
+}
+
 const emptyItem = (): TemplateItem => ({
   _key: Math.random().toString(36).slice(2),
   titulo: '',
@@ -70,6 +77,13 @@ const emptyPrequoteCard = (): PrequoteCard => ({
   ctaText: 'Precotizar paquete',
   imageUrl: '',
   videoUrl: '',
+});
+
+const emptyPrequoteAddon = (): PrequoteAddon => ({
+  _key: Math.random().toString(36).slice(2),
+  name: '',
+  description: '',
+  basePrice: 0,
 });
 
 function currency(n: number) {
@@ -322,8 +336,14 @@ export function TemplateEditorPage() {
     'Eres el asistente comercial virtual de la empresa. Tu objetivo es saludar cordialmente, consultar los datos de contacto del cliente y guiarlo a través de nuestras opciones y paquetes de servicio.'
   );
   const [botTone, setBotTone] = useState('comercial');
-  const [mandatoryFields, setMandatoryFields] = useState<string[]>(['nombre', 'telefono', 'correo', 'empresa']);
   const [prequoteCards, setPrequoteCards] = useState<PrequoteCard[]>([emptyPrequoteCard()]);
+  const [prequoteAddons, setPrequoteAddons] = useState<PrequoteAddon[]>([]);
+
+  const addPrequoteAddon = () => setPrequoteAddons(prev => [...prev, emptyPrequoteAddon()]);
+  const removePrequoteAddon = (key: string) => setPrequoteAddons(prev => prev.filter(a => a._key !== key));
+  const updatePrequoteAddon = (key: string, field: keyof PrequoteAddon, value: any) => {
+    setPrequoteAddons(prev => prev.map(a => a._key === key ? { ...a, [field]: value } : a));
+  };
 
   // Reusable Items Drawer State
   const [reusableItems, setReusableItems] = useState<ReusableItem[]>([]);
@@ -512,6 +532,14 @@ export function TemplateEditorPage() {
                 videoUrl: c.videoUrl || '',
               })));
             }
+            if (Array.isArray(tpl.cardsConfig.addons)) {
+              setPrequoteAddons(tpl.cardsConfig.addons.map((a: any) => ({
+                _key: Math.random().toString(36).slice(2),
+                name: a.name || '',
+                description: a.description || '',
+                basePrice: Number(a.basePrice) || 0,
+              })));
+            }
           }
 
           setLoading(false);
@@ -668,6 +696,7 @@ export function TemplateEditorPage() {
               botTone,
               mandatoryFields,
               cards: prequoteCards,
+              addons: prequoteAddons.filter(a => a.name.trim()).map(({ _key, ...rest }) => rest),
             }
           : undefined,
         customFields: customFields.length > 0 ? customFields : undefined,
@@ -1229,6 +1258,96 @@ export function TemplateEditorPage() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            {/* Panel 2.5: Servicios Adicionales (Addons) del Precotizador */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                    <PlusCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800">Servicios Adicionales (Addons) de Precotización</h2>
+                    <p className="text-xs text-slate-500">
+                      Personaliza los adicionales disponibles para que los clientes complementen su paquete principal.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addPrequoteAddon}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <Plus className="w-4 h-4" /> Agregar Servicio Adicional
+                </button>
+              </div>
+
+              {prequoteAddons.length === 0 ? (
+                <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl text-center space-y-2">
+                  <p className="text-xs text-slate-500">No hay servicios adicionales configurados expresamente en esta plantilla.</p>
+                  <button
+                    type="button"
+                    onClick={addPrequoteAddon}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-bold border border-purple-200 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Agregar primer adicional
+                  </button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {prequoteAddons.map((addon, idx) => (
+                    <div key={addon._key} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 relative group">
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
+                        <span className="text-xs font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded-md">
+                          Adicional #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removePrequoteAddon(addon._key)}
+                          className="text-slate-400 hover:text-red-600 p-1 rounded-md transition-colors"
+                          title="Eliminar adicional"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Nombre del Adicional</label>
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-purple-300 outline-none bg-white font-semibold"
+                          placeholder="Ej: Pasarela de pagos, Hosting por 1 año..."
+                          value={addon.name}
+                          onChange={e => updatePrequoteAddon(addon._key, 'name', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Descripción Breve</label>
+                        <textarea
+                          rows={2}
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-purple-300 outline-none bg-white resize-y"
+                          placeholder="Descripción corta del servicio adicional..."
+                          value={addon.description}
+                          onChange={e => updatePrequoteAddon(addon._key, 'description', e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Precio Base (S/)</label>
+                        <input
+                          type="number"
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-purple-300 outline-none bg-white font-bold"
+                          placeholder="Ej: 500"
+                          value={addon.basePrice || ''}
+                          onChange={e => updatePrequoteAddon(addon._key, 'basePrice', Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Panel 3: Agendamiento / Calendario de Contacto */}

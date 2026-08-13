@@ -573,6 +573,17 @@ async function main() {
           },
           {
             _key: "card-v2",
+            serviceName: "Página Web con Catálogo",
+            subtitle: "Sitio web interactivo con catálogo de productos/servicios, filtros y pedidos por WhatsApp",
+            whyIdeal: "Ideal para empresas que desean mostrar su catálogo completo y recibir consultas directas.",
+            includedAddons: ["Catálogo dinámico", "Botón de pedido vía WhatsApp", "Panel administrativo intuitivo"],
+            basePrice: 3000,
+            ctaText: "Precotizar Web con Catálogo",
+            imageUrl: "/companies/vertex-developers/portada.jpeg",
+            videoUrl: "/companies/vertex-developers/video1.mp4"
+          },
+          {
+            _key: "card-v3",
             serviceName: "Tienda Online E-commerce",
             subtitle: "Catálogo de productos, carrito de compras, gestión de stock y pasarela de pagos integrada",
             whyIdeal: "Ideal para comercios y empresas que desean vender sus productos 24/7 en internet.",
@@ -583,7 +594,7 @@ async function main() {
             videoUrl: "/companies/vertex-developers/video1.mp4"
           },
           {
-            _key: "card-v3",
+            _key: "card-v4",
             serviceName: "Software SaaS a Medida",
             subtitle: "Sistema de gestión web con backend en NestJS, PostgreSQL y panel administrativo interactivo",
             whyIdeal: "Para empresas con operaciones complejas que requieren digitalizar y automatizar sus procesos.",
@@ -594,7 +605,7 @@ async function main() {
             videoUrl: "/companies/vertex-developers/video1.mp4"
           },
           {
-            _key: "card-v4",
+            _key: "card-v5",
             serviceName: "Aplicación Móvil (Android / iOS)",
             subtitle: "App nativa o multiplataforma con interfaz amigable, autenticación y notificaciones push",
             whyIdeal: "Para startups y negocios que desean estar en la pantalla de inicio de sus clientes.",
@@ -604,6 +615,15 @@ async function main() {
             imageUrl: "/companies/vertex-developers/portada.jpeg",
             videoUrl: "/companies/vertex-developers/video1.mp4"
           }
+        ],
+        addons: [
+          { _key: "add-1", name: "Integración pasarela de pagos (Yape / tarjetas)", description: "Procesamiento de pagos con Culqi o MercadoPago", basePrice: 800 },
+          { _key: "add-2", name: "Facturación electrónica (Boletas / Facturas)", description: "Emisión directa conectada a la SUNAT", basePrice: 700 },
+          { _key: "add-3", name: "Adaptación PWA (App instalable)", description: "Permite instalar la web como app en celulares", basePrice: 1000 },
+          { _key: "add-4", name: "Chatbot con IA entrenada", description: "Atención al cliente automatizada las 24 horas", basePrice: 800 },
+          { _key: "add-5", name: "Integración WhatsApp Business API", description: "Respuestas y cotizaciones por WhatsApp", basePrice: 500 },
+          { _key: "add-6", name: "Dominio .COM y Hosting ilimitado (1 año)", description: "Alojamiento cloud y registro de dominio", basePrice: 200 },
+          { _key: "add-7", name: "SEO Técnico On-Page", description: "Posicionamiento en Google Search Console", basePrice: 300 }
         ]
       }
     },
