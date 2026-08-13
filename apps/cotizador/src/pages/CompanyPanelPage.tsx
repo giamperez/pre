@@ -11,7 +11,8 @@ export function CompanyPanelPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
-  const isAdmin = getUser()?.role === 'admin';
+  const userRole = getUser()?.role;
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
   const activeTab = searchParams.get('tab') === 'plantillas' ? 'plantillas' : 'cotizacion';
   const setTab = (tab: 'cotizacion' | 'plantillas') => {

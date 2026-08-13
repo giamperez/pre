@@ -17,6 +17,10 @@ export class CatalogService {
       where: { slug: companySlug },
       include: {
         catalogItems: true,
+        templates: {
+          where: { type: 'precotizacion' },
+          take: 1,
+        },
       },
     });
 

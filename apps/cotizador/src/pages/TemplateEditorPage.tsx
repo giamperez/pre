@@ -8,7 +8,7 @@ import { CompanyCustomFieldsEditor, type CustomFieldDefinition } from '../compon
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, ChevronRight, LayoutTemplate,
   Bot, Search, PlusCircle, Layers, Power, Sparkles,
-  ShieldAlert, ImagePlus, Sliders, Film
+  ShieldAlert, ImagePlus, Sliders, Film, Calendar, Check, Contact
 } from 'lucide-react';
 
 const REFERENCE_COMPANY_SLUG = 'vertex-developers';
@@ -47,6 +47,7 @@ interface PrequoteCard {
   includedAddons: string[];
   basePrice?: number;
   ctaText?: string;
+  imageUrl?: string;
   videoUrl?: string;
 }
 
@@ -67,6 +68,7 @@ const emptyPrequoteCard = (): PrequoteCard => ({
   includedAddons: [],
   basePrice: 0,
   ctaText: 'Precotizar paquete',
+  imageUrl: '',
   videoUrl: '',
 });
 
@@ -83,12 +85,15 @@ export interface FieldConfig {
 }
 
 const defaultFieldConfigs: Record<string, FieldConfig> = {
-  empresa: { label: 'Empresa / Cliente', defaultValue: '', placeholder: 'Nombre de la empresa', enabled: true },
+  nombre: { label: 'Nombre', defaultValue: '', placeholder: 'Tu nombre', enabled: true },
+  empresa: { label: 'Empresa / Negocio', defaultValue: '', placeholder: 'Opcional', enabled: true },
+  correo: { label: 'Correo', defaultValue: '', placeholder: 'tucorreo@ejemplo.com', enabled: true },
+  telefono: { label: 'WhatsApp', defaultValue: '', placeholder: '999 999 999', enabled: true },
+  presupuesto: { label: 'Presupuesto disponible', defaultValue: '', placeholder: 'Puede ser un monto exacto o un intervalo', enabled: true },
+  detalles: { label: 'Detalles de tu proyecto / ¿Qué necesitas?', defaultValue: '', placeholder: 'Describe brevemente tus requerimientos...', enabled: true },
   ruc: { label: 'RUC / DNI', defaultValue: '', placeholder: '20XXXXXXXXX / DNI', enabled: true },
   solicitante: { label: 'Solicitante', defaultValue: '', placeholder: 'Nombre completo', enabled: true },
   direccion: { label: 'Dirección', defaultValue: '', placeholder: 'Av. / Calle / Urb.', enabled: true },
-  telefono: { label: 'Teléfono', defaultValue: '', placeholder: '+51 999 000 000', enabled: true },
-  correo: { label: 'Correo', defaultValue: '', placeholder: 'correo@empresa.com', enabled: true },
   tipoCliente: {
     label: 'Tipo de cliente',
     defaultValue: '',
@@ -159,6 +164,7 @@ export function TemplateEditorPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('General');
+  const [showInPrequote, setShowInPrequote] = useState(true);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
 
   const [fieldConfigs, setFieldConfigs] = useState<Record<string, FieldConfig>>(defaultFieldConfigs);
@@ -420,6 +426,7 @@ export function TemplateEditorPage() {
 
           if (tpl.projectData) {
             const pd = tpl.projectData as any;
+            if (pd.showInPrequote !== undefined) setShowInPrequote(Boolean(pd.showInPrequote));
             if (pd.fieldConfigs) setFieldConfigs(prev => ({ ...prev, ...pd.fieldConfigs }));
             if (pd.modalidad || pd.plazo || pd.nombre) {
               setProjectDetails({
@@ -501,6 +508,7 @@ export function TemplateEditorPage() {
                 includedAddons: Array.isArray(c.includedAddons) ? c.includedAddons : [],
                 basePrice: Number(c.basePrice) || 0,
                 ctaText: c.ctaText || 'Precotizar paquete',
+                imageUrl: c.imageUrl || '',
                 videoUrl: c.videoUrl || '',
               })));
             }
@@ -625,6 +633,7 @@ export function TemplateEditorPage() {
         category: category.trim() || 'General',
         type,
         projectData: {
+          showInPrequote,
           nombre: projectDetails.nombre.trim(),
           modalidad: projectDetails.modalidad.trim() || 'Proyecto por alcance',
           plazo: projectDetails.plazo.trim() || '45 días calendario',
@@ -687,7 +696,8 @@ export function TemplateEditorPage() {
     }
   };
 
-  if (getUser()?.role !== 'admin') {
+  const userRole = getUser()?.role;
+  if (userRole !== 'admin' && userRole !== 'superadmin') {
     return (
       <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
         <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto mb-4" />
@@ -860,13 +870,27 @@ export function TemplateEditorPage() {
                 />
               </div>
 
-              <div className="sm:col-span-2 flex items-end">
+              <div className="sm:col-span-2 flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 px-3.5 py-2 rounded-xl transition-all shadow-2xs">
+                  <input
+                    type="checkbox"
+                    id="showInPrequoteCheckbox"
+                    checked={showInPrequote}
+                    onChange={e => setShowInPrequote(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                  />
+                  <label htmlFor="showInPrequoteCheckbox" className="text-xs font-semibold text-slate-700 cursor-pointer flex items-center gap-1.5">
+                    <Bot className="w-4 h-4 text-indigo-600" />
+                    <span>Aparecer / Disponible en el Precotizador</span>
+                  </label>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setShowReuseDrawer(!showReuseDrawer)}
-                  className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 font-semibold px-3 py-2 rounded-lg transition-colors border border-indigo-200"
+                  className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 font-semibold px-3 py-2 rounded-xl transition-colors border border-indigo-200"
                 >
-                  <Search className="w-3.5 h-3.5" /> Reutilizar ítems/tarjetas de otras plantillas
+                  <Search className="w-3.5 h-3.5" /> Reutilizar ítems
                 </button>
               </div>
             </div>
@@ -960,7 +984,7 @@ export function TemplateEditorPage() {
                           { id: 'presupuesto', label: 'Presupuesto' },
                           { id: 'plazo', label: 'Plazo' },
                         ].map(f => {
-                          const isChecked = mandatoryFields.includes(f.id);
+                          const isChecked = (mandatoryFields || []).includes(f.id);
                           return (
                             <label key={f.id} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all ${
                               isChecked ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500'
@@ -970,7 +994,7 @@ export function TemplateEditorPage() {
                                 checked={isChecked}
                                 onChange={() => {
                                   setMandatoryFields(prev =>
-                                    isChecked ? prev.filter(x => x !== f.id) : [...prev, f.id]
+                                    isChecked ? (prev || []).filter(x => x !== f.id) : [...(prev || []), f.id]
                                   );
                                 }}
                                 className="rounded text-indigo-600 focus:ring-indigo-500 w-3 h-3"
@@ -1009,7 +1033,7 @@ export function TemplateEditorPage() {
               </div>
 
               <div className="space-y-4">
-                {prequoteCards.map((card, cIdx) => (
+                {(prequoteCards || []).map((card, cIdx) => (
                   <div key={card._key} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1073,21 +1097,122 @@ export function TemplateEditorPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
-                        <Film className="w-3.5 h-3.5 text-indigo-500" /> URL del Video Demostrativo (Opcional, 30s)
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-300 text-slate-600 font-mono"
-                        placeholder="Ej: /companies/vertex-developers/video1.mp4"
-                        value={card.videoUrl || ''}
-                        onChange={e => updatePrequoteCard(card._key, 'videoUrl', e.target.value)}
-                      />
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        Si ingresas la URL del video, aparecerá el botón de reproducción rápida (30s) en el precotizador.
-                      </p>
+                    <div className="grid sm:grid-cols-2 gap-4 bg-white p-3.5 rounded-xl border border-slate-200/80">
+                      {/* Subida de Imagen de Portada */}
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <ImagePlus className="w-3.5 h-3.5 text-indigo-600" /> Imagen de Portada (Miniatura)
+                          </span>
+                          <label className="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md transition-colors">
+                            📁 Subir imagen...
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = ev => updatePrequoteCard(card._key, 'imageUrl', ev.target?.result as string);
+                                  reader.readAsDataURL(file);
+                                }
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                        </label>
+
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-300 text-slate-600 font-mono"
+                          placeholder="Ruta local o URL (Ej: /companies/...) o sube tu archivo"
+                          value={card.imageUrl || ''}
+                          onChange={e => updatePrequoteCard(card._key, 'imageUrl', e.target.value)}
+                        />
+
+                        {card.imageUrl && (
+                          <div className="relative aspect-[21/9] rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group/img">
+                            <img
+                              src={
+                                card.imageUrl.startsWith('data:') || card.imageUrl.startsWith('http')
+                                  ? card.imageUrl
+                                  : `${API_URL}/public${card.imageUrl.startsWith('/') ? '' : '/'}${card.imageUrl}`
+                              }
+                              alt="Portada seleccionada"
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => updatePrequoteCard(card._key, 'imageUrl', '')}
+                              className="absolute top-1.5 right-1.5 bg-black/70 hover:bg-red-600 text-white p-1 rounded-md text-[10px] font-bold backdrop-blur-xs transition-colors"
+                              title="Quitar imagen"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Subida de Video Demostrativo (Hover) */}
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Film className="w-3.5 h-3.5 text-purple-600" /> Video Demostrativo (Hover)
+                          </span>
+                          <label className="text-[11px] text-purple-600 hover:text-purple-800 font-bold cursor-pointer bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded-md transition-colors">
+                            🎥 Subir video...
+                            <input
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = ev => updatePrequoteCard(card._key, 'videoUrl', ev.target?.result as string);
+                                  reader.readAsDataURL(file);
+                                }
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                        </label>
+
+                        <input
+                          type="text"
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-300 text-slate-600 font-mono"
+                          placeholder="Ruta local o URL (Ej: /companies/...) o sube tu archivo"
+                          value={card.videoUrl || ''}
+                          onChange={e => updatePrequoteCard(card._key, 'videoUrl', e.target.value)}
+                        />
+
+                        {card.videoUrl && (
+                          <div className="relative aspect-[21/9] rounded-lg overflow-hidden border border-slate-200 bg-black group/vid">
+                            <video
+                              src={
+                                card.videoUrl.startsWith('data:') || card.videoUrl.startsWith('http')
+                                  ? card.videoUrl
+                                  : `${API_URL}/public${card.videoUrl.startsWith('/') ? '' : '/'}${card.videoUrl}`
+                              }
+                              controls
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => updatePrequoteCard(card._key, 'videoUrl', '')}
+                              className="absolute top-1.5 right-1.5 bg-black/70 hover:bg-red-600 text-white p-1 rounded-md text-[10px] font-bold backdrop-blur-xs transition-colors"
+                              title="Quitar video"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <p className="text-[11px] text-slate-400">
+                      💡 <strong>Comportamiento:</strong> La imagen de portada se muestra fija por defecto; el video se reproducirá automáticamente al pasar el cursor (hover).
+                    </p>
 
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -1106,19 +1231,58 @@ export function TemplateEditorPage() {
               </div>
             </section>
 
-            {/* Panel 3: Campos del Formulario de Precotización */}
-            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-              <h2 className="text-base font-bold text-slate-800 mb-2">Campos del Formulario de Precotización</h2>
-              <p className="text-xs text-slate-500 mb-5">
-                Personaliza los nombres de etiquetas y opciones de los campos solicitados en el formulario web.
+            {/* Panel 3: Agendamiento / Calendario de Contacto */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-800">Calendario de Agendamiento</h2>
+                    <p className="text-xs text-slate-500">Sección opcional para que los clientes agenden fecha y hora de llamada.</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg text-xs font-bold">
+                  <Check className="w-3.5 h-3.5" /> Habilitado
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Esta sección permite a tus clientes seleccionar un día y horario disponible según los parámetros configurados en el panel de Disponibilidad de la Empresa.
               </p>
+            </section>
+
+            {/* Panel 4: Campos del Formulario de Precotización */}
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <Contact className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">Campos del Formulario de Precotización (Paso 3: Tus Datos de Contacto)</h2>
+                  <p className="text-xs text-slate-500">
+                    Personaliza las etiquetas, valores por defecto y opciones desplegables que completará el cliente.
+                  </p>
+                </div>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
+                {renderFieldEditor('nombre')}
                 {renderFieldEditor('empresa')}
-                {renderFieldEditor('solicitante')}
-                {renderFieldEditor('telefono')}
                 {renderFieldEditor('correo')}
+                {renderFieldEditor('telefono')}
+                {renderFieldEditor('presupuesto')}
+                {renderFieldEditor('detalles')}
                 {renderFieldEditor('sectorProyecto', true)}
                 {renderFieldEditor('tipoServicio', true)}
+              </div>
+
+              {/* Campos Personalizados Adicionales */}
+              <div className="mt-6 pt-4 border-t border-slate-100">
+                <CompanyCustomFieldsEditor
+                  customFields={customFields || []}
+                  onChange={setCustomFields}
+                  heading="Campos Personalizados Adicionales para el Precotizador"
+                />
               </div>
             </section>
           </div>

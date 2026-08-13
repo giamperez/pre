@@ -63,6 +63,25 @@ export class LeadsService {
       this.logger.error(`No se pudo auto-agendar la reunión para el lead ${lead.id}: ${e}`);
     }
 
+    // Vincular la sesión de chat del precotizador si el usuario interactuó con la IA
+    try {
+      const answers: any = lead.answers || {};
+      if (answers.chatSessionId) {
+        await this.prisma.precotizadorChatSession.update({
+          where: { id: answers.chatSessionId },
+          data: {
+            leadId: lead.id,
+            customerName: lead.name,
+            customerPhone: lead.phone,
+            customerEmail: lead.email,
+            isSavedWithLead: true,
+          },
+        }).catch(() => {});
+      }
+    } catch (e) {
+      this.logger.error(`No se pudo vincular la sesión de chat al lead ${lead.id}: ${e}`);
+    }
+
     this.notifyLeadSummary(lead).catch((err) =>
       this.logger.error(`No se pudo enviar el resumen de cotización al lead ${lead.id}: ${err}`),
     );
@@ -88,6 +107,13 @@ export class LeadsService {
         company: {
           select: { name: true, colorPrimary: true, slug: true },
         },
+        precotizadorChats: {
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -101,6 +127,13 @@ export class LeadsService {
       include: {
         company: {
           select: { name: true, colorPrimary: true, slug: true },
+        },
+        precotizadorChats: {
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' },
+            },
+          },
         },
       },
     });

@@ -27,12 +27,26 @@ export function isAuthenticated(): boolean {
   }
 }
 
-export function getUser(): { userId: string; email: string; name: string; role: string } | null {
+export function getUser(): {
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
+  companyId?: string | null;
+  permissions?: Record<string, boolean> | null;
+} | null {
   const token = getToken();
   if (!token) return null;
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return { userId: payload.sub, email: payload.email, name: payload.name, role: payload.role };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      role: payload.role,
+      companyId: payload.companyId || null,
+      permissions: payload.permissions || null,
+    };
   } catch {
     return null;
   }

@@ -13,7 +13,8 @@ interface TemplateListPageProps {
 
 export function TemplateListPage({ companySlug }: TemplateListPageProps) {
   const navigate = useNavigate();
-  const isAdmin = getUser()?.role === 'admin';
+  const userRole = getUser()?.role;
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
   const navigateToNewTemplate = (type: 'cotizacion' | 'precotizacion') =>
     navigate(`/plantillas/nueva?company=${companySlug}&type=${type}`);
@@ -145,7 +146,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Buscar plantilla..."
+                placeholder="Buscar plantilla de cotización..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:ring-2 focus:ring-indigo-300 outline-none"
@@ -179,7 +180,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-md uppercase">
+                    <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-md uppercase">
                       {prequoteTemplate.code || 'PRECOT-BOT'}
                     </span>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
@@ -198,7 +199,7 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
               </div>
 
               <button
-                onClick={() => navigate(`/plantillas/editar/${prequoteTemplate.id}`)}
+                onClick={() => navigate(`/plantillas/editar/${prequoteTemplate.id}?type=precotizacion`)}
                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs shadow-md shadow-indigo-200 transition-all shrink-0"
               >
                 <Pencil className="w-4 h-4" />
@@ -218,16 +219,11 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
 
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/70">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  Datos Obligatorios por Defecto
+                  Mensaje de Bienvenida del Bot
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Fecha de Emisión
-                  </span>
-                  <span className="inline-flex items-center gap-1 bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700">
-                    <Contact className="w-3.5 h-3.5 text-indigo-500" /> Datos del Cliente (Nombre, Teléfono, Correo)
-                  </span>
-                </div>
+                <p className="text-xs text-slate-700 line-clamp-3">
+                  {prequoteTemplate.cardsConfig?.botWelcome || '¡Hola! Bienvenido al precotizador.'}
+                </p>
               </div>
             </div>
 
@@ -245,17 +241,17 @@ export function TemplateListPage({ companySlug }: TemplateListPageProps) {
               <Bot className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-bold text-slate-800 mb-1">
-              Precotización
+              Configuración de Precotización
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              Esta empresa aún no tiene configurada su plantilla de precotización ni las opciones del servicio.
+              Esta empresa aún no tiene configurada su plantilla máster de precotización.
             </p>
             <button
               onClick={() => navigateToNewTemplate('precotizacion')}
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md"
             >
               <Plus className="w-4 h-4" />
-              Precotización
+              Configurar Precotización
             </button>
           </div>
         )

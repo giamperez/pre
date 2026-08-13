@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, DollarSign, Play, Film } from 'lucide-react';
+import { Send, CheckCircle2, Briefcase, Phone, Mail, User, ArrowLeft, CheckSquare, MessageSquare, MessageCircle, DollarSign, Play, Film } from 'lucide-react';
 import { useCatalog } from '../hooks/useCatalog';
 import { API_URL } from '../config';
 import { CalendarPicker } from '../components/CalendarPicker';
@@ -11,18 +11,28 @@ import { AiAnalysisCard } from '../components/AiAnalysisCard';
 import { VideoDemoModal } from '../components/VideoDemoModal';
 
 function ServiceVideoThumbnail({
+  imageUrl,
   videoUrl,
   isHovered,
   onHoverStart,
   onHoverEnd,
   onOpen,
 }: {
-  videoUrl: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
   isHovered: boolean;
   onHoverStart: () => void;
   onHoverEnd: () => void;
   onOpen: (e: React.MouseEvent) => void;
 }) {
+  const formattedImageUrl = imageUrl
+    ? (imageUrl.startsWith('http') || imageUrl.startsWith('data:') ? imageUrl : `${API_URL}/public${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
+    : null;
+
+  const formattedVideoUrl = videoUrl
+    ? (videoUrl.startsWith('http') ? videoUrl : `${API_URL}/public${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}`)
+    : null;
+
   return (
     <div
       onMouseEnter={onHoverStart}
@@ -30,24 +40,33 @@ function ServiceVideoThumbnail({
       onClick={onOpen}
       className="group/thumb relative mb-3 aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer"
     >
-      {isHovered ? (
+      {isHovered && formattedVideoUrl ? (
         <video
-          src={videoUrl}
+          src={formattedVideoUrl}
           autoPlay
           muted
           loop
           playsInline
           className="w-full h-full object-cover"
         />
+      ) : formattedImageUrl ? (
+        <img
+          src={formattedImageUrl}
+          alt="Portada del servicio"
+          className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+        />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover/thumb:text-slate-500 transition-colors">
           <Film className="w-5 h-5 mb-1" />
-          <span className="text-[11px] font-medium">Pasa el cursor o toca para ver la demo</span>
+          <span className="text-[11px] font-medium">Pasa el cursor para ver el video demo</span>
         </div>
       )}
-      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none">
-        <Play className="w-2.5 h-2.5 fill-white" /> 30s
-      </span>
+
+      {formattedVideoUrl && (
+        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none">
+          <Play className="w-2.5 h-2.5 fill-white" /> {isHovered ? 'Reproduciendo...' : 'Demo 30s'}
+        </span>
+      )}
     </div>
   );
 }
@@ -94,6 +113,8 @@ export function PrecotizadorPage() {
 
   const contactSectionRef = useRef<HTMLDivElement>(null);
 
+  const [aiObservationDetails, setAiObservationDetails] = useState('');
+
   const handleConfirmRecommendation = (rec: {
     mainServiceId?: string;
     addonIds?: string[];
@@ -116,22 +137,19 @@ export function PrecotizadorPage() {
       .map(id => items.find(i => i.id === id)?.name)
       .filter(Boolean) as string[];
 
+    const mainName = rec.mainServiceName || items.find(i => i.id === rec.mainServiceId)?.name;
+
     setAiAnalysis({
-      mainServiceName: rec.mainServiceName || items.find(i => i.id === rec.mainServiceId)?.name,
+      mainServiceName: mainName,
       summary: rec.summary,
       explanation: rec.explanation,
       addonNames: matchedAddonNames,
     });
 
-    if (rec.summary) {
-      setFormData(prev => {
-        const existingNotes = prev.notes ? prev.notes.trim() : '';
-        const summaryText = `[Asistente Virtual]: ${rec.summary}`;
-        return {
-          ...prev,
-          notes: existingNotes ? `${existingNotes}\n\n${summaryText}` : summaryText,
-        };
-      });
+    // Guardar detalles en variable interna no visible para el formulario
+    if (rec.summary || rec.explanation) {
+      const summaryText = `[Asistente Virtual IA]: ${rec.summary || ''}${rec.explanation ? ` - Razón: ${rec.explanation}` : ''}`;
+      setAiObservationDetails(summaryText);
     }
 
     setTimeout(() => {
@@ -191,6 +209,8 @@ export function PrecotizadorPage() {
     setSubmitting(true);
 
     try {
+      const activeSessionId = sessionStorage.getItem(`precotizador_chat_session_${company.id}`) || null;
+
       const payload = {
         ...formData,
         companyId: company.id,
@@ -203,7 +223,9 @@ export function PrecotizadorPage() {
           total,
           ...(formData.budget ? { presupuestoEstimadoCliente: formData.budget } : {}),
           ...(formData.notes ? { detallesProyecto: formData.notes } : {}),
-          ...(booking ? { booking } : {})
+          ...(aiObservationDetails ? { observacionesIA: aiObservationDetails } : {}),
+          ...(booking ? { booking } : {}),
+          ...(activeSessionId ? { chatSessionId: activeSessionId } : {}),
         }
       };
 
@@ -289,7 +311,8 @@ export function PrecotizadorPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {mainServices.map(item => {
               const isSelected = selectedMainService === item.id;
-              const videoUrl = (item as any).videoUrl || (company.slug === 'vertex-developers' ? `${API_URL}/public/companies/vertex-developers/video1.mp4` : null);
+              const videoUrl = (item as any).videoUrl || (company.slug === 'vertex-developers' ? `/companies/vertex-developers/video1.mp4` : null);
+              const imageUrl = (item as any).imageUrl || company.coverImageUrl;
 
               return (
                 <div
@@ -300,20 +323,23 @@ export function PrecotizadorPage() {
                   `}
                   style={isSelected ? { borderColor: company.colorPrimary, boxShadow: `0 0 0 4px ${company.colorPrimary}15` } : {}}
                 >
-                  {videoUrl && (
+                  {(videoUrl || imageUrl) && (
                     <ServiceVideoThumbnail
+                      imageUrl={imageUrl}
                       videoUrl={videoUrl}
                       isHovered={hoveredPreviewId === item.id}
                       onHoverStart={() => scheduleHoverPreview(item.id)}
                       onHoverEnd={cancelHoverPreview}
                       onOpen={(e) => {
                         e.stopPropagation();
-                        setActiveVideoModal({
-                          serviceName: item.name,
-                          videoUrl,
-                          onSelect: () => setSelectedMainService(item.id),
-                          isSelected,
-                        });
+                        if (videoUrl) {
+                          setActiveVideoModal({
+                            serviceName: item.name,
+                            videoUrl,
+                            onSelect: () => setSelectedMainService(item.id),
+                            isSelected,
+                          });
+                        }
                       }}
                     />
                   )}
@@ -402,7 +428,11 @@ export function PrecotizadorPage() {
 
         {/* SECCIÓN AI ANALYSIS CARD (SI FUE RECOMENDADO POR EL BOT) */}
         {aiAnalysis && (
-          <AiAnalysisCard analysis={aiAnalysis} onClear={() => setAiAnalysis(null)} />
+          <AiAnalysisCard
+            analysis={aiAnalysis}
+            colorPrimary={company.colorPrimary || '#0ea5e9'}
+            onClear={() => setAiAnalysis(null)}
+          />
         )}
 
         {/* PASO 3: TUS DATOS */}
@@ -458,98 +488,144 @@ export function PrecotizadorPage() {
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 text-sm text-center space-y-2">
-                  <p className="text-slate-500">Contacto de la empresa:</p>
-                  <p className="font-medium text-slate-800">{company.contactPhone}</p>
-                  <p className="font-medium text-slate-800">{company.contactEmail}</p>
+                <div className="mt-6 pt-4 border-t border-slate-100 text-sm text-center space-y-3">
+                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Contacto de la empresa</p>
+
+                  {company.contactPhone && (
+                    <a
+                      href={`https://wa.me/${company.contactPhone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 text-slate-800 font-bold hover:text-emerald-600 transition-colors group"
+                      title="Enviar mensaje por WhatsApp"
+                    >
+                      <img
+                        src={`${API_URL}/public/companies/images/whatsapp.png`}
+                        alt="WhatsApp"
+                        className="w-5 h-5 object-contain group-hover:scale-110 transition-transform shrink-0"
+                      />
+                      <span>{company.contactPhone}</span>
+                    </a>
+                  )}
+
+                  {company.contactEmail && (
+                    <div className="text-xs font-semibold text-slate-600 flex items-center justify-center gap-1.5 pt-1">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{company.contactEmail}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
             <form onSubmit={handleOpenModal} className="space-y-5">
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <User className="w-4 h-4 text-slate-400" /> Nombre
-                  </label>
-                  <input required type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
-                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Tu nombre" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-slate-400" /> Empresa / Negocio
-                  </label>
-                  <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
-                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} placeholder="Opcional" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-slate-400" /> Correo
-                  </label>
-                  <input required type="email" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
-                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="tucorreo@ejemplo.com" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-slate-400" /> WhatsApp
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={countryCode}
-                      onChange={e => {
-                        const newCode = e.target.value;
-                        setCountryCode(newCode);
-                        setFormData({ ...formData, phone: `${newCode} ${phoneNumber.trim()}` });
-                      }}
-                      className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm font-medium outline-none transition-all focus:ring-2 focus:border-transparent shrink-0 cursor-pointer shadow-sm"
-                      style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    >
-                      {COUNTRY_CODES.map(c => (
-                        <option key={c.code + c.country} value={c.code}>
-                          {c.flag} {c.code} ({c.country})
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      required
-                      type="tel"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent"
-                      style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                      value={phoneNumber}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setPhoneNumber(val);
-                        setFormData({ ...formData, phone: `${countryCode} ${val.trim()}` });
-                      }}
-                      placeholder="999 999 999"
-                    />
+              {(() => {
+                const activeTemplate = (company as any)?.templates?.[0] || (company as any)?.quoteTemplates?.[0];
+                const fc = activeTemplate?.projectData?.fieldConfigs || {};
+
+                return (
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    {fc.nombre?.enabled !== false && (
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <User className="w-4 h-4 text-slate-400" /> {fc.nombre?.label || 'Nombre'}
+                        </label>
+                        <input required type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                          style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder={fc.nombre?.placeholder || "Tu nombre"} />
+                      </div>
+                    )}
+
+                    {fc.empresa?.enabled !== false && (
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-slate-400" /> {fc.empresa?.label || 'Empresa / Negocio'}
+                        </label>
+                        <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                          style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} placeholder={fc.empresa?.placeholder || "Opcional"} />
+                      </div>
+                    )}
+
+                    {fc.correo?.enabled !== false && (
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-slate-400" /> {fc.correo?.label || 'Correo'}
+                        </label>
+                        <input required type="email" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                          style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder={fc.correo?.placeholder || "tucorreo@ejemplo.com"} />
+                      </div>
+                    )}
+
+                    {fc.telefono?.enabled !== false && (
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-slate-400" /> {fc.telefono?.label || 'WhatsApp'}
+                        </label>
+                        <div className="flex gap-2">
+                          <select
+                            value={countryCode}
+                            onChange={e => {
+                              const newCode = e.target.value;
+                              setCountryCode(newCode);
+                              setFormData({ ...formData, phone: `${newCode} ${phoneNumber.trim()}` });
+                            }}
+                            className="px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-sm font-medium outline-none transition-all focus:ring-2 focus:border-transparent shrink-0 cursor-pointer shadow-sm"
+                            style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          >
+                            {COUNTRY_CODES.map(c => (
+                              <option key={c.code + c.country} value={c.code}>
+                                {c.flag} {c.code} ({c.country})
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            required
+                            type="tel"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                            style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                            value={phoneNumber}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setPhoneNumber(val);
+                              setFormData({ ...formData, phone: `${countryCode} ${val.trim()}` });
+                            }}
+                            placeholder={fc.telefono?.placeholder || "999 999 999"}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {fc.presupuesto?.enabled !== false && (
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-slate-400" /> {fc.presupuesto?.label || 'Presupuesto disponible'}
+                        </label>
+                        <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
+                          style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          value={formData.budget} onChange={e => setFormData({ ...formData, budget: e.target.value })} placeholder={fc.presupuesto?.placeholder || "Puede ser un monto exacto o un intervalo"} />
+                      </div>
+                    )}
+
+                    {fc.detalles?.enabled !== false && (
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-slate-400" /> {fc.detalles?.label || 'Detalles de tu proyecto / ¿Qué necesitas?'}
+                        </label>
+                        <textarea
+                          rows={3}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm resize-y"
+                          style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
+                          value={formData.notes}
+                          onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                          placeholder={fc.detalles?.placeholder || "Describe brevemente tus requerimientos o cualquier detalle importante..."}
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-slate-400" /> Presupuesto disponible
-                  </label>
-                  <input type="text" className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm"
-                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    value={formData.budget} onChange={e => setFormData({ ...formData, budget: e.target.value })} placeholder="Puede ser un monto exacto o un intervalo" />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-slate-400" /> Detalles de tu proyecto / ¿Qué necesitas?
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none transition-all focus:ring-2 focus:border-transparent text-sm resize-y"
-                    style={{ '--tw-ring-color': company.colorPrimary } as React.CSSProperties}
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Describe brevemente tus requerimientos o cualquier detalle importante..."
-                  />
-                </div>
-              </div>
+                );
+              })()}
               <button
                 disabled={!selectedMainService || submitting}
                 type="submit"

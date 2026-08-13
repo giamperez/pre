@@ -23,7 +23,7 @@ import { FileText, Home, Users, LogOut, BarChart2, UserCog, Calendar, MessageCir
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const user = getUser();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinkCls = (path: string) =>

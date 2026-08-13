@@ -37,7 +37,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
   const [unreadCount, setUnreadCount] = useState(1);
   const [inputMessage, setInputMessage] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(() => {
-    return localStorage.getItem(`precotizador_chat_session_${company.id}`) || null;
+    return sessionStorage.getItem(`precotizador_chat_session_${company.id}`) || null;
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -224,7 +224,7 @@ export function PrecotizadorChatWidget({ company, onConfirmRecommendation }: Pre
 
       if (data.session && data.session.id) {
         setSessionId(data.session.id);
-        localStorage.setItem(`precotizador_chat_session_${company.id}`, data.session.id);
+        sessionStorage.setItem(`precotizador_chat_session_${company.id}`, data.session.id);
         setIsBotPaused(data.session.status === 'HUMAN_TAKEOVER');
         if (data.session.messages) {
           setMessages(data.session.messages);

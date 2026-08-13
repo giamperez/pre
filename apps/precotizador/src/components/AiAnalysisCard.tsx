@@ -1,4 +1,4 @@
-import { Sparkles, CheckCircle, Lightbulb, FileText } from 'lucide-react';
+import { Sparkles, CheckCircle, Lightbulb, FileText, BellRing, ArrowDown, AlertCircle } from 'lucide-react';
 
 interface AiAnalysisCardProps {
   analysis: {
@@ -7,6 +7,7 @@ interface AiAnalysisCardProps {
     explanation?: string;
     addonNames?: string[];
   };
+  colorPrimary?: string;
   onClear?: () => void;
 }
 
@@ -16,7 +17,7 @@ const renderFormattedContent = (text: string) => {
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={i} className="font-bold text-cyan-300">
+        <strong key={i} className="font-bold text-slate-900">
           {part.slice(2, -2)}
         </strong>
       );
@@ -25,53 +26,69 @@ const renderFormattedContent = (text: string) => {
   });
 };
 
-export function AiAnalysisCard({ analysis, onClear }: AiAnalysisCardProps) {
+export function AiAnalysisCard({ analysis, colorPrimary = '#0ea5e9', onClear }: AiAnalysisCardProps) {
   if (!analysis || (!analysis.summary && !analysis.explanation)) return null;
 
   return (
-    <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 text-white rounded-2xl p-6 shadow-xl border border-indigo-500/30 my-8 relative overflow-hidden animate-fadeIn z-0">
-      {/* Decorative background glow */}
-      <div className="absolute -top-24 -right-24 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="relative z-0">
-        <div className="flex items-center justify-between gap-3 pb-4 border-b border-indigo-500/20 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <Sparkles className="w-5 h-5 text-white animate-pulse" />
+    <div
+      className="bg-white rounded-2xl p-6 sm:p-7 shadow-sm border my-8 relative overflow-hidden animate-fadeIn"
+      style={{ borderColor: `${colorPrimary}35` }}
+    >
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3.5">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
+              style={{ backgroundColor: colorPrimary }}
+            >
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg text-white">Análisis Inteligente de tu Proyecto</h3>
-                <span className="text-[10px] font-semibold bg-cyan-400/20 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-400/30">
-                  Resumen Simplificado
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-lg text-slate-800 tracking-tight">Análisis Inteligente de tu Proyecto</h3>
+                <span
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border shadow-2xs"
+                  style={{ backgroundColor: `${colorPrimary}12`, color: colorPrimary, borderColor: `${colorPrimary}30` }}
+                >
+                  Resumen Recomendado
                 </span>
               </div>
-              <p className="text-xs text-indigo-200">Generado por el Asistente Virtual para ayudarte a entender tu cotización</p>
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">Recomendación personalizada basada en tus requerimientos</p>
             </div>
           </div>
           {onClear && (
             <button
               onClick={onClear}
-              className="text-xs text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 transition-colors font-medium shrink-0"
             >
               Reajustar selección
             </button>
           )}
         </div>
 
+        {/* Selected Main Service */}
         {analysis.mainServiceName && (
-          <div className="bg-slate-800/50 backdrop-blur border border-indigo-400/20 rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-2 text-cyan-300 font-semibold text-sm mb-1">
-              <CheckCircle className="w-4 h-4 text-cyan-400" />
-              <span>Opción Principal Seleccionada</span>
+          <div
+            className="p-4 rounded-xl border space-y-2"
+            style={{ backgroundColor: `${colorPrimary}08`, borderColor: `${colorPrimary}25` }}
+          >
+            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider" style={{ color: colorPrimary }}>
+              <CheckCircle className="w-4 h-4 shrink-0" />
+              <span>Opción Principal Recomendada</span>
             </div>
-            <p className="text-white font-bold text-base">{renderFormattedContent(analysis.mainServiceName)}</p>
+            <p className="text-slate-900 font-extrabold text-base sm:text-lg leading-snug">
+              {renderFormattedContent(analysis.mainServiceName)}
+            </p>
             {analysis.addonNames && analysis.addonNames.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-slate-700/60 flex flex-wrap gap-1.5">
-                <span className="text-xs text-slate-400 mr-1">Complementos incluidos:</span>
+              <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500">Complementos incluidos:</span>
                 {analysis.addonNames.map((addon, idx) => (
-                  <span key={idx} className="text-xs bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 px-2 py-0.5 rounded-md">
+                  <span
+                    key={idx}
+                    className="text-xs font-bold px-2.5 py-0.5 rounded-md border"
+                    style={{ backgroundColor: '#ffffff', color: colorPrimary, borderColor: `${colorPrimary}30` }}
+                  >
                     +{renderFormattedContent(addon)}
                   </span>
                 ))}
@@ -80,26 +97,48 @@ export function AiAnalysisCard({ analysis, onClear }: AiAnalysisCardProps) {
           </div>
         )}
 
+        {/* Explanation / Why it's ideal */}
         {analysis.explanation && (
-          <div className="space-y-3 text-sm text-indigo-100 leading-relaxed">
-            <div className="flex items-start gap-2.5">
-              <Lightbulb className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-amber-300 mb-1 text-xs uppercase tracking-wider">¿Por qué es ideal para ti?</h4>
-                <div className="whitespace-pre-line text-slate-200 text-sm bg-slate-900/40 p-3.5 rounded-xl border border-slate-800">
-                  {renderFormattedContent(analysis.explanation)}
-                </div>
-              </div>
+          <div className="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-amber-700 font-bold text-xs uppercase tracking-wider">
+              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>¿Por qué es la mejor opción para ti?</span>
+            </div>
+            <div className="whitespace-pre-line text-slate-700 text-sm leading-relaxed font-medium">
+              {renderFormattedContent(analysis.explanation)}
             </div>
           </div>
         )}
 
-        <div className="mt-4 pt-3 border-t border-indigo-500/20 flex items-center justify-between text-xs text-indigo-300">
-          <div className="flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Los detalles han sido copiados a tus observaciones.</span>
+        {/* ALERTA DE ALTO IMPACTO ARMONIZADA CON EL TEMA */}
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-50 via-amber-100/60 to-amber-50 border-2 border-amber-300 rounded-2xl flex items-center gap-4 shadow-xs">
+          <div className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-sm">
+            <BellRing className="w-5 h-5 animate-bounce text-slate-950" />
           </div>
-          <span className="font-medium text-slate-400">Solo completa tus datos abajo para finalizar</span>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span className="bg-amber-400 text-slate-950 font-extrabold px-2.5 py-0.5 rounded-md text-[11px] uppercase tracking-wider shadow-2xs">
+                PASO FINAL REQUERIDO
+              </span>
+              <span className="text-xs font-bold text-amber-900 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> ¡Atención!
+              </span>
+            </div>
+            <p className="text-base font-extrabold text-slate-900 leading-snug">
+              Solo completa tus datos abajo en el Paso 3 para finalizar y recibir tu cotización.
+            </p>
+          </div>
+
+          <div className="hidden sm:flex flex-col items-center justify-center shrink-0">
+            <ArrowDown className="w-6 h-6 text-amber-600 animate-bounce" />
+          </div>
+        </div>
+
+        {/* Footer info line */}
+        <div className="pt-1 text-right text-[11px] text-slate-400 font-medium">
+          <FileText className="w-3.5 h-3.5 text-slate-400 inline mr-1" />
+          <span>Los detalles del proyecto han sido añadidos automáticamente a tu formulario.</span>
         </div>
       </div>
     </div>

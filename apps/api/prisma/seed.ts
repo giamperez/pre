@@ -10,11 +10,21 @@ async function main() {
   console.log('🌱 Iniciando seed...');
 
   // ---------------------------------------------------------
-  // USUARIOS ADMIN Y VENTAS
+  // USUARIOS SUPERADMIN, ADMIN Y USUARIO (VENTAS)
   // ---------------------------------------------------------
   await prisma.user.upsert({
+    where: { email: 'superadmin@vertexdev.tech' },
+    update: { role: 'superadmin' },
+    create: {
+      email: 'superadmin@vertexdev.tech',
+      password: bcrypt.hashSync('Vertex2026!', 10),
+      name: 'Super Admin System',
+      role: 'superadmin',
+    },
+  });
+  await prisma.user.upsert({
     where: { email: 'admin@vertexdev.tech' },
-    update: {},
+    update: { role: 'admin' },
     create: {
       email: 'admin@vertexdev.tech',
       password: bcrypt.hashSync('Vertex2026!', 10),
@@ -24,15 +34,15 @@ async function main() {
   });
   await prisma.user.upsert({
     where: { email: 'ventas@vertexdev.tech' },
-    update: {},
+    update: { role: 'usuario' },
     create: {
       email: 'ventas@vertexdev.tech',
       password: bcrypt.hashSync('Vertex2026!', 10),
       name: 'Equipo Ventas',
-      role: 'ventas',
+      role: 'usuario',
     },
   });
-  console.log('✅ Usuarios admin y ventas creados/verificados');
+  console.log('✅ Usuarios superadmin, admin y usuario (ventas) creados/verificados');
 
   let companiesCount = 0;
   let catalogItemsCount = 0;
@@ -494,7 +504,8 @@ async function main() {
       update: {
         name: tpl.name,
         category: tpl.category,
-        projectData: tpl.projectData,
+        type: 'cotizacion',
+        projectData: { ...tpl.projectData, showInPrequote: true },
         items: tpl.items,
         sections: tpl.sections,
         isCustom: false,
@@ -504,9 +515,167 @@ async function main() {
         companyId: co.id,
         name: tpl.name,
         category: tpl.category,
-        projectData: tpl.projectData,
+        type: 'cotizacion',
+        projectData: { ...tpl.projectData, showInPrequote: true },
         items: tpl.items,
         sections: tpl.sections,
+        isCustom: false,
+      }
+    });
+    templatesCount++;
+  }
+
+  // ---------------------------------------------------------
+  // PLANTILLAS DE PRECOTIZACIÓN PRECARGADAS (VERTEX Y PYRAMID)
+  // ---------------------------------------------------------
+  const precotizacionesSeed = [
+    {
+      companyId: vertex.id,
+      code: "PRECOT-VERTEX-MASTER",
+      name: "Precotización General - Soluciones Tecnológicas Vertex",
+      category: "precotizacion",
+      type: "precotizacion",
+      projectData: { showInPrequote: true },
+      items: [],
+      cardsConfig: {
+        botEnabled: true,
+        botWelcome: "¡Hola! 👋 Bienvenido a Vertex Developers. ¿En qué solución tecnológica o software estás interesado hoy?",
+        botPrompt: "Eres el asistente comercial inteligente de Vertex Developers. Tu función es orientar al cliente sobre desarrollo web, tiendas virtuales e-commerce, aplicaciones móviles y software SaaS a medida, sugiriendo los adicionales y guiándolo a generar su precotización.",
+        botTone: "comercial",
+        mandatoryFields: ["nombre", "telefono", "correo", "empresa"],
+        cards: [
+          {
+            _key: "card-v1",
+            serviceName: "Landing Page Corporativa",
+            subtitle: "Sitio web corporativo de impacto de 1 a 5 secciones con diseño responsive y SEO",
+            whyIdeal: "Ideal para marcas que buscan presencia digital inmediata, ágil y profesional.",
+            includedAddons: ["Hosting & Dominio por 1 año", "Formulario de contacto a correo", "Certificado SSL de seguridad"],
+            basePrice: 1500,
+            ctaText: "Precotizar Landing Page",
+            imageUrl: "/companies/vertex-developers/portada.jpeg",
+            videoUrl: "/companies/vertex-developers/video1.mp4"
+          },
+          {
+            _key: "card-v2",
+            serviceName: "Tienda Online E-commerce",
+            subtitle: "Catálogo de productos, carrito de compras, gestión de stock y pasarela de pagos integrada",
+            whyIdeal: "Ideal para comercios y empresas que desean vender sus productos 24/7 en internet.",
+            includedAddons: ["Pasarela de tarjeta (Culqi/MercadoPago)", "Cobros por Yape y Plin", "Panel administrativo intuitivo"],
+            basePrice: 4500,
+            ctaText: "Precotizar E-commerce",
+            imageUrl: "/companies/vertex-developers/portada.jpeg",
+            videoUrl: "/companies/vertex-developers/video1.mp4"
+          },
+          {
+            _key: "card-v3",
+            serviceName: "Software SaaS a Medida",
+            subtitle: "Sistema de gestión web con backend en NestJS, PostgreSQL y panel administrativo interactivo",
+            whyIdeal: "Para empresas con operaciones complejas que requieren digitalizar y automatizar sus procesos.",
+            includedAddons: ["Arquitectura Cloud Escalable", "Módulo de Reportes en Excel/PDF", "Soporte y Garantía de 60 días"],
+            basePrice: 8000,
+            ctaText: "Precotizar Software SaaS",
+            imageUrl: "/companies/vertex-developers/portada.jpeg",
+            videoUrl: "/companies/vertex-developers/video1.mp4"
+          },
+          {
+            _key: "card-v4",
+            serviceName: "Aplicación Móvil (Android / iOS)",
+            subtitle: "App nativa o multiplataforma con interfaz amigable, autenticación y notificaciones push",
+            whyIdeal: "Para startups y negocios que desean estar en la pantalla de inicio de sus clientes.",
+            includedAddons: ["Publicación en Google Play y App Store", "API REST de conexión", "Notificaciones Push"],
+            basePrice: 12000,
+            ctaText: "Precotizar App Móvil",
+            imageUrl: "/companies/vertex-developers/portada.jpeg",
+            videoUrl: "/companies/vertex-developers/video1.mp4"
+          }
+        ]
+      }
+    },
+    {
+      companyId: pyramid.id,
+      code: "PRECOT-PYRAMID-MASTER",
+      name: "Precotización General - Servicios de Ingeniería Pyramid",
+      category: "precotizacion",
+      type: "precotizacion",
+      projectData: { showInPrequote: true },
+      items: [],
+      cardsConfig: {
+        botEnabled: true,
+        botWelcome: "¡Hola! 👋 Bienvenido a Pyramid Structures. ¿En qué proyecto estructural o de construcción te podemos ayudar?",
+        botPrompt: "Eres el asistente comercial especialista de Pyramid Structures. Tu objetivo es responder sobre diseño estructural, inspecciones, metrados, presupuestos y construcción de obra según la normativa RNE vigente.",
+        botTone: "tecnico-comercial",
+        mandatoryFields: ["nombre", "telefono", "correo", "empresa"],
+        cards: [
+          {
+            _key: "card-p1",
+            serviceName: "Diseño y Cálculo Estructural",
+            subtitle: "Modelamiento 3D, análisis sísmico y memoria de cálculo según RNE E.030 / E.060",
+            whyIdeal: "Para edificaciones nuevas residenciales, comerciales e naves industriales.",
+            includedAddons: ["Planos de cimentaciones, columnas y vigas", "Firma de Ingeniero Civil Colegiado", "Soporte ante observaciones municipales"],
+            basePrice: 3500,
+            ctaText: "Precotizar Diseño Estructural",
+            imageUrl: "/companies/pyramid-structures/portada.jpeg",
+            videoUrl: ""
+          },
+          {
+            _key: "card-p2",
+            serviceName: "Inspección y Evaluación Estructural",
+            subtitle: "Levantamiento as-built, ensayos no destructivos (esclerometría/pacometría) e informe técnico",
+            whyIdeal: "Para edificaciones existentes con fisuras o que requieren evaluación para ampliación.",
+            includedAddons: ["Pruebas de Esclerometría", "Pacometría de acero existente", "Estudio de Mecánica de Suelos"],
+            basePrice: 4500,
+            ctaText: "Precotizar Inspección",
+            imageUrl: "/companies/pyramid-structures/portada.jpeg",
+            videoUrl: ""
+          },
+          {
+            _key: "card-p3",
+            serviceName: "Elaboración de Metrados y Presupuesto",
+            subtitle: "Cómputo métrico de todas las especialidades, análisis de precios unitarios y fórmula polinómica",
+            whyIdeal: "Para contratistas y propietarios que requieren costear su obra con precisión.",
+            includedAddons: ["Desagregado de gastos generales", "Cronograma valorizado de avance", "Relación de insumos requeridos"],
+            basePrice: 2750,
+            ctaText: "Precotizar Presupuesto",
+            imageUrl: "/companies/pyramid-structures/portada.jpeg",
+            videoUrl: ""
+          },
+          {
+            _key: "card-p4",
+            serviceName: "Construcción y Ejecución de Obra",
+            subtitle: "Ejecución integral de proyectos de construcción con mano de obra calificada y supervisión",
+            whyIdeal: "Para quienes buscan garantizar la calidad y durabilidad de su construcción.",
+            includedAddons: ["Supervisión técnica de obra", "Control de seguridad en el trabajo", "Entrega con Acta de Conformidad"],
+            basePrice: 25000,
+            ctaText: "Precotizar Construcción",
+            imageUrl: "/companies/pyramid-structures/portada.jpeg",
+            videoUrl: ""
+          }
+        ]
+      }
+    }
+  ];
+
+  for (const preTpl of precotizacionesSeed) {
+    await prisma.quoteTemplate.upsert({
+      where: { companyId_code: { companyId: preTpl.companyId, code: preTpl.code } },
+      update: {
+        name: preTpl.name,
+        category: preTpl.category,
+        type: preTpl.type,
+        projectData: preTpl.projectData,
+        items: preTpl.items,
+        cardsConfig: preTpl.cardsConfig,
+        isCustom: false,
+      },
+      create: {
+        code: preTpl.code,
+        companyId: preTpl.companyId,
+        name: preTpl.name,
+        category: preTpl.category,
+        type: preTpl.type,
+        projectData: preTpl.projectData,
+        items: preTpl.items,
+        cardsConfig: preTpl.cardsConfig,
         isCustom: false,
       }
     });

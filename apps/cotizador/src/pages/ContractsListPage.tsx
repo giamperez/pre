@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
-import { fetchWithAuth } from '../auth';
+import { fetchWithAuth, getUser } from '../auth';
 import type { ContractDocument, Company } from '../types';
 import { ScrollText, ExternalLink, Pencil, Search, X, Filter, Lock, FileCheck, Hash, Trash2, Shield, Layers } from 'lucide-react';
 import { ContractAuditModal } from '../components/contracts/ContractAuditModal';
@@ -114,6 +114,8 @@ function ContractActionsModal({
 
 export function ContractsListPage() {
   const navigate = useNavigate();
+  const userRole = getUser()?.role;
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const [contracts, setContracts] = useState<ContractDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -375,14 +377,16 @@ export function ContractsListPage() {
                     <td className="px-4 py-3 text-center">
                       {/* Desktop Buttons */}
                       <div className="hidden lg:flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => { setSelectedAuditContract(c); setAuditModalOpen(true); }}
-                          title="Ver historial de auditoría y versiones del contrato"
-                          className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 font-medium border border-indigo-200 px-2 py-1 rounded-lg transition-all"
-                        >
-                          <Shield className="w-3.5 h-3.5" />
-                          Auditoría
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => { setSelectedAuditContract(c); setAuditModalOpen(true); }}
+                            title="Ver historial de auditoría y versiones del contrato"
+                            className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 font-medium border border-indigo-200 px-2 py-1 rounded-lg transition-all"
+                          >
+                            <Shield className="w-3.5 h-3.5" />
+                            Auditoría
+                          </button>
+                        )}
 
                         <Link
                           to={`/contratos/editar/${c.id}`}
