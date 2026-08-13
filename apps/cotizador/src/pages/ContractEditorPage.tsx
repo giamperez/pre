@@ -325,22 +325,6 @@ export function ContractEditorPage() {
                 <Heading2 className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Dynamic Tags Helper */}
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
-              <span className="text-slate-400 font-semibold flex items-center gap-1">
-                <Tag className="w-3 h-3 text-indigo-400" /> Insertar variables:
-              </span>
-              <button type="button" onClick={() => insertTag('{{CLIENTE_EMPRESA}}')} className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded text-[11px] font-mono">
-                {'{{CLIENTE_EMPRESA}}'}
-              </button>
-              <button type="button" onClick={() => insertTag('{{EMPLEADOR_RAZON_SOCIAL}}')} className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded text-[11px] font-mono">
-                {'{{EMPLEADOR_RAZON_SOCIAL}}'}
-              </button>
-              <button type="button" onClick={() => insertTag('{{MONTO_TOTAL}}')} className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded text-[11px] font-mono">
-                {'{{MONTO_TOTAL}}'}
-              </button>
-            </div>
           </div>
         )}
 
