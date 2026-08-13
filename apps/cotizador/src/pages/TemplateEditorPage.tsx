@@ -336,6 +336,7 @@ export function TemplateEditorPage() {
     'Eres el asistente comercial virtual de la empresa. Tu objetivo es saludar cordialmente, consultar los datos de contacto del cliente y guiarlo a través de nuestras opciones y paquetes de servicio.'
   );
   const [botTone, setBotTone] = useState('comercial');
+  const [mandatoryFields, setMandatoryFields] = useState<string[]>(['nombre', 'telefono', 'correo', 'empresa']);
   const [prequoteCards, setPrequoteCards] = useState<PrequoteCard[]>([emptyPrequoteCard()]);
   const [prequoteAddons, setPrequoteAddons] = useState<PrequoteAddon[]>([]);
 
