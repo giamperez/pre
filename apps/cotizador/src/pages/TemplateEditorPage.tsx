@@ -1392,8 +1392,6 @@ export function TemplateEditorPage() {
                 {renderFieldEditor('telefono')}
                 {renderFieldEditor('presupuesto')}
                 {renderFieldEditor('detalles')}
-                {renderFieldEditor('sectorProyecto', true)}
-                {renderFieldEditor('tipoServicio', true)}
               </div>
 
               {/* Campos Personalizados Adicionales */}
