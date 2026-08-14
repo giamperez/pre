@@ -335,6 +335,17 @@ export function LeadsPage() {
                     </div>
                   </div>
 
+                  {selectedLead.answers.observacionesIA && (
+                    <div className="mt-4 bg-indigo-50/80 p-4 rounded-xl border border-indigo-200">
+                      <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        🤖 Observaciones y Recomendación IA
+                      </h4>
+                      <p className="text-sm text-indigo-950 font-medium whitespace-pre-line">
+                        {selectedLead.answers.observacionesIA}
+                      </p>
+                    </div>
+                  )}
+
                   {selectedLead.answers.booking && (
                     <div className="mt-4 bg-green-50 p-4 rounded-xl border border-green-200">
                       <h4 className="font-semibold text-green-800 mb-1 flex items-center gap-2">
@@ -345,6 +356,36 @@ export function LeadsPage() {
                       </p>
                     </div>
                   )}
+                </section>
+              )}
+
+              {/* Chatbot Conversation Log Belonging to this Precotización */}
+              {(selectedLead as any).precotizadorChats && (selectedLead as any).precotizadorChats.length > 0 && (
+                <section className="space-y-3 pt-2">
+                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2">
+                    💬 Conversación del Chatbot IA (Sesión vinculada a esta Cotización)
+                  </h3>
+                  <div className="bg-slate-900 rounded-2xl p-4 max-h-60 overflow-y-auto space-y-2.5 text-xs text-white">
+                    {(selectedLead as any).precotizadorChats.flatMap((session: any) => session.messages || []).map((msg: any, idx: number) => (
+                      <div
+                        key={msg.id || idx}
+                        className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className="text-[10px] text-slate-400 mb-0.5">
+                          {msg.sender === 'user' ? 'Cliente' : (msg.senderName || 'Asistente IA')}
+                        </span>
+                        <div
+                          className={`p-2.5 rounded-xl max-w-[85%] whitespace-pre-line ${
+                            msg.sender === 'user'
+                              ? 'bg-indigo-600 text-white rounded-br-none'
+                              : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none'
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 

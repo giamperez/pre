@@ -112,6 +112,7 @@ export class CompaniesService {
       legalEntityType: data.legalEntityType,
       fiscalAddress: data.fiscalAddress,
       customFields: data.customFields,
+      permissions: (data as any).permissions,
     };
 
     if (data.slug !== undefined) {

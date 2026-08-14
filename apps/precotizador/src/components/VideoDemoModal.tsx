@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Volume2, VolumeX, Maximize2, X, Film, Check } from 'lucide-react';
+import { API_URL } from '../config';
 
 function withAlpha(hex: string, alpha: string) {
   return /^#([0-9a-f]{6})$/i.test(hex) ? `${hex}${alpha}` : hex;
@@ -13,6 +14,58 @@ interface VideoDemoModalProps {
   colorPrimary?: string;
   onSelectService?: () => void;
   isSelected?: boolean;
+}
+
+export function parseVideoUrl(url?: string | null) {
+  if (!url || !url.trim()) return null;
+  let cleanUrl = url.trim();
+
+  // Fix relative URLs by prefixing backend API_URL/public
+  if (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('data:')) {
+    cleanUrl = `${API_URL}/public${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`;
+  }
+
+  // 1. Google Drive
+  const driveFileMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  const driveIdMatch = cleanUrl.match(/drive\.google\.com\/(?:open\?id=|uc\?id=|uc\?export=download&id=)([a-zA-Z0-9_-]+)/);
+  const driveId = (driveFileMatch && driveFileMatch[1]) || (driveIdMatch && driveIdMatch[1]);
+
+  if (driveId) {
+    return {
+      type: 'iframe' as const,
+      url: `https://drive.google.com/uc?export=download&id=${driveId}`,
+      embedUrl: `https://drive.google.com/file/d/${driveId}/preview`,
+      isDrive: true,
+    };
+  }
+
+  // 2. YouTube
+  const youtubeMatch = cleanUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (youtubeMatch && youtubeMatch[1]) {
+    const ytId = youtubeMatch[1];
+    return {
+      type: 'iframe' as const,
+      url: `https://www.youtube.com/watch?v=${ytId}`,
+      embedUrl: `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=1`,
+      isYoutube: true,
+    };
+  }
+
+  // 3. Vimeo
+  const vimeoMatch = cleanUrl.match(/vimeo\.com\/([0-9]+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    const vimeoId = vimeoMatch[1];
+    return {
+      type: 'iframe' as const,
+      url: cleanUrl,
+      embedUrl: `https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1`,
+    };
+  }
+
+  return {
+    type: 'direct' as const,
+    url: cleanUrl,
+  };
 }
 
 export function VideoDemoModal({
@@ -30,13 +83,15 @@ export function VideoDemoModal({
   const [progress, setProgress] = useState(0);
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
+  const videoInfo = parseVideoUrl(videoUrl);
+
   useEffect(() => {
-    if (isOpen && videoRef.current) {
+    if (isOpen && videoRef.current && videoInfo?.type === 'direct') {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(() => {});
       setIsPlaying(true);
     }
-  }, [isOpen]);
+  }, [isOpen, videoInfo?.type]);
 
   if (!isOpen) return null;
 
@@ -72,14 +127,11 @@ export function VideoDemoModal({
   };
 
   const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      }
+    if (videoRef.current && videoRef.current.requestFullscreen) {
+      videoRef.current.requestFullscreen();
     }
   };
 
-  // Determine dynamic modal width based on video aspect ratio
   const isVertical = aspectRatio !== null && aspectRatio < 0.9;
   const isSquare = aspectRatio !== null && aspectRatio >= 0.9 && aspectRatio <= 1.2;
 
@@ -106,7 +158,7 @@ export function VideoDemoModal({
             </div>
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider font-bold" style={{ color: colorPrimary }}>
-                Demo · 30s
+                {videoInfo?.isDrive ? 'Google Drive Demo' : videoInfo?.isYoutube ? 'YouTube Demo' : 'Demo 30s'}
               </div>
               <h3 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">
                 {serviceName}
@@ -123,77 +175,88 @@ export function VideoDemoModal({
           </button>
         </div>
 
-        {/* Video Player Container - Adapts to native aspect ratio */}
+        {/* Video Player Container */}
         <div
           className={`relative bg-black flex items-center justify-center group overflow-hidden ${
             isVertical ? 'max-h-[65vh] aspect-[9/16]' : isSquare ? 'aspect-square' : 'aspect-video'
           }`}
         >
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            loop
-            muted={isMuted}
-            playsInline
-            onLoadedMetadata={handleLoadedMetadata}
-            onTimeUpdate={handleTimeUpdate}
-            onClick={togglePlay}
-            className="w-full h-full object-contain cursor-pointer"
-          />
-
-          {/* Overlay Play / Pause Button */}
-          {!isPlaying && (
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 text-white transition-opacity"
-            >
-              <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/40 shadow-xl transform scale-100 hover:scale-110 transition-transform">
-                <Play className="w-7 h-7 fill-current ml-1" />
-              </div>
-            </button>
-          )}
-
-          {/* Controls Bar Overlay */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-3 flex items-center justify-between text-xs text-white opacity-90 group-hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="inline-flex items-center gap-1.5 border px-2.5 py-1 rounded-lg transition-colors font-semibold text-[11px] backdrop-blur-xs text-white"
-                style={isMuted
-                  ? { backgroundColor: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.3)' }
-                  : { backgroundColor: withAlpha(colorPrimary, '33'), borderColor: withAlpha(colorPrimary, '80') }}
-              >
-                {isMuted ? (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5" /> Activar audio
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5" /> Silenciar
-                  </>
-                )}
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleFullscreen}
-              className="p-1.5 bg-white/15 hover:bg-white/25 rounded-lg text-slate-300 hover:text-white transition-colors border border-white/20"
-              title="Pantalla completa"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Animated Progress Bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-            <div
-              className="h-full transition-all duration-100"
-              style={{ width: `${progress}%`, backgroundColor: colorPrimary }}
+          {videoInfo?.type === 'iframe' && videoInfo.embedUrl ? (
+            <iframe
+              src={videoInfo.embedUrl}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              title={`Demo - ${serviceName}`}
             />
-          </div>
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                src={videoInfo?.url || videoUrl}
+                loop
+                muted={isMuted}
+                playsInline
+                onLoadedMetadata={handleLoadedMetadata}
+                onTimeUpdate={handleTimeUpdate}
+                onClick={togglePlay}
+                className="w-full h-full object-contain cursor-pointer"
+              />
+
+              {!isPlaying && (
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 text-white transition-opacity"
+                >
+                  <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/40 shadow-xl transform scale-100 hover:scale-110 transition-transform">
+                    <Play className="w-7 h-7 fill-current ml-1" />
+                  </div>
+                </button>
+              )}
+
+              {/* Controls Bar Overlay */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-3 flex items-center justify-between text-xs text-white opacity-90 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    className="inline-flex items-center gap-1.5 border px-2.5 py-1 rounded-lg transition-colors font-semibold text-[11px] backdrop-blur-xs text-white"
+                    style={isMuted
+                      ? { backgroundColor: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.3)' }
+                      : { backgroundColor: withAlpha(colorPrimary, '33'), borderColor: withAlpha(colorPrimary, '80') }}
+                  >
+                    {isMuted ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5" /> Activar audio
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5" /> Silenciar
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleFullscreen}
+                  className="p-1.5 bg-white/15 hover:bg-white/25 rounded-lg text-slate-300 hover:text-white transition-colors border border-white/20"
+                  title="Pantalla completa"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Animated Progress Bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                <div
+                  className="h-full transition-all duration-100"
+                  style={{ width: `${progress}%`, backgroundColor: colorPrimary }}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer Action */}

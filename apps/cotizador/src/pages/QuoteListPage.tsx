@@ -355,7 +355,7 @@ export function QuoteListPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ Nueva</span>
+            <span>Nueva</span>
           </Link>
         </div>
       </div>
@@ -507,14 +507,16 @@ export function QuoteListPage() {
                           Contrato
                         </button>
 
-                        <button
-                          onClick={() => { setSelectedAuditQuote({ id: q.id, number: q.number }); setAuditModalOpen(true); }}
-                          title="Historial de Auditoría"
-                          className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 font-semibold border border-indigo-200 px-2 py-1 rounded-lg transition-all"
-                        >
-                          <Shield className="w-3.5 h-3.5 text-indigo-600" />
-                          Auditoría
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => { setSelectedAuditQuote({ id: q.id, number: q.number }); setAuditModalOpen(true); }}
+                            title="Historial de Auditoría"
+                            className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 font-semibold border border-indigo-200 px-2 py-1 rounded-lg transition-all"
+                          >
+                            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                            Auditoría
+                          </button>
+                        )}
 
                         <Link
                           to={`/editar/${q.id}`}

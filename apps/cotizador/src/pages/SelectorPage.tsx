@@ -15,16 +15,26 @@ export function SelectorPage() {
   const [editCompany, setEditCompany] = useState<Company | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-  const isAdmin = getUser()?.role === 'admin';
+  const currentUser = getUser();
+  const userRole = currentUser?.role;
+  const isSuperAdmin = userRole === 'superadmin';
+  const isAdmin = userRole === 'admin' || isSuperAdmin;
 
   const loadCompanies = useCallback(() => {
     setLoading(true);
     const request = isAdmin ? fetchWithAuth(`${API_URL}/companies`) : fetch(`${API_URL}/catalog`);
     request
       .then(res => res.json())
-      .then(data => { setCompanies(data); setLoading(false); })
+      .then(data => {
+        let list = Array.isArray(data) ? data : [];
+        if (!isSuperAdmin && currentUser?.companyId) {
+          list = list.filter(c => c.id === currentUser.companyId);
+        }
+        setCompanies(list);
+        setLoading(false);
+      })
       .catch(() => { setError('No se pudieron cargar las empresas'); setLoading(false); });
-  }, [isAdmin]);
+  }, [isAdmin, isSuperAdmin, currentUser?.companyId]);
 
   useEffect(() => { loadCompanies(); }, [loadCompanies]);
 
@@ -60,8 +70,8 @@ export function SelectorPage() {
     <div className="text-center py-16 text-red-500">{error}</div>
   );
 
-  const activeCompanies = companies.filter(c => c.isActive !== false);
-  const archivedCompanies = companies.filter(c => c.isActive === false);
+  const activeCompanies = (companies || []).filter(c => c.isActive !== false);
+  const archivedCompanies = (companies || []).filter(c => c.isActive === false);
 
   return (
     <div className="max-w-3xl mx-auto">

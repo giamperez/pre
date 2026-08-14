@@ -16,6 +16,11 @@ export class UsersService {
         name: true,
         role: true,
         isActive: true,
+        companyId: true,
+        company: {
+          select: { id: true, name: true, slug: true, logoUrl: true }
+        },
+        permissions: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -35,7 +40,9 @@ export class UsersService {
         email: data.email,
         password: hashedPassword,
         name: data.name,
-        role: data.role || 'ventas',
+        role: data.role || 'usuario',
+        companyId: (data as any).companyId || null,
+        permissions: (data as any).permissions || null,
       },
       select: {
         id: true,
@@ -43,6 +50,8 @@ export class UsersService {
         name: true,
         role: true,
         isActive: true,
+        companyId: true,
+        permissions: true,
         createdAt: true,
       }
     });
@@ -57,14 +66,14 @@ export class UsersService {
       name: data.name,
       role: data.role,
       isActive: data.isActive,
+      companyId: (data as any).companyId,
+      permissions: (data as any).permissions,
     };
     
-    // Si se está cambiando la contraseña (no lo pide el requerimiento, pero por si acaso)
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
 
-    // Remover undefineds
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
     return this.prisma.user.update({
@@ -76,6 +85,8 @@ export class UsersService {
         name: true,
         role: true,
         isActive: true,
+        companyId: true,
+        permissions: true,
         updatedAt: true,
       }
     });

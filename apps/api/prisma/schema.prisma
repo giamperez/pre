@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -15,8 +14,11 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("ventas") // admin, ventas
+  role      String   @default("usuario") // superadmin, admin, usuario
   isActive  Boolean  @default(true)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  permissions Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -35,6 +37,7 @@ model Company {
   contactEmail      String?
   paymentInfo       String?
   customFields      Json?
+  permissions       Json?   // Módulos activados para la empresa
   isActive          Boolean @default(true)
 
   legalName        String?
@@ -43,6 +46,7 @@ model Company {
   legalEntityType  String?
   fiscalAddress    String?
 
+  users        User[]
   catalogItems ServiceCatalogItem[]
   leads        Lead[]
   quotes       Quote[]
@@ -69,6 +73,8 @@ model ServiceCatalogItem {
   basePrice   Float
   isAddon     Boolean @default(false)
   currency    String  @default("PEN")
+  imageUrl    String?
+  videoUrl    String?
 
   company Company @relation(fields: [companyId], references: [id])
 
@@ -96,8 +102,9 @@ model Lead {
   classification LeadClassification @default(pendiente)
   notes          String?
 
-  company       Company        @relation(fields: [companyId], references: [id])
-  whatsappChats WhatsAppChat[]
+  company           Company                   @relation(fields: [companyId], references: [id])
+  whatsappChats     WhatsAppChat[]
+  precotizadorChats PrecotizadorChatSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -264,6 +271,7 @@ model WhatsAppMessage {
 model PrecotizadorChatSession {
   id               String   @id @default(uuid())
   companyId        String
+  leadId           String?
   customerName     String?  @default("Cliente Precotizador")
   customerPhone    String?
   customerEmail    String?
@@ -274,8 +282,10 @@ model PrecotizadorChatSession {
   lastMessageAt    DateTime @default(now())
   summary          String?  @db.Text
   analysisResult   Json?
+  isSavedWithLead  Boolean  @default(false)
 
-  company          Company  @relation(fields: [companyId], references: [id])
+  company          Company                 @relation(fields: [companyId], references: [id])
+  lead             Lead?                   @relation(fields: [leadId], references: [id], onDelete: SetNull)
   messages         PrecotizadorChatMessage[]
 
   createdAt        DateTime @default(now())

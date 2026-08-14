@@ -8,6 +8,7 @@ function App() {
       <Routes>
         <Route path="/" element={<CompanySelectorPage />} />
         <Route path="/catalog/:companySlug" element={<PrecotizadorPage />} />
+        <Route path="/:companySlug" element={<PrecotizadorPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
