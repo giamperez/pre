@@ -14,7 +14,7 @@ async function main() {
   // ---------------------------------------------------------
   await prisma.user.upsert({
     where: { email: 'superadmin@vertexdev.tech' },
-    update: { role: 'superadmin' },
+    update: { role: 'superadmin', password: bcrypt.hashSync('Vertex2026!', 10) },
     create: {
       email: 'superadmin@vertexdev.tech',
       password: bcrypt.hashSync('Vertex2026!', 10),
@@ -24,7 +24,7 @@ async function main() {
   });
   await prisma.user.upsert({
     where: { email: 'admin@vertexdev.tech' },
-    update: { role: 'admin' },
+    update: { role: 'admin', password: bcrypt.hashSync('Vertex2026!', 10) },
     create: {
       email: 'admin@vertexdev.tech',
       password: bcrypt.hashSync('Vertex2026!', 10),
@@ -34,7 +34,7 @@ async function main() {
   });
   await prisma.user.upsert({
     where: { email: 'ventas@vertexdev.tech' },
-    update: { role: 'usuario' },
+    update: { role: 'usuario', password: bcrypt.hashSync('Vertex2026!', 10) },
     create: {
       email: 'ventas@vertexdev.tech',
       password: bcrypt.hashSync('Vertex2026!', 10),
