@@ -8,7 +8,7 @@ import { QuoteSummaryModal } from '../components/QuoteSummaryModal';
 import { COUNTRY_CODES } from '../constants/countryCodes';
 import { PrecotizadorChatWidget } from '../components/PrecotizadorChatWidget';
 import { AiAnalysisCard } from '../components/AiAnalysisCard';
-import { VideoDemoModal } from '../components/VideoDemoModal';
+import { VideoDemoModal, parseVideoUrl } from '../components/VideoDemoModal';
 
 function ServiceVideoThumbnail({
   imageUrl,
@@ -29,9 +29,7 @@ function ServiceVideoThumbnail({
     ? (imageUrl.startsWith('http') || imageUrl.startsWith('data:') ? imageUrl : `${API_URL}/public${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`)
     : null;
 
-  const formattedVideoUrl = videoUrl
-    ? (videoUrl.startsWith('http') ? videoUrl : `${API_URL}/public${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}`)
-    : null;
+  const videoInfo = parseVideoUrl(videoUrl);
 
   return (
     <div
@@ -40,14 +38,20 @@ function ServiceVideoThumbnail({
       onClick={onOpen}
       className="group/thumb relative mb-3 aspect-[21/9] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer"
     >
-      {isHovered && formattedVideoUrl ? (
+      {isHovered && videoInfo?.type === 'direct' ? (
         <video
-          src={formattedVideoUrl}
+          src={videoInfo.url}
           autoPlay
           muted
           loop
           playsInline
           className="w-full h-full object-cover"
+        />
+      ) : isHovered && videoInfo?.type === 'iframe' && videoInfo.embedUrl ? (
+        <iframe
+          src={videoInfo.embedUrl}
+          className="w-full h-full border-0 pointer-events-none"
+          title="Vista previa demo"
         />
       ) : formattedImageUrl ? (
         <img
@@ -58,13 +62,13 @@ function ServiceVideoThumbnail({
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover/thumb:text-slate-500 transition-colors">
           <Film className="w-5 h-5 mb-1" />
-          <span className="text-[11px] font-medium">Pasa el cursor para ver el video demo</span>
+          <span className="text-[11px] font-medium">Haz clic para ver el video demo</span>
         </div>
       )}
 
-      {formattedVideoUrl && (
+      {videoInfo && (
         <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none">
-          <Play className="w-2.5 h-2.5 fill-white" /> {isHovered ? 'Reproduciendo...' : 'Demo 30s'}
+          <Play className="w-2.5 h-2.5 fill-white" /> {isHovered ? 'Reproduciendo...' : videoInfo.isDrive ? 'Drive Video' : videoInfo.isYoutube ? 'YouTube' : 'Demo 30s'}
         </span>
       )}
     </div>
@@ -311,7 +315,7 @@ export function PrecotizadorPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {mainServices.map(item => {
               const isSelected = selectedMainService === item.id;
-              const videoUrl = (item as any).videoUrl || (company.slug === 'vertex-developers' ? `/companies/vertex-developers/video1.mp4` : null);
+              const videoUrl = (item as any).videoUrl || null;
               const imageUrl = (item as any).imageUrl || company.coverImageUrl;
 
               return (

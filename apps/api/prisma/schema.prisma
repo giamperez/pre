@@ -73,6 +73,8 @@ model ServiceCatalogItem {
   basePrice   Float
   isAddon     Boolean @default(false)
   currency    String  @default("PEN")
+  imageUrl    String?
+  videoUrl    String?
 
   company Company @relation(fields: [companyId], references: [id])
 

@@ -49,6 +49,7 @@ interface PrequoteCard {
   ctaText?: string;
   imageUrl?: string;
   videoUrl?: string;
+  catalogItemId?: string;
 }
 
 interface PrequoteAddon {
@@ -531,6 +532,7 @@ export function TemplateEditorPage() {
                 ctaText: c.ctaText || 'Precotizar paquete',
                 imageUrl: c.imageUrl || '',
                 videoUrl: c.videoUrl || '',
+                catalogItemId: c.catalogItemId || undefined,
               })));
             }
             if (Array.isArray(tpl.cardsConfig.addons)) {
@@ -681,12 +683,12 @@ export function TemplateEditorPage() {
           customDetailsFields,
           customConsiderationFields,
           customCommercialFields,
+          additionalItems: type === 'cotizacion'
+            ? additionalItems.filter(i => i.titulo.trim()).map(({ _key, ...rest }) => rest)
+            : [],
         },
         items: type === 'cotizacion'
           ? items.filter(i => i.titulo.trim()).map(({ _key, ...rest }) => rest)
-          : [],
-        additionalItems: type === 'cotizacion'
-          ? additionalItems.filter(i => i.titulo.trim()).map(({ _key, ...rest }) => rest)
           : [],
         sections: type === 'cotizacion' ? sections : undefined,
         cardsConfig: type === 'precotizacion'
@@ -1212,7 +1214,7 @@ export function TemplateEditorPage() {
                         <input
                           type="text"
                           className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-300 text-slate-600 font-mono"
-                          placeholder="Ruta local o URL (Ej: /companies/...) o sube tu archivo"
+                          placeholder="Pega enlace de Google Drive, YouTube, URL directa (.mp4) o sube tu archivo"
                           value={card.videoUrl || ''}
                           onChange={e => updatePrequoteCard(card._key, 'videoUrl', e.target.value)}
                         />
